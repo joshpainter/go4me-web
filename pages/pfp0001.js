@@ -42,6 +42,8 @@ export async function getServerSideProps(context) {
   return {
     props: {
       username: '@' + username,
+      tweetid: 1556785618750955520,
+      tweetDate: (new Date()).toUTCString(),
       fontSize: fontSize
     }
   }
@@ -58,8 +60,25 @@ export default function Pfp0001(props) {
       <main>
         <div>
           <img src="/pfp0001.png" height="300" width="300" />
-          <div style={{position: 'absolute', width: '290px', top: '185px', height: '40px', fontFamily: 'Courier New, Courier, monospace', fontWeight: 'bold', fontSize: props.fontSize + 'px', textAlign: 'center', lineHeight: '40px'}}>
+          <div style={{
+            position: 'absolute',
+            width: '290px', 
+            top: '185px', 
+            height: '40px', 
+            fontFamily: 'Courier New, Courier, monospace', 
+            fontWeight: 'bold', 
+            fontSize: props.fontSize + 'px', 
+            textAlign: 'center', 
+            lineHeight: '40px'
+            }}>
             {props.username}
+            <div style={{
+              position: 'relative',
+              top: '2px',
+              fontSize: '6px',
+              lineHeight: '11px',
+              color: 'gray',
+            }}>tweetid {props.tweetid} on {props.tweetDate}</div>
           </div>
         </div>
       </main>
