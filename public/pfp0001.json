@@ -1,0 +1,38 @@
+{
+    "name": "{username}",
+    "description": "The NFT that represents the root authority for {username}",
+    "sensitive_content": false,
+    "format": "CHIP-0007",
+    "collection": {
+        "name": "{username}",
+        "id": "{username-hash}",
+        "attributes": [
+            {
+                "type": "description",
+                "value": "A collection of NFTs that store information for {username}"
+            },
+            {
+                "type": "icon",
+                "value": "{collectionIconUrl}"
+            },
+            {
+                "type": "banner",
+                "value": "{bannerUrl}"
+            }
+        ]
+    },
+    "attributes": [
+        {
+            "trait_type": "ipfs-cid",
+            "value": "{ipfsCid}"
+        },
+        {
+            "trait_type": "fs-handle",
+            "value": "{fsHandle}"
+        },        
+        {
+            "trait_type": "first-minted-on",
+            "value": "{firstMintedOn}"
+        }
+    ]
+}
