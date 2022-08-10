@@ -9,7 +9,7 @@ const nextConfig = {
         has: [
           {
             type: 'host',
-            value: '(?<pfpname>.*)\.localhost|\.go4\.me'
+            value: '(?<pfpname>.*)(\.go4\.me|\.localhost)'
           }
         ],
         destination: 'https://go4me-pfps.s3.amazonaws.com/go4me0001-:pfpname.png',
@@ -19,7 +19,7 @@ const nextConfig = {
         has: [
           {
             type: 'host',
-            value: '(?<pfpname>.*)\.localhost|\.go4\.me'
+            value: '(?<pfpname>.*)(\.go4\.me|\.localhost)'
           }
         ],        
         destination: 'https://go4me-domains.s3.amazonaws.com/:pfpname.json',
