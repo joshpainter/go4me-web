@@ -14,3 +14,9 @@ a {
 * {
   box-sizing: border-box;
 }
+
+@font-face {
+  font-family: "Apostrof-Regular";
+  src: local("Apostrof-Regular"),
+   url("/Apostrof-Regular.otf") format("opentype");
+ }

@@ -1,5 +1,6 @@
 import Head from 'next/head'
 import Image from 'next/image'
+import styles from '../styles/Home.module.css'
 
 export async function getServerSideProps(context) {
   context.res.setHeader(
@@ -33,7 +34,7 @@ export async function getServerSideProps(context) {
       fontSize = 23;
       break;
     case 15:
-      fontSize = 21;
+      fontSize = 30;
       break;
     default:
       break;
@@ -65,8 +66,7 @@ export default function Pfp0001(props) {
             width: '290px', 
             top: '185px', 
             height: '40px', 
-            fontFamily: 'Courier New, Courier, monospace', 
-            fontWeight: 'bold', 
+            fontFamily: 'Apostrof-Regular', 
             fontSize: props.fontSize + 'px', 
             textAlign: 'center', 
             lineHeight: '40px'
