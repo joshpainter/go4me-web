@@ -16,22 +16,22 @@ export async function getServerSideProps(context) {
     }      
   }
 
-  var fontSize = 33;
+  var fontSize = 40;
   switch (username.length) {
     case 10:
-      fontSize = 31;
+      fontSize = 40;
       break;
     case 11:
-      fontSize = 29;
+      fontSize = 38;
       break;
     case 12:
-      fontSize = 27;
+      fontSize = 36;
       break;
     case 13:
-      fontSize = 25;
+      fontSize = 34;
       break;
     case 14:
-      fontSize = 23;
+      fontSize = 32;
       break;
     case 15:
       fontSize = 30;
@@ -64,7 +64,7 @@ export default function Pfp0001(props) {
           <div style={{
             position: 'absolute',
             width: '290px', 
-            top: '185px', 
+            top: '187px', 
             height: '40px', 
             fontFamily: 'Apostrof-Regular', 
             fontSize: props.fontSize + 'px', 
