@@ -45,10 +45,10 @@ export default function Home(props) {
       <main className={styles.main}>
       <img src={props.pfpUrls[0]} width='300' height='300' />
       <br/>
+        {props.pointers[props.pointers.length -1].value}
         <h1 className={styles.title}>
-          not yet. soon.
+          more Soon(tm)
         </h1>
-        
       </main>
       <footer className={styles.footer}>
       </footer>
