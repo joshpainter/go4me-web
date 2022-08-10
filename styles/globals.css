@@ -17,6 +17,10 @@ a {
 
 @font-face {
   font-family: "Apostrof-Regular";
-  src: local("Apostrof-Regular"),
-   url("/Apostrof-Regular.otf") format("opentype");
+  src: local("Apostrof-Regular"), url("/fonts/Apostrof-Regular.otf") format("opentype");
+ }
+
+ @font-face {
+  font-family: "Inter-Variable";
+  src: local("Inter-Variable"), url("/fonts/Inter-VariableFont_slnt,wght.ttf") format("truetype");
  }

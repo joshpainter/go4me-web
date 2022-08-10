@@ -1,6 +1,6 @@
 import Head from 'next/head'
 import Image from 'next/image'
-import styles from '../styles/Home.module.css'
+import styles from '../../styles/Home.module.css'
 
 export async function getServerSideProps(context) {
   context.res.setHeader(
@@ -16,25 +16,25 @@ export async function getServerSideProps(context) {
     }      
   }
 
-  var fontSize = 40;
+  var fontSize = 32;
   switch (username.length) {
     case 10:
-      fontSize = 40;
+      fontSize = 30;
       break;
     case 11:
-      fontSize = 38;
+      fontSize = 28;
       break;
     case 12:
-      fontSize = 36;
+      fontSize = 26;
       break;
     case 13:
-      fontSize = 34;
+      fontSize = 24;
       break;
     case 14:
-      fontSize = 32;
+      fontSize = 22;
       break;
     case 15:
-      fontSize = 30;
+      fontSize = 20;
       break;
     default:
       break;
@@ -60,13 +60,13 @@ export default function Pfp0001(props) {
       </Head>
       <main>
         <div>
-          <img src="/pfp0001.png" height="300" width="300" />
+          <img src="/templates/pfp0001.png" height="300" width="300" />
           <div style={{
             position: 'absolute',
             width: '290px', 
             top: '187px', 
             height: '40px', 
-            fontFamily: 'Apostrof-Regular', 
+            fontFamily: 'Inter-Variable', 
             fontSize: props.fontSize + 'px', 
             textAlign: 'center', 
             lineHeight: '40px'
@@ -75,10 +75,17 @@ export default function Pfp0001(props) {
             <div style={{
               position: 'relative',
               top: '2px',
+              fontFamily: 'monospace',
               fontSize: '6px',
-              lineHeight: '11px',
+              lineHeight: '6px',
               color: 'gray',
             }}>tweetid {props.tweetid} on {props.tweetDate}</div>
+            <div style={{
+              position: 'relative',
+              top: '-220px',
+              fontFamily: 'Apostrof-Regular',
+              fontSize: '32px',
+            }}>go4.me</div>
           </div>
         </div>
       </main>
