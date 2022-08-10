@@ -49,6 +49,7 @@ export default function Home(props) {
         <h1 className={styles.title}>
           more Soon(tm)
         </h1>
+        <a href='/domain.json'>domain.json</a>
       </main>
       <footer className={styles.footer}>
       </footer>
