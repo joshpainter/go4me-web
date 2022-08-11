@@ -9,10 +9,6 @@ export async function getServerSideProps(context) {
   );
 
   const host = context.req.headers.host;
-  if (host == 'go4.me' || host == 'localhost')
-  {
-    return {}
-  }
 
   const domain = host.replace(/\..*/g, '');
     if (domain.length < 4 || domain.length > 15) {
@@ -45,7 +41,7 @@ export default function Home(props) {
       <main className={styles.main}>
       <img src={props.pfpUrls[0]} width='300' height='300' />
       <br/>
-        {props.pointers[props.pointers.length -1].value}
+        {props.pointers[props.pointers.length - 1].value}
         <h1 className={styles.title}>
           more Soon(tm)
         </h1>

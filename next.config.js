@@ -5,6 +5,26 @@ const nextConfig = {
   rewrites: async () => {
     return [
       {
+        source: '/',
+        has: [
+          {
+            type: 'host',
+            value: '(?<pfpname>.*)(\.go4\.me|\.localhost)'
+          }
+        ],
+        destination: '/domain',
+      },      
+      {
+        source: '/',
+        has: [
+          {
+            type: 'host',
+            value: '(go4\.me|localhost)'
+          }
+        ],
+        destination: '/home',
+      },         
+      {
         source: '/go4me0001.png',
         has: [
           {
