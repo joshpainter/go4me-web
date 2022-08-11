@@ -1,6 +1,7 @@
 import Head from 'next/head'
 import Image from 'next/image'
 import styles from '../styles/Home.module.css'
+import { Search, Grid, Header, Segment, Container } from 'semantic-ui-react'
 
 export async function getServerSideProps(context) {
   context.res.setHeader(
@@ -20,13 +21,19 @@ export default function Home(props) {
         <title>go4.me</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className={styles.main}>
-        <h1 className={styles.title}>
-          not yet. soon.
-        </h1>
-      </main>
-      <footer className={styles.footer}>
-      </footer>
+      <Container textAlign='center'>
+        <Segment padded='very' basic>
+          <Header size='huge' style={{fontFamily: 'Apostrof-Regular', fontSize: '100px'}}>go4.me</Header>
+        </Segment>
+      </Container>
+      <Container textAlign='center'>
+          <Search fluid size='massive' />
+      </Container>
+      <Container textAlign='center'>
+        <Segment padded='very' basic>
+          <Header size='huge'>more Soon(tm)</Header>
+        </Segment>
+      </Container>
     </div>
   )
 }
