@@ -36,7 +36,7 @@ export default function Home(props) {
       <Container textAlign='center'>
         <Segment padded='very' basic>
           <Header style={{fontFamily: 'Apostrof-Regular', fontSize: '32px'}}>a personal page for you, powered by chia.</Header>
-          tweet your xch address <a href='https://twitter.com/go4mebot' target='_blank'>@go4mebot</a> to get started!
+          tweet your xch address <a href='https://twitter.com/go4mebot' target='_blank' rel='noreferrer'>@go4mebot</a> to get started!
           <Header style={{fontFamily: 'Apostrof-Regular', fontSize: '50px'}}>more Soon(tm)</Header>
         </Segment>
       </Container>
