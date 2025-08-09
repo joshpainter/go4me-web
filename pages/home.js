@@ -88,7 +88,19 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
   const router = useRouter()
   const [view, setView] = useState(initialView || 'totalSold');
   const [query, setQuery] = useState(initialQuery || '');
-  const [loadedUsers, setLoadedUsers] = useState(users)
+  // Add stable ranks to initial users
+  const computeRanks = useCallback((list) => {
+    if (!list || !list.length) return []
+    const bySold = [...list].sort((a, b) => b.totalSold - a.totalSold)
+    const byTraded = [...list].sort((a, b) => b.totalTradedXCH - a.totalTradedXCH)
+    const rankSold = new Map()
+    const rankTraded = new Map()
+    bySold.forEach((u, i) => { if (!rankSold.has(u.id)) rankSold.set(u.id, i + 1) })
+    byTraded.forEach((u, i) => { if (!rankTraded.has(u.id)) rankTraded.set(u.id, i + 1) })
+    return list.map(u => ({ ...u, rankTotalSold: rankSold.get(u.id), rankTotalTraded: rankTraded.get(u.id) }))
+  }, [])
+
+  const [loadedUsers, setLoadedUsers] = useState(() => computeRanks(users))
   const [page, setPage] = useState(1) // next page index (0 fetched server-side)
   const [hasMore, setHasMore] = useState(initialHasMore)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
@@ -110,14 +122,14 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
     }
   }, [view, query, router])
 
-  const appendUsers = (more) => {
+  const appendUsers = useCallback((more) => {
     setLoadedUsers(prev => {
       const existing = new Set(prev.map(u => u.id))
       const merged = [...prev]
       more.forEach(u => { if (!existing.has(u.id)) merged.push(u) })
-      return merged
+      return computeRanks(merged)
     })
-  }
+  }, [computeRanks])
 
   const loadMore = useCallback(async () => {
     if (!hasMore || isLoadingMore) return
@@ -168,7 +180,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
     } finally {
       setIsLoadingMore(false)
     }
-  }, [hasMore, isLoadingMore, page, query])
+  }, [hasMore, isLoadingMore, page, query, appendUsers])
 
   // Determine feature support
   useEffect(() => {
@@ -197,8 +209,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
   // Simple in-memory filtering and sorting each render (small data pages)
   const renderList = useMemo(() => {
     const arr = [...loadedUsers]
-    if (view === 'avgTimeToSell') arr.sort((a, b) => a.avgTimeToSellMs - b.avgTimeToSellMs)
-    else if (view === 'totalTraded') arr.sort((a, b) => b.totalTradedXCH - a.totalTradedXCH)
+  if (view === 'totalTraded') arr.sort((a, b) => b.totalTradedXCH - a.totalTradedXCH)
     else arr.sort((a, b) => b.totalSold - a.totalSold)
     const q = query.trim().toLowerCase()
     if (!q) return arr
@@ -284,7 +295,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
           <div className={styles.lbGrid}>
             {renderList.map((u, idx) => (
               <div key={u.id} className={styles.lbCard}>
-                <div className={styles.rankBadge}>#{idx + 1}</div>
+                <div className={styles.rankBadge}>#{view === 'totalTraded' ? (u.rankTotalTraded || idx + 1) : (u.rankTotalSold || idx + 1)}</div>
                 <div className={styles.cardImgWrap}>
                   <Image src={u.avatarUrl} alt={`${u.username} avatar`} layout='fill' objectFit='cover' />
                 </div>
