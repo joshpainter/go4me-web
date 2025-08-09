@@ -39,7 +39,7 @@ export default function Home(props) {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className={styles.main}>
-      <img src={props.pfpUrls[0]} width='300' height='300' />
+  <Image src={props.pfpUrls[0]} width={300} height={300} alt="PFP" />
       <br/>
         {props.pointers[props.pointers.length - 1].value}
         <h1 className={styles.title}>

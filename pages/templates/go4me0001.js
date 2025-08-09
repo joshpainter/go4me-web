@@ -60,7 +60,7 @@ export default function Pfp0001(props) {
       </Head>
       <main>
         <div>
-          <img src="/templates/pfp0001.png" height="300" width="300" />
+          <Image src="/templates/pfp0001.png" height={300} width={300} alt="PFP template" />
           <div style={{
             position: 'absolute',
             width: '290px', 
