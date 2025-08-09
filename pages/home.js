@@ -278,11 +278,6 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
             active={view === 'totalTraded'}
             onClick={() => setView('totalTraded')}
           />
-          <Menu.Item
-            name='Avg time to sell'
-            active={view === 'avgTimeToSell'}
-            onClick={() => setView('avgTimeToSell')}
-          />
         </Menu>
 
         <Segment basic style={{ padding: 0 }}>
