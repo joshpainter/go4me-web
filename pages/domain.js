@@ -70,6 +70,21 @@ export default function DomainPage({ user, rootHostForLinks }) {
   const { username, fullName, description, avatarUrl, xchAddress } = user
   const [copied, setCopied] = useState(false)
 
+  // Build canonical URLs for social cards
+  const isLocal = rootHostForLinks && rootHostForLinks.includes('localhost')
+  const scheme = isLocal ? 'http' : 'https'
+  const pageUrl = rootHostForLinks ? `${scheme}://${username}.${rootHostForLinks}/` : ''
+  let ogImage = avatarUrl || '/templates/pfp0001.png'
+  if (!/^https?:\/\//i.test(ogImage)) {
+    if (rootHostForLinks) {
+      // Ensure leading slash
+      if (!ogImage.startsWith('/')) ogImage = '/' + ogImage
+      ogImage = `${scheme}://${rootHostForLinks}${ogImage}`
+    }
+  }
+  const metaTitle = fullName ? `${fullName} (@${username}) on go4.me` : `@${username} on go4.me`
+  const metaDesc = description ? description.slice(0, 200) : 'Claim your free, custom go4.me PFP and earn royalties whenever others purchase it.'
+
   const handleCopy = async () => {
     if (!xchAddress) return
     try {
@@ -97,6 +112,20 @@ export default function DomainPage({ user, rootHostForLinks }) {
       <Head>
         <title>{username}.go4.me</title>
         <link rel="icon" href="/favicon.ico" />
+        {/* Open Graph / Twitter Card Meta */}
+        {pageUrl && <link rel="canonical" href={pageUrl} />}
+        <meta property="og:site_name" content="go4.me" />
+        {pageUrl && <meta property="og:url" content={pageUrl} />}
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content={metaTitle} />
+        <meta property="og:description" content={metaDesc} />
+        <meta property="og:image" content={ogImage} />
+        <meta property="og:image:alt" content={`${username} profile image`} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={metaTitle} />
+        <meta name="twitter:description" content={metaDesc} />
+        <meta name="twitter:image" content={ogImage} />
+        <meta name="twitter:site" content="@go4mebot" />
       </Head>
       <main className={styles.main} style={{ justifyContent: 'flex-start' }}>
         <div style={{ display: 'flex', flexDirection: 'row', gap: 40, alignItems: 'center', flexWrap: 'wrap', marginTop: '2rem', justifyContent: 'center', marginLeft: 'auto', marginRight: 'auto' }}>
