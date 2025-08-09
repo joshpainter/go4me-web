@@ -37,11 +37,26 @@ export async function getServerSideProps(context) {
     let data = null
     let error = null
     const PAGE_SIZE = 100
-    const viewQuery = await supabase
+    const { view: viewParam, q: qParam } = context.query || {}
+    const currentView = viewParam || 'totalSold'
+    const q = (qParam || '').toString().trim()
+    const orderMap = {
+      totalSold: { column: 'rank_copies_sold', ascending: true },
+      totalTraded: { column: 'rank_total_traded_value', ascending: true },
+      trending: { column: 'rank_average_time_to_sell', ascending: true }
+    }
+    const orderSpec = orderMap[currentView] || orderMap.totalSold
+
+    let queryBuilder = supabase
       .from('get_leaderboard')
       .select('*')
-      .order('total_sold', { ascending: false })
+      .order(orderSpec.column, { ascending: orderSpec.ascending })
       .range(0, PAGE_SIZE - 1)
+    if (q) {
+      // Server-side filtering on username or full name
+      queryBuilder = queryBuilder.or(`username.ilike.%${q}%`, `full_name.ilike.%${q}%`)
+    }
+    const viewQuery = await queryBuilder
 
     data = viewQuery.data
     error = viewQuery.error
@@ -49,13 +64,13 @@ export async function getServerSideProps(context) {
     if (error) throw error
 
 
-  users = (data || []).map(row => {
+    users = (data || []).map(row => {
       const totalSalesAmount = row.xch_total_sales_amount ?? 0
       const avgSalesAmount = row.xch_average_sales_amount ?? 0
       const avgTimeToSell = row.average_time_to_sell ?? 0
       const user = {
-    // Use a stable unique id consistently across SSR + client pagination to avoid duplicates
-    id: row.author_id || row.id || row.user_id || row.username,
+        // Use a stable unique id consistently across SSR + client pagination to avoid duplicates
+        id: row.author_id || row.id || row.user_id || row.username,
         username: row.username || '',
         fullName: row.full_name || '',
         avatarUrl: row.generated_pfp_url,
@@ -64,7 +79,10 @@ export async function getServerSideProps(context) {
         totalRoyaltiesXCH: (totalSalesAmount / MOJO_PER_XCH) * 0.10,
         averageSaleXCH: avgSalesAmount / MOJO_PER_XCH,
         avgTimeToSellMs: avgTimeToSell,
-  lastOfferId: row.last_offerid,
+        lastOfferId: row.last_offerid,
+        rankCopiesSold: row.rank_copies_sold,
+        rankTotalTradedValue: row.rank_total_traded_value,
+        rankAverageTimeToSell: row.rank_average_time_to_sell,
         _search: ((row.username || '') + ' ' + (row.full_name || '')).toLowerCase(),
       }
       user.displayTotalTradedXCH = formatXCH(user.totalTradedXCH)
@@ -78,29 +96,17 @@ export async function getServerSideProps(context) {
   }
 
   const hasMore = users.length === 100
-  const { view: viewParam, q: qParam } = context.query || {}
   return {
-    props: { users, hasMore, initialView: viewParam || null, initialQuery: qParam || '' }
+    props: { users, hasMore, initialView: (context.query.view || null), initialQuery: (context.query.q || '') }
   }
 }
 
 export default function Home({ users = [], hasMore: initialHasMore = false, initialView, initialQuery }) {
   const router = useRouter()
   const [view, setView] = useState(initialView || 'totalSold');
-  const [query, setQuery] = useState(initialQuery || '');
-  // Add stable ranks to initial users
-  const computeRanks = useCallback((list) => {
-    if (!list || !list.length) return []
-    const bySold = [...list].sort((a, b) => b.totalSold - a.totalSold)
-    const byTraded = [...list].sort((a, b) => b.totalTradedXCH - a.totalTradedXCH)
-    const rankSold = new Map()
-    const rankTraded = new Map()
-    bySold.forEach((u, i) => { if (!rankSold.has(u.id)) rankSold.set(u.id, i + 1) })
-    byTraded.forEach((u, i) => { if (!rankTraded.has(u.id)) rankTraded.set(u.id, i + 1) })
-    return list.map(u => ({ ...u, rankTotalSold: rankSold.get(u.id), rankTotalTraded: rankTraded.get(u.id) }))
-  }, [])
-
-  const [loadedUsers, setLoadedUsers] = useState(() => computeRanks(users))
+  const [rawSearch, setRawSearch] = useState(initialQuery || '');
+  const [query, setQuery] = useState(initialQuery || ''); // debounced value used for server filtering
+  const [loadedUsers, setLoadedUsers] = useState(() => users)
   const [page, setPage] = useState(1) // next page index (0 fetched server-side)
   const [hasMore, setHasMore] = useState(initialHasMore)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
@@ -127,32 +133,118 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
       const existing = new Set(prev.map(u => u.id))
       const merged = [...prev]
       more.forEach(u => { if (!existing.has(u.id)) merged.push(u) })
-      return computeRanks(merged)
+      return merged
     })
-  }, [computeRanks])
+  }, [])
+
+  // Debounce search input -> query (300ms)
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setQuery(rawSearch.trim())
+      setPage(0)
+    }, 300)
+    return () => clearTimeout(t)
+  }, [rawSearch])
+
+  // When view or debounced query changes: reset and fetch first page (client side to keep UX fast on tab switch)
+  useEffect(() => {
+    // Skip if this matches SSR initial load and we already have users
+    const supabase = getSupabaseClient()
+    if (!supabase) return
+    let isCancelled = false
+    const fetchFirst = async () => {
+      setIsLoadingMore(true)
+      try {
+        const orderMap = {
+          totalSold: { column: 'rank_copies_sold', ascending: true },
+          totalTraded: { column: 'rank_total_traded_value', ascending: true },
+          trending: { column: 'rank_average_time_to_sell', ascending: true }
+        }
+        const orderSpec = orderMap[view] || orderMap.totalSold
+        let qb = supabase
+          .from('get_leaderboard')
+          .select('*')
+          .order(orderSpec.column, { ascending: orderSpec.ascending })
+          .range(0, PAGE_SIZE - 1)
+        if (query) {
+          qb = qb.or(`username.ilike.%${query}%`, `full_name.ilike.%${query}%`)
+        }
+        const { data, error } = await qb
+        if (error) throw error
+        if (isCancelled) return
+        const mapped = (data || []).map(row => {
+          const totalSalesAmount = row.xch_total_sales_amount ?? row.total_traded_value ?? row.traded_xch ?? 0
+          const avgSalesAmount = row.xch_average_sale_amount ?? row.xch_average_sales_amount ?? 0
+          const avgTimeToSell = row.average_time_to_sell ?? 0
+          const user = {
+            id: row.author_id || row.id || row.user_id || row.username,
+            username: row.username || row.handle || 'unknown',
+            fullName: row.full_name || row.name || '',
+            avatarUrl: row.generated_pfp_url || row.avatar_url || '/templates/pfp0001.png',
+            totalSold: row.total_sold ?? 0,
+            totalTradedXCH: totalSalesAmount / MOJO_PER_XCH,
+            totalRoyaltiesXCH: (totalSalesAmount / MOJO_PER_XCH) * 0.10,
+            averageSaleXCH: avgSalesAmount / MOJO_PER_XCH,
+            avgTimeToSellMs: avgTimeToSell,
+            latestPrice: row.latest_price_xch ?? row.last_price ?? 0,
+            lastOfferId: row.last_offerid,
+            rankCopiesSold: row.rank_copies_sold,
+            rankTotalTradedValue: row.rank_total_traded_value,
+            rankAverageTimeToSell: row.rank_average_time_to_sell,
+            _search: ((row.username || row.handle || '') + ' ' + (row.full_name || row.name || '')).toLowerCase(),
+          }
+          user.displayTotalTradedXCH = formatXCH(user.totalTradedXCH)
+          user.displayTotalRoyaltiesXCH = formatXCH(user.totalRoyaltiesXCH)
+          user.displayAverageSaleXCH = formatXCH(user.averageSaleXCH)
+          user.displayAvgTime = formatDuration(user.avgTimeToSellMs)
+          return user
+        })
+        setLoadedUsers(mapped)
+        setHasMore((data || []).length === PAGE_SIZE)
+        setPage(1)
+      } catch (e) {
+        console.error('Failed to refresh leaderboard', e)
+        setLoadedUsers([])
+        setHasMore(false)
+      } finally {
+        if (!isCancelled) setIsLoadingMore(false)
+      }
+    }
+    fetchFirst()
+    return () => { isCancelled = true }
+  }, [view, query])
 
   const loadMore = useCallback(async () => {
     if (!hasMore || isLoadingMore) return
-    if (query) return // don't load additional pages during active search
     setIsLoadingMore(true)
     try {
       const supabase = getSupabaseClient()
       if (!supabase) return
       const from = page * PAGE_SIZE
       const to = from + PAGE_SIZE - 1
-      const { data, error } = await supabase
+      const orderMap = {
+        totalSold: { column: 'total_sold', ascending: false },
+        totalTraded: { column: 'total_traded_value', ascending: false },
+        trending: { column: 'average_time_to_sell', ascending: true }
+      }
+      const orderSpec = orderMap[view] || orderMap.totalSold
+      let qb = supabase
         .from('get_leaderboard')
         .select('*')
-        .order('total_sold', { ascending: false })
+        .order(orderSpec.column, { ascending: orderSpec.ascending })
         .range(from, to)
+      if (query) {
+        qb = qb.or(`username.ilike.%${query}%,full_name.ilike.%${query}%`)
+      }
+      const { data, error } = await qb
       if (error) throw error
-    const mapped = (data || []).map(row => {
+      const mapped = (data || []).map(row => {
         const totalSalesAmount = row.xch_total_sales_amount ?? row.total_traded_value ?? row.traded_xch ?? 0
         const avgSalesAmount = row.xch_average_sale_amount ?? row.xch_average_sales_amount ?? 0
         const avgTimeToSell = row.average_time_to_sell ?? 0
         const user = {
-      // Maintain identical id derivation logic as SSR to prevent duplicate entries when merging pages
-      id: row.author_id || row.id || row.user_id || row.username,
+          // Maintain identical id derivation logic as SSR to prevent duplicate entries when merging pages
+          id: row.author_id || row.id || row.user_id || row.username,
           username: row.username || row.handle || 'unknown',
           fullName: row.full_name || row.name || '',
           avatarUrl: row.generated_pfp_url || row.avatar_url || '/templates/pfp0001.png',
@@ -163,6 +255,9 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
           avgTimeToSellMs: avgTimeToSell,
           latestPrice: row.latest_price_xch ?? row.last_price ?? 0,
           lastOfferId: row.last_offerid,
+          rankCopiesSold: row.rank_copies_sold,
+          rankTotalTradedValue: row.rank_total_traded_value,
+          rankAverageTimeToSell: row.rank_average_time_to_sell,
           _search: ((row.username || row.handle || '') + ' ' + (row.full_name || row.name || '')).toLowerCase(),
         }
         user.displayTotalTradedXCH = formatXCH(user.totalTradedXCH)
@@ -180,7 +275,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
     } finally {
       setIsLoadingMore(false)
     }
-  }, [hasMore, isLoadingMore, page, query, appendUsers])
+  }, [hasMore, isLoadingMore, page, query, appendUsers, view])
 
   // Determine feature support
   useEffect(() => {
@@ -191,7 +286,6 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
 
   useEffect(() => {
     if (!hasMore) return
-    if (query) return // pause infinite scroll while searching
     if (!intersectionSupported) return
     const el = sentinelRef.current
     if (!el) return
@@ -204,17 +298,17 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
     }, { rootMargin: '300px' })
     observer.observe(el)
     return () => observer.disconnect()
-  }, [hasMore, loadMore, query, intersectionSupported])
+  }, [hasMore, loadMore, intersectionSupported])
 
   // Simple in-memory filtering and sorting each render (small data pages)
   const renderList = useMemo(() => {
+    // Data already server-ordered; fallback sort if needed
     const arr = [...loadedUsers]
-  if (view === 'totalTraded') arr.sort((a, b) => b.totalTradedXCH - a.totalTradedXCH)
-    else arr.sort((a, b) => b.totalSold - a.totalSold)
-    const q = query.trim().toLowerCase()
-    if (!q) return arr
-    return arr.filter(u => u._search && u._search.includes(q))
-  }, [loadedUsers, view, query])
+    if (view === 'totalTraded') arr.sort((a, b) => (a.rankTotalTradedValue || 0) - (b.rankTotalTradedValue || 0))
+    else if (view === 'trending') arr.sort((a, b) => (a.rankAverageTimeToSell || 0) - (b.rankAverageTimeToSell || 0))
+    else arr.sort((a, b) => (a.rankCopiesSold || 0) - (b.rankCopiesSold || 0))
+    return arr
+  }, [loadedUsers, view])
 
   const { theme, toggleTheme } = useTheme()
 
@@ -259,8 +353,8 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
           icon='search'
           size='large'
           placeholder='Search by username or name…'
-          value={query}
-          onChange={(e, { value }) => setQuery(value)}
+          value={rawSearch}
+          onChange={(e, { value }) => setRawSearch(value)}
           style={{ flex: 1, minWidth: 220 }}
         />
         <Button
@@ -289,13 +383,22 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
             active={view === 'totalTraded'}
             onClick={() => setView('totalTraded')}
           />
+          <Menu.Item
+            name='Trending'
+            active={view === 'trending'}
+            onClick={() => setView('trending')}
+          />
         </Menu>
 
         <Segment basic style={{ padding: 0 }}>
           <div className={styles.lbGrid}>
             {renderList.map((u, idx) => (
               <div key={u.id} className={styles.lbCard}>
-                <div className={styles.rankBadge}>#{view === 'totalTraded' ? (u.rankTotalTraded || idx + 1) : (u.rankTotalSold || idx + 1)}</div>
+                <div className={styles.rankBadge}>#{
+                  view === 'totalTraded' ? (u.rankTotalTradedValue || u.rankCopiesSold || idx + 1)
+                    : view === 'trending' ? (u.rankAverageTimeToSell || idx + 1)
+                      : (u.rankCopiesSold || idx + 1)
+                }</div>
                 <div className={styles.cardImgWrap}>
                   <Image src={u.avatarUrl} alt={`${u.username} avatar`} layout='fill' objectFit='cover' />
                 </div>
@@ -376,12 +479,12 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
           </div>
         </Segment>
         <div ref={sentinelRef} />
-        {!query && !intersectionSupported && hasMore && (
+        {!intersectionSupported && hasMore && (
           <div style={{ textAlign: 'center', margin: '1rem 0' }}>
             <Button onClick={loadMore} loading={isLoadingMore} disabled={isLoadingMore} primary>Load more</Button>
           </div>
         )}
-        {!query && intersectionSupported && hasMore && (
+        {intersectionSupported && hasMore && (
           <div style={{ textAlign: 'center', fontSize: 12, color: '#888', marginTop: 8 }}>Scrolling loads more…</div>
         )}
         <div style={{ textAlign: 'center', margin: '2.5rem 0 1.5rem' }}>
