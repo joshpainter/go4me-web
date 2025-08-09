@@ -63,7 +63,7 @@ export async function getServerSideProps(context) {
         totalRoyaltiesXCH: (totalSalesAmount / MOJO_PER_XCH) * 0.10,
         averageSaleXCH: avgSalesAmount / MOJO_PER_XCH,
         avgTimeToSellMs: avgTimeToSell,
-        dexieUrl: row.latest_offer_url,
+  lastOfferId: row.last_offerid,
         _search: ((row.username || '') + ' ' + (row.full_name || '')).toLowerCase(),
       }
       user.displayTotalTradedXCH = formatXCH(user.totalTradedXCH)
@@ -148,7 +148,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
           averageSaleXCH: avgSalesAmount / MOJO_PER_XCH,
           avgTimeToSellMs: avgTimeToSell,
           latestPrice: row.latest_price_xch ?? row.last_price ?? 0,
-          dexieUrl: row.latest_offer_url,
+          lastOfferId: row.last_offerid,
           _search: ((row.username || row.handle || '') + ' ' + (row.full_name || row.name || '')).toLowerCase(),
         }
         user.displayTotalTradedXCH = formatXCH(user.totalTradedXCH)
@@ -303,27 +303,51 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                   <div className={styles.statsRowSmall}>
                     <span title='Avg Sale Price'>Avg Sales Price: {formatXCH(u.averageSaleXCH)} XCH</span>
                   </div>
-                  <div style={{ marginTop: 'auto', paddingTop: 8, textAlign: 'center' }}>
-                    <Button
-                      as='a'
-                      href={u.dexieUrl}
-                      target='_blank'
-                      rel='noreferrer'
-                      size='tiny'
-                      basic
-                      color='blue'
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px', margin: '0 auto' }}
-                      aria-label='View latest offer on Dexie'
-                      title='View latest offer on Dexie'
-                    >
-                      <Image
-                        src="https://raw.githubusercontent.com/dexie-space/dexie-kit/main/svg/dexie.svg"
-                        alt="Dexie"
-                        width={50}
-                        height={16}
-                      />
-                      <Icon name='external' size='small' />
-                    </Button>
+                  <div style={{ marginTop: 'auto', paddingTop: 8, textAlign: 'center', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+                    {u.lastOfferId && (
+                      <>
+                        <Button
+                          as='a'
+                          href={`https://dexie.space/offers/${u.lastOfferId}`}
+                          target='_blank'
+                          rel='noreferrer'
+                          size='tiny'
+                          basic
+                          color='blue'
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px' }}
+                          aria-label='Dexie'
+                          title='Dexie'
+                        >
+                          <Image
+                            src="https://raw.githubusercontent.com/dexie-space/dexie-kit/main/svg/duck.svg"
+                            alt="Dexie"
+                            width={22}
+                            height={22}
+                          />
+                          <Icon name='external' size='small' />
+                        </Button>
+                        <Button
+                          as='a'
+                          href={`https://mintgarden.io/offers/${u.lastOfferId}`}
+                          target='_blank'
+                          rel='noreferrer'
+                          size='tiny'
+                          basic
+                          color='green'
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px' }}
+                          aria-label='Mintgarden'
+                          title='Mintgarden'
+                        >
+                          <Image
+                            src="https://mintgarden.io/mint-logo-round.svg"
+                            alt="MintGarden"
+                            width={22}
+                            height={22}
+                          />
+                          <Icon name='external' size='small' />
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
