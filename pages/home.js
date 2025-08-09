@@ -57,7 +57,7 @@ export async function getServerSideProps(context) {
     const orderMap = {
       totalSold: { column: 'rank_copies_sold', ascending: true },
       totalTraded: { column: 'rank_total_traded_value', ascending: true },
-      trending: { column: 'rank_average_time_to_sell', ascending: true }
+      trending: { column: 'rank_last_sale', ascending: true }
     }
     const orderSpec = orderMap[currentView] || orderMap.totalSold
 
@@ -96,7 +96,7 @@ export async function getServerSideProps(context) {
         lastOfferId: row.last_offerid,
         rankCopiesSold: row.rank_copies_sold,
         rankTotalTradedValue: row.rank_total_traded_value,
-        rankAverageTimeToSell: row.rank_average_time_to_sell,
+  rankLastSale: row.rank_last_sale,
         _search: ((row.username || '') + ' ' + (row.full_name || '')).toLowerCase(),
       }
       user.displayTotalTradedXCH = formatXCH(user.totalTradedXCH)
@@ -172,7 +172,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
         const orderMap = {
           totalSold: { column: 'rank_copies_sold', ascending: true },
           totalTraded: { column: 'rank_total_traded_value', ascending: true },
-          trending: { column: 'rank_average_time_to_sell', ascending: true }
+          trending: { column: 'rank_last_sale', ascending: true }
         }
         const orderSpec = orderMap[view] || orderMap.totalSold
         let qb = supabase
@@ -204,7 +204,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
             lastOfferId: row.last_offerid,
             rankCopiesSold: row.rank_copies_sold,
             rankTotalTradedValue: row.rank_total_traded_value,
-            rankAverageTimeToSell: row.rank_average_time_to_sell,
+            rankLastSale: row.rank_last_sale,
             _search: ((row.username || row.handle || '') + ' ' + (row.full_name || row.name || '')).toLowerCase(),
           }
           user.displayTotalTradedXCH = formatXCH(user.totalTradedXCH)
@@ -239,7 +239,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
       const orderMap = {
         totalSold: { column: 'total_sold', ascending: false },
         totalTraded: { column: 'total_traded_value', ascending: false },
-        trending: { column: 'average_time_to_sell', ascending: true }
+        trending: { column: 'rank_last_sale', ascending: true }
       }
       const orderSpec = orderMap[view] || orderMap.totalSold
       let qb = supabase
@@ -271,7 +271,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
           lastOfferId: row.last_offerid,
           rankCopiesSold: row.rank_copies_sold,
           rankTotalTradedValue: row.rank_total_traded_value,
-          rankAverageTimeToSell: row.rank_average_time_to_sell,
+          rankLastSale: row.rank_last_sale,
           _search: ((row.username || row.handle || '') + ' ' + (row.full_name || row.name || '')).toLowerCase(),
         }
         user.displayTotalTradedXCH = formatXCH(user.totalTradedXCH)
@@ -319,7 +319,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
     // Data already server-ordered; fallback sort if needed
     const arr = [...loadedUsers]
     if (view === 'totalTraded') arr.sort((a, b) => (a.rankTotalTradedValue || 0) - (b.rankTotalTradedValue || 0))
-    else if (view === 'trending') arr.sort((a, b) => (a.rankAverageTimeToSell || 0) - (b.rankAverageTimeToSell || 0))
+  else if (view === 'trending') arr.sort((a, b) => (a.rankLastSale || 0) - (b.rankLastSale || 0))
     else arr.sort((a, b) => (a.rankCopiesSold || 0) - (b.rankCopiesSold || 0))
     return arr
   }, [loadedUsers, view])
@@ -410,7 +410,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
               <div key={u.id} className={styles.lbCard}>
                 <div className={styles.rankBadge}>#{
                   view === 'totalTraded' ? (u.rankTotalTradedValue || u.rankCopiesSold || idx + 1)
-                    : view === 'trending' ? (u.rankAverageTimeToSell || idx + 1)
+                    : view === 'trending' ? (u.rankLastSale || idx + 1)
                       : (u.rankCopiesSold || idx + 1)
                 }</div>
         {u.username ? (
