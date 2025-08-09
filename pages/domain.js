@@ -26,10 +26,11 @@ export async function getServerSideProps(ctx) {
     const supabase = getSupabaseClient()
     if (supabase) {
       // Reuse leaderboard source so stats align with home page
+      // Case-insensitive lookup so subdomain / query param case differences still resolve
       const { data, error } = await supabase
         .from('get_user_page_info')
         .select('*')
-        .eq('username', username)
+        .ilike('username', username)
         .limit(1)
       if (error) throw error
       if (data && data.length > 0) {
