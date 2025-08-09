@@ -1,5 +1,6 @@
 import Head from 'next/head'
 import Image from 'next/image'
+import Link from 'next/link'
 import styles from '../styles/Home.module.css'
 import { getSupabaseClient } from '../lib/supabaseClient'
 import { useState } from 'react'
@@ -50,10 +51,22 @@ export async function getServerSideProps(ctx) {
 
   if (!user) return { notFound: true }
 
-  return { props: { user } }
+  // Build root host (remove the username subdomain while preserving port)
+  const hostHeader = req.headers.host || ''
+  const [hostNoPort, portPart] = hostHeader.split(':')
+  let rootHostForLinks = hostNoPort
+  if (hostNoPort.includes('.') && username && hostNoPort.toLowerCase().startsWith(username.toLowerCase() + '.')) {
+    // Strip only the first label (the username)
+    const parts = hostNoPort.split('.')
+    parts.shift()
+    rootHostForLinks = parts.join('.')
+  }
+  if (portPart) rootHostForLinks += ':' + portPart
+
+  return { props: { user, rootHostForLinks } }
 }
 
-export default function DomainPage({ user }) {
+export default function DomainPage({ user, rootHostForLinks }) {
   const { username, fullName, description, avatarUrl, xchAddress } = user
   const [copied, setCopied] = useState(false)
 
@@ -131,6 +144,15 @@ export default function DomainPage({ user }) {
         </div>
       </main>
       <footer className={styles.footer}>
+        {rootHostForLinks ? (
+          <a href={`//${rootHostForLinks}/`} aria-label="Back to leaderboard home" style={{ fontSize: 14, textDecoration: 'none' }}>
+            ← Back to Leaderboard
+          </a>
+        ) : (
+          <Link href="/" aria-label="Back to leaderboard home" style={{ fontSize: 14, textDecoration: 'none' }}>
+            ← Back to Leaderboard
+          </Link>
+        )}
       </footer>
     </div>
   )
