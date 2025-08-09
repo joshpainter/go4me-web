@@ -7,17 +7,17 @@ const nextConfig = {
     domains: [
       'go4me-pfps.s3.amazonaws.com',
       'go4me-domains.s3.amazonaws.com',
-  'can.seedsn.app',
-  'go4.me',
-  'raw.githubusercontent.com'
+      'can.seedsn.app',
+      'go4.me',
+      'raw.githubusercontent.com'
     ],
     // Keep remotePatterns (ignored in older versions but future proof if upgraded)
     remotePatterns: [
       { protocol: 'https', hostname: 'go4me-pfps.s3.amazonaws.com', pathname: '/**' },
       { protocol: 'https', hostname: 'go4me-domains.s3.amazonaws.com', pathname: '/**' },
-  { protocol: 'https', hostname: 'can.seedsn.app', pathname: '/**' },
-  { protocol: 'https', hostname: 'go4.me', pathname: '/**' },
-  { protocol: 'https', hostname: 'raw.githubusercontent.com', pathname: '/**' }
+      { protocol: 'https', hostname: 'can.seedsn.app', pathname: '/**' },
+      { protocol: 'https', hostname: 'go4.me', pathname: '/**' },
+      { protocol: 'https', hostname: 'raw.githubusercontent.com', pathname: '/**' }
     ]
   },
   rewrites: async () => {
@@ -31,7 +31,7 @@ const nextConfig = {
           }
         ],
         destination: '/domain',
-      },      
+      },
       {
         source: '/',
         has: [
@@ -41,7 +41,7 @@ const nextConfig = {
           }
         ],
         destination: '/home',
-      },         
+      },
       {
         source: '/go4me0001.png',
         has: [
@@ -59,9 +59,9 @@ const nextConfig = {
             type: 'host',
             value: '(?<pfpname>.*)(\.go4\.me|\.localhost)'
           }
-        ],        
+        ],
         destination: 'https://go4me-domains.s3.amazonaws.com/:pfpname.json',
-      },      
+      },
     ]
   },
 }

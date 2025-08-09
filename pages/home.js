@@ -2,6 +2,7 @@ import Head from 'next/head'
 import Image from 'next/image'
 import styles from '../styles/Home.module.css'
 import { Header, Segment, Container, Menu, Input, Label, Button, Icon } from 'semantic-ui-react'
+import { useTheme } from './_app'
 import { useMemo, useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/router'
 import { getSupabaseClient } from '../lib/supabaseClient'
@@ -202,6 +203,8 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
     return arr.filter(u => u._search && u._search.includes(q))
   }, [loadedUsers, view, query])
 
+  const { theme, toggleTheme } = useTheme()
+
   return (
     <div className={styles.container}>
       <Head>
@@ -238,15 +241,27 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
         </div>
       </Container>
 
-      <Container style={{ marginTop: 20, marginBottom: 10 }}>
+      <Container style={{ marginTop: 20, marginBottom: 10, display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'stretch' }}>
         <Input
-          fluid
           icon='search'
           size='large'
           placeholder='Search by username or name…'
           value={query}
           onChange={(e, { value }) => setQuery(value)}
+          style={{ flex: 1, minWidth: 220 }}
         />
+        <Button
+          type='button'
+          onClick={toggleTheme}
+          basic
+          color='grey'
+          style={{ flex: '0 0 auto', height: 46, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 14px' }}
+          aria-label='Toggle dark mode'
+          title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          icon
+        >
+          <Icon name={theme === 'dark' ? 'sun' : 'moon'} />
+        </Button>
       </Container>
 
       <Container style={{ marginTop: 10 }}>

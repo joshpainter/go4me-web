@@ -16,7 +16,7 @@
   display: flex;
   flex: 1;
   padding: 2rem 0;
-  border-top: 1px solid #eaeaea;
+  border-top: 1px solid var(--color-border);
   justify-content: center;
   align-items: center;
 }
@@ -79,17 +79,18 @@
   text-align: left;
   color: inherit;
   text-decoration: none;
-  border: 1px solid #eaeaea;
+  border: 1px solid var(--color-border);
   border-radius: 10px;
-  transition: color 0.15s ease, border-color 0.15s ease;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
   max-width: 300px;
+  background: var(--color-card-bg);
 }
 
 .card:hover,
 .card:focus,
 .card:active {
-  color: #0070f3;
-  border-color: #0070f3;
+  color: var(--color-link);
+  border-color: var(--color-link);
 }
 
 .card h2 {
@@ -110,7 +111,7 @@
 
 .skeleton {
   position: relative;
-  background: linear-gradient(90deg, #eee 25%, #f5f5f5 37%, #eee 63%);
+  background: linear-gradient(90deg, var(--skeleton-stop-1) 25%, var(--skeleton-stop-2) 37%, var(--skeleton-stop-1) 63%);
   background-size: 400% 100%;
   animation: skeleton-loading 1.2s ease-in-out infinite;
   border-radius: 4px;
@@ -125,24 +126,24 @@
 
 .lbCard {
   position: relative;
-  background: #fff;
-  border: 1px solid #e5e5e5;
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   padding: 8px 8px 10px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.06);
-  transition: box-shadow 0.15s ease, transform 0.15s ease;
+  box-shadow: var(--shadow-elev-1);
+  transition: box-shadow 0.15s ease, transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
   min-height: 280px;
 }
 
-.lbCard:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.12); transform: translateY(-3px); }
+.lbCard:hover { box-shadow: var(--shadow-elev-2); transform: translateY(-3px); }
 
 .rankBadge {
   position: absolute;
   top: 8px;
   left: 8px;
-  background: rgba(0,0,0,0.65);
+  background: var(--color-rank-badge-bg);
   color: #fff;
   font-size: 11px;
   font-weight: 600;
@@ -159,17 +160,17 @@
   border-radius: 8px;
   overflow: hidden;
   margin-bottom: 8px;
-  background: #fff; /* match page background so transparent PNG edges blend */
+  background: var(--color-card-bg); /* transparent images blend */
 }
 
 .cardBody { flex: 1; display: flex; flex-direction: column; }
 .username { font-weight: 600; font-size: 14px; line-height: 1.1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.fullName { font-size: 12px; color: #666; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fullName { font-size: 12px; color: var(--color-text-subtle); margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .statsRow, .statsRowSmall { display: flex; flex-wrap: wrap; gap: 6px; font-size: 11px; line-height: 1.2; }
 .statsRow { margin-top: 4px; }
-.statsRowSmall { margin-top: 2px; color: #555; }
+.statsRowSmall { margin-top: 2px; color: var(--color-text-subtle); }
 
-.lbSkeletonCard { position: relative; border: 1px solid #e5e5e5; border-radius: 12px; padding: 8px; min-height: 280px; }
+.lbSkeletonCard { position: relative; border: 1px solid var(--color-border); border-radius: 12px; padding: 8px; min-height: 280px; background: var(--color-card-bg); }
 .lbSkeletonImg { width: 100%; padding-top: 100%; border-radius: 8px; }
 .lbSkeletonLine { height: 12px; margin-top: 8px; }
 
