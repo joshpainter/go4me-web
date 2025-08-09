@@ -384,6 +384,24 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
         {!query && intersectionSupported && hasMore && (
           <div style={{ textAlign: 'center', fontSize: 12, color: '#888', marginTop: 8 }}>Scrolling loads more…</div>
         )}
+        <div style={{ textAlign: 'center', margin: '2.5rem 0 1.5rem' }}>
+          <Button
+            size='small'
+            basic
+            icon
+            labelPosition='left'
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+              }
+            }}
+            aria-label='Back to top'
+            title='Back to top'
+          >
+            <Icon name='arrow up' />
+            Back to Top
+          </Button>
+        </div>
         {/* Removed legacy filtered/rawQuery/deferredQuery indicators */}
       </Container>
     </div>
