@@ -2,6 +2,7 @@ import Head from 'next/head'
 import Image from 'next/image'
 import styles from '../styles/Home.module.css'
 import { getSupabaseClient } from '../lib/supabaseClient'
+import { useState } from 'react'
 
 export async function getServerSideProps(ctx) {
   const { req, query } = ctx
@@ -37,7 +38,8 @@ export async function getServerSideProps(ctx) {
           username: row.username,
           fullName: row.name || '',
           description: row.description || '',
-          avatarUrl: row.generated_pfp_url || ''
+          avatarUrl: row.generated_pfp_url || '',
+          xchAddress: row.xch_address || '',
         }
       }
     }
@@ -51,7 +53,31 @@ export async function getServerSideProps(ctx) {
 }
 
 export default function DomainPage({ user }) {
-  const { username, fullName, description, avatarUrl } = user
+  const { username, fullName, description, avatarUrl, xchAddress } = user
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = async () => {
+    if (!xchAddress) return
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(xchAddress)
+      } else {
+        // Fallback
+        const ta = document.createElement('textarea')
+        ta.value = xchAddress
+        ta.style.position = 'fixed'
+        ta.style.left = '-9999px'
+        document.body.appendChild(ta)
+        ta.select()
+        document.execCommand('copy')
+        document.body.removeChild(ta)
+      }
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1600)
+    } catch (e) {
+      console.error('Copy failed', e)
+    }
+  }
   return (
     <div className={styles.container}>
       <Head>
@@ -69,10 +95,38 @@ export default function DomainPage({ user }) {
             {description && (
               <p style={{ margin: '18px 0 16px', fontSize: 18, lineHeight: 1.4, whiteSpace: 'pre-wrap' }}>{description}</p>
             )}
+            
           </div>
         </div>
+        {xchAddress && (
+              <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8, fontSize: 18, lineHeight: 1.3, flexWrap: 'wrap' }}>
+                <code style={{ background: 'var(--color-card-bg, #111)', padding: '4px 8px', borderRadius: 6, fontSize: 18, color: '#bbb', maxWidth: '100%', overflowWrap: 'anywhere' }}>
+                  {xchAddress}
+                </code>
+                <button
+                  onClick={handleCopy}
+                  aria-label='Copy XCH address'
+                  style={{
+                    cursor: 'pointer',
+                    background: copied ? 'var(--color-link, #0b5)' : 'var(--color-card-bg, #1b1b1b)',
+                    color: copied ? '#fff' : 'var(--color-text, #eee)',
+                    border: '1px solid var(--color-border, #333)',
+                    padding: '6px 10px',
+                    fontSize: 12,
+                    borderRadius: 6,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    fontWeight: 500,
+                    transition: 'background .15s, color .15s, border-color .15s'
+                  }}
+                >
+                  {copied ? 'Copied!' : 'Copy'}
+                </button>
+              </div>
+            )}
         <div style={{ marginTop: 40, width: '100%', textAlign: 'center', opacity: 0.6 }}>
-          <p>More profile stats & collectibles coming soon.</p>
+          <p>More profile stats & collection info coming soon!</p>
         </div>
       </main>
       <footer className={styles.footer}>
