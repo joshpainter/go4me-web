@@ -49,12 +49,13 @@ export async function getServerSideProps(context) {
     if (error) throw error
 
 
-    users = (data || []).map(row => {
+  users = (data || []).map(row => {
       const totalSalesAmount = row.xch_total_sales_amount ?? 0
       const avgSalesAmount = row.xch_average_sales_amount ?? 0
       const avgTimeToSell = row.average_time_to_sell ?? 0
       const user = {
-        id: row.author_id,
+    // Use a stable unique id consistently across SSR + client pagination to avoid duplicates
+    id: row.author_id || row.id || row.user_id || row.username,
         username: row.username || '',
         fullName: row.full_name || '',
         avatarUrl: row.generated_pfp_url,
@@ -133,12 +134,13 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
         .order('total_sold', { ascending: false })
         .range(from, to)
       if (error) throw error
-      const mapped = (data || []).map(row => {
+    const mapped = (data || []).map(row => {
         const totalSalesAmount = row.xch_total_sales_amount ?? row.total_traded_value ?? row.traded_xch ?? 0
         const avgSalesAmount = row.xch_average_sale_amount ?? row.xch_average_sales_amount ?? 0
         const avgTimeToSell = row.average_time_to_sell ?? 0
         const user = {
-          id: row.id || row.user_id || row.username,
+      // Maintain identical id derivation logic as SSR to prevent duplicate entries when merging pages
+      id: row.author_id || row.id || row.user_id || row.username,
           username: row.username || row.handle || 'unknown',
           fullName: row.full_name || row.name || '',
           avatarUrl: row.generated_pfp_url || row.avatar_url || '/templates/pfp0001.png',
