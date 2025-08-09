@@ -29,6 +29,20 @@ export async function getServerSideProps(context) {
     'public, s-maxage=10, stale-while-revalidate=59'
   );
 
+  // Derive root host (without subdomain) + preserve port so we can build username.<server> links dynamically
+  const hostHeader = context.req?.headers?.host || ''
+  const [hostNoPort, portPart] = hostHeader.split(':')
+  let rootDomain = hostNoPort
+  if (hostNoPort && hostNoPort !== 'localhost' && hostNoPort !== '127.0.0.1') {
+    const parts = hostNoPort.split('.')
+    if (parts.length >= 2) {
+      rootDomain = parts.slice(-2).join('.') // use apex domain (e.g. go4.me)
+    }
+  } else if (hostNoPort === '127.0.0.1') {
+    rootDomain = 'localhost'
+  }
+  const rootHostForLinks = portPart ? `${rootDomain}:${portPart}` : rootDomain
+
   let users = []
   try {
     const supabase = getSupabaseClient()
@@ -97,11 +111,11 @@ export async function getServerSideProps(context) {
 
   const hasMore = users.length === 100
   return {
-    props: { users, hasMore, initialView: (context.query.view || null), initialQuery: (context.query.q || '') }
+    props: { users, hasMore, initialView: (context.query.view || null), initialQuery: (context.query.q || ''), rootHostForLinks }
   }
 }
 
-export default function Home({ users = [], hasMore: initialHasMore = false, initialView, initialQuery }) {
+export default function Home({ users = [], hasMore: initialHasMore = false, initialView, initialQuery, rootHostForLinks }) {
   const router = useRouter()
   const [view, setView] = useState(initialView || 'totalSold');
   const [rawSearch, setRawSearch] = useState(initialQuery || '');
@@ -399,11 +413,37 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                     : view === 'trending' ? (u.rankAverageTimeToSell || idx + 1)
                       : (u.rankCopiesSold || idx + 1)
                 }</div>
-                <div className={styles.cardImgWrap}>
-                  <Image src={u.avatarUrl} alt={`${u.username} avatar`} layout='fill' objectFit='cover' />
-                </div>
+        {u.username ? (
+                  <a
+          href={`//${u.username}.${(rootHostForLinks || 'go4.me')}/`}
+                    target='_blank'
+                    rel='noreferrer noopener'
+                    className={styles.cardImgWrap}
+                    aria-label={`Open ${u.username}.go4.me in new tab`}
+                  >
+                    <Image src={u.avatarUrl} alt={`${u.username} avatar`} layout='fill' objectFit='cover' />
+                  </a>
+                ) : (
+                  <div className={styles.cardImgWrap}>
+                    <Image src={u.avatarUrl} alt={`${u.username || 'user'} avatar`} layout='fill' objectFit='cover' />
+                  </div>
+                )}
                 <div className={styles.cardBody}>
-                  <div className={styles.username}>@{u.username}</div>
+      {u.username ? (
+                    <div className={styles.username}>
+                      <a
+        href={`//${u.username}.${(rootHostForLinks || 'go4.me')}/`}
+                        target='_blank'
+                        rel='noreferrer noopener'
+        style={{ color: 'inherit', textDecoration: 'none' }}
+        aria-label={`Open ${u.username}.${(rootHostForLinks || 'go4.me')} in new tab`}
+                      >
+                        @{u.username}
+                      </a>
+                    </div>
+                  ) : (
+                    <div className={styles.username}>@{u.username}</div>
+                  )}
                   {u.fullName && <div className={styles.fullName}>{u.fullName}</div>}
                   <div className={styles.statsRow}>
                     <span title='Total sold'>Total Sold: {u.totalSold} ({formatXCH(u.totalTradedXCH)} XCH)</span>
