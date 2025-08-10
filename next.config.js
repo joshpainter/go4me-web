@@ -10,7 +10,8 @@ const nextConfig = {
       'can.seedsn.app',
       'go4.me',
       'raw.githubusercontent.com',
-      'mintgarden.io'
+      'mintgarden.io',
+      'assets.mainnet.mintgarden.io'
     ],
     // Keep remotePatterns (ignored in older versions but future proof if upgraded)
     remotePatterns: [

@@ -23,11 +23,10 @@ export async function getServerSideProps(ctx) {
   if (!/^[a-zA-Z0-9_-]{1,32}$/.test(username)) return { notFound: true }
 
   let user = null
+  let ownedPfps = []
   try {
     const supabase = getSupabaseClient()
     if (supabase) {
-      // Reuse leaderboard source so stats align with home page
-      // Case-insensitive lookup so subdomain / query param case differences still resolve
       const { data, error } = await supabase
         .from('get_user_page_info')
         .select('*')
@@ -43,6 +42,29 @@ export async function getServerSideProps(ctx) {
           avatarUrl: row.generated_pfp_url || '',
           xchAddress: row.xch_address || '',
         }
+      }
+
+      // Attempt to load owned PFP NFTs (best-effort; swallow errors so profile still renders)
+      try {
+        const { data: ownedData, error: ownedError } = await supabase
+          .from('get_user_page_owned_pfps')
+          .select('*')
+          .ilike('username', username)
+          .limit(100) // arbitrary cap to prevent huge payloads
+        if (ownedError) throw ownedError
+        if (Array.isArray(ownedData)) {
+          ownedPfps = ownedData.map((r, idx) => {
+            const image = r.thumbnail_uri
+            const label = r.name
+            return {
+              id: r.nft_id,
+              image,
+              label
+            }
+          })
+        }
+      } catch (ownedErr) {
+        console.warn('Owned PFP fetch failed (non-fatal)', ownedErr)
       }
     }
   } catch (e) {
@@ -63,10 +85,10 @@ export async function getServerSideProps(ctx) {
   }
   if (portPart) rootHostForLinks += ':' + portPart
 
-  return { props: { user, rootHostForLinks } }
+  return { props: { user, ownedPfps, rootHostForLinks } }
 }
 
-export default function DomainPage({ user, rootHostForLinks }) {
+export default function DomainPage({ user, ownedPfps = [], rootHostForLinks }) {
   const { username, fullName, description, avatarUrl, xchAddress } = user
   const [copied, setCopied] = useState(false)
 
@@ -184,6 +206,26 @@ export default function DomainPage({ user, rootHostForLinks }) {
             </button>
           </div>
         )}
+        {/* Owned PFP Grid */}
+        <div style={{ marginTop: 48, width: '100%', maxWidth: 1100, marginLeft: 'auto', marginRight: 'auto' }}>
+          <h2 style={{ textAlign: 'center', margin: '0 0 20px', fontSize: 28 }}>Owned PFPs</h2>
+          {ownedPfps.length > 0 ? (
+            <div className={styles.lbGrid} style={{ alignItems: 'stretch' }}>
+              {ownedPfps.map(item => (
+                <div key={item.id} className={styles.lbCard} style={{ minHeight: 220 }}>
+                  <div className={styles.cardImgWrap}>
+                    <Image src={item.image} alt={item.label} layout='fill' objectFit='cover' />
+                  </div>
+                  <div className={styles.cardBody}>
+                    <div className={styles.username} style={{ fontSize: 13 }} title={item.label}>{item.label}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', opacity: 0.55, fontSize: 14 }}>No owned PFPs to display yet.</div>
+          )}
+        </div>
         <div style={{ marginTop: 40, width: '100%', textAlign: 'center', opacity: 0.6 }}>
           <p>More profile stats & collection info coming soon!</p>
         </div>
