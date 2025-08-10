@@ -132,7 +132,7 @@ export default function DomainPage({ user, rootHostForLinks }) {
           <a
             href={avatarUrl || '#'}
             target={avatarUrl ? '_blank' : undefined}
-            rel={avatarUrl ? 'noreferrer noopener' : undefined}
+            rel="noreferrer noopener"
             aria-label={avatarUrl ? `Open full-size avatar for ${username}` : undefined}
             style={{ position: 'relative', width: 225, height: 225, flex: '0 0 auto', display: 'block' }}
           >
