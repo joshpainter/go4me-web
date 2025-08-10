@@ -4,7 +4,7 @@ import Link from 'next/link'
 import styles from '../styles/Home.module.css'
 import { getSupabaseClient } from '../lib/supabaseClient'
 import { useState } from 'react'
-import { Button, Icon } from 'semantic-ui-react'
+import { Button, Icon, Menu } from 'semantic-ui-react'
 
 export async function getServerSideProps(ctx) {
   const { req, query } = ctx
@@ -25,6 +25,7 @@ export async function getServerSideProps(ctx) {
 
   let user = null
   let ownedPfps = []
+  let otherOwners = []
   try {
     const supabase = getSupabaseClient()
     if (supabase) {
@@ -56,17 +57,40 @@ export async function getServerSideProps(ctx) {
         if (ownedError) throw ownedError
         if (Array.isArray(ownedData)) {
           ownedPfps = ownedData.map((r, idx) => {
-            const image = r.thumbnail_uri
-            const label = r.name
+            const image = r.thumbnail_uri || r.image_url || r.generated_pfp_url
             return {
-              id: r.nft_id,
+              id: r.nft_id || r.id || `owned-${idx}`,
               image,
-              label
+              pfpName: r.pfp_name || r.name || `#${r.nft_id || idx + 1}`,
+              pfpUsername: r.pfp_username || r.username || null
             }
           })
         }
       } catch (ownedErr) {
         console.warn('Owned PFP fetch failed (non-fatal)', ownedErr)
+      }
+
+      // Attempt to load other owners collection (same shape)
+      try {
+        const { data: othersData, error: othersError } = await supabase
+          .from('get_user_page_other_owners')
+          .select('*')
+          .ilike('username', username)
+          .limit(100)
+        if (othersError) throw othersError
+        if (Array.isArray(othersData)) {
+          otherOwners = othersData.map((r, idx) => {
+            const image = r.thumbnail_uri || ''
+            return {
+              id: r.nft_id || r.id || `other-${idx}`,
+              image,
+              pfpName: r.pfp_name || r.name || `#${r.nft_id || idx + 1}`,
+              pfpUsername: r.pfp_username || r.username || null
+            }
+          })
+        }
+      } catch (othersErr) {
+        console.warn('Other owners fetch failed (non-fatal)', othersErr)
       }
     }
   } catch (e) {
@@ -87,12 +111,13 @@ export async function getServerSideProps(ctx) {
   }
   if (portPart) rootHostForLinks += ':' + portPart
 
-  return { props: { user, ownedPfps, rootHostForLinks } }
+  return { props: { user, ownedPfps, otherOwners, rootHostForLinks } }
 }
 
-export default function DomainPage({ user, ownedPfps = [], rootHostForLinks }) {
+export default function DomainPage({ user, ownedPfps = [], otherOwners = [], rootHostForLinks }) {
   const { username, fullName, description, avatarUrl, xchAddress, lastOfferId } = user
   const [copied, setCopied] = useState(false)
+  const [collectionTab, setCollectionTab] = useState('my') // 'my' | 'others'
 
   // Build canonical URLs for social cards
   const isLocal = rootHostForLinks && rootHostForLinks.includes('localhost')
@@ -279,25 +304,70 @@ export default function DomainPage({ user, ownedPfps = [], rootHostForLinks }) {
             </div>
           </div>
         )}
-        {/* Owned PFP Grid */}
+        {/* Collection Tabs */}
         <div style={{ marginTop: 48, width: '100%', maxWidth: 1100, marginLeft: 'auto', marginRight: 'auto' }}>
-          <h2 style={{ textAlign: 'center', margin: '0 0 20px', fontSize: 28 }}>Owned PFPs</h2>
-          {ownedPfps.length > 0 ? (
-            <div className={styles.lbGrid} style={{ alignItems: 'stretch' }}>
-              {ownedPfps.map(item => (
-                <div key={item.id} className={styles.lbCard} style={{ minHeight: 220 }}>
-                  <div className={styles.cardImgWrap}>
-                    <Image src={item.image} alt={item.label} layout='fill' objectFit='cover' />
-                  </div>
-                  <div className={styles.cardBody}>
-                    <div className={styles.username} style={{ fontSize: 13 }} title={item.label}>{item.label}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div style={{ textAlign: 'center', opacity: 0.55, fontSize: 14 }}>No owned PFPs to display yet.</div>
-          )}
+          <Menu secondary pointing style={{ marginBottom: 10 }}>
+            <Menu.Item
+              name='My Collection'
+              active={collectionTab === 'my'}
+              onClick={() => setCollectionTab('my')}
+            />
+            <Menu.Item
+              name='Other Owners'
+              active={collectionTab === 'others'}
+              onClick={() => setCollectionTab('others')}
+            />
+          </Menu>
+          {(() => {
+            const list = collectionTab === 'my' ? ownedPfps : otherOwners
+            if (!list || list.length === 0) {
+              return <div style={{ textAlign: 'center', opacity: 0.55, fontSize: 14 }}>{collectionTab === 'my' ? 'No owned PFPs to display yet.' : 'No other owner PFPs to display.'}</div>
+            }
+            return (
+              <div className={styles.lbGrid} style={{ alignItems: 'stretch' }}>
+                {list.map(item => {
+                  const subHref = item.pfpUsername ? `//${item.pfpUsername}.${(rootHostForLinks || 'go4.me')}/` : null
+                  return (
+                    <div key={item.id} className={styles.lbCard} style={{ minHeight: 230 }}>
+                      {subHref ? (
+                        <a
+                          href={subHref}
+                          target='_blank'
+                          rel='noreferrer noopener'
+                          className={styles.cardImgWrap}
+                          aria-label={`Open ${item.pfpUsername}.go4.me in new tab`}
+                        >
+                          <Image src={item.image} alt={item.pfpName || item.pfpUsername || 'pfp'} layout='fill' objectFit='cover' />
+                        </a>
+                      ) : (
+                        <div className={styles.cardImgWrap}>
+                          <Image src={item.image} alt={item.pfpName || item.pfpUsername || 'pfp'} layout='fill' objectFit='cover' />
+                        </div>
+                      )}
+                      <div className={styles.cardBody}>
+                        {item.pfpName && (
+                          <div className={styles.fullName} style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text)' }} title={item.pfpName}>{item.pfpName}</div>
+                        )}
+                        {item.pfpUsername && (
+                          <div className={styles.username} style={{ fontSize: 12 }} title={`@${item.pfpUsername}`}>
+                            <a
+                              href={`https://x.com/${item.pfpUsername}`}
+                              target='_blank'
+                              rel='noreferrer noopener'
+                              style={{ color: 'inherit', textDecoration: 'none' }}
+                              aria-label={`View @${item.pfpUsername} on X`}
+                            >
+                              @{item.pfpUsername}
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )
+          })()}
         </div>
       </main>
       <footer className={styles.footer}>
