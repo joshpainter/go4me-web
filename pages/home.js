@@ -330,7 +330,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
     <div className={styles.container}>
       <Head>
         <title>go4.me</title>
-        <link rel="icon" href="/favicon.ico" />
+  <link rel="icon" href="/collection-icon.png" />
       </Head>
 
       <Container textAlign='center' style={{ paddingTop: 20, paddingBottom: 10 }}>
