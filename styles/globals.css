@@ -67,3 +67,14 @@ a {
 * {
   box-sizing: border-box;
 }
+
+/* Semantic UI adjustments for dark theme visibility */
+[data-theme='dark'] .ui.secondary.pointing.menu .item {
+  color: var(--color-text-subtle) !important;
+}
+[data-theme='dark'] .ui.secondary.pointing.menu .item.active,
+[data-theme='dark'] .ui.secondary.pointing.menu .item:hover {
+  color: var(--color-text) !important;
+  border-color: var(--color-link) !important;
+}
+[data-theme='dark'] .ui.menu .item > i.icon { color: var(--color-text-subtle) !important; }
