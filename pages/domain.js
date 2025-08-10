@@ -3,7 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import styles from '../styles/Home.module.css'
 import { getSupabaseClient } from '../lib/supabaseClient'
-import { useState } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Button, Icon, Menu } from 'semantic-ui-react'
 
 export async function getServerSideProps(ctx) {
@@ -23,9 +23,12 @@ export async function getServerSideProps(ctx) {
   if (!username) return { notFound: true }
   if (!/^[a-zA-Z0-9_-]{1,32}$/.test(username)) return { notFound: true }
 
+  const PAGE_SIZE = 60
   let user = null
   let ownedPfps = []
   let otherOwners = []
+  let ownedHasMore = false
+  let othersHasMore = false
   try {
     const supabase = getSupabaseClient()
     if (supabase) {
@@ -53,7 +56,7 @@ export async function getServerSideProps(ctx) {
           .from('get_user_page_owned_pfps')
           .select('*')
           .ilike('username', username)
-          .limit(100) // arbitrary cap to prevent huge payloads
+          .range(0, PAGE_SIZE - 1)
         if (ownedError) throw ownedError
         if (Array.isArray(ownedData)) {
           ownedPfps = ownedData.map((r, idx) => {
@@ -65,6 +68,7 @@ export async function getServerSideProps(ctx) {
               pfpUsername: r.pfp_username || r.username || null
             }
           })
+          ownedHasMore = ownedData.length === PAGE_SIZE
         }
       } catch (ownedErr) {
         console.warn('Owned PFP fetch failed (non-fatal)', ownedErr)
@@ -76,7 +80,7 @@ export async function getServerSideProps(ctx) {
           .from('get_user_page_other_owners')
           .select('*')
           .ilike('username', username)
-          .limit(100)
+          .range(0, PAGE_SIZE - 1)
         if (othersError) throw othersError
         if (Array.isArray(othersData)) {
           otherOwners = othersData.map((r, idx) => {
@@ -88,6 +92,7 @@ export async function getServerSideProps(ctx) {
               pfpUsername: r.pfp_username || r.username || null
             }
           })
+          othersHasMore = othersData.length === PAGE_SIZE
         }
       } catch (othersErr) {
         console.warn('Other owners fetch failed (non-fatal)', othersErr)
@@ -111,13 +116,87 @@ export async function getServerSideProps(ctx) {
   }
   if (portPart) rootHostForLinks += ':' + portPart
 
-  return { props: { user, ownedPfps, otherOwners, rootHostForLinks } }
+  return { props: { user, ownedPfps, otherOwners, ownedHasMore, othersHasMore, pageSize: PAGE_SIZE, rootHostForLinks } }
 }
 
-export default function DomainPage({ user, ownedPfps = [], otherOwners = [], rootHostForLinks }) {
+export default function DomainPage({ user, ownedPfps = [], otherOwners = [], ownedHasMore = false, othersHasMore = false, pageSize = 60, rootHostForLinks }) {
   const { username, fullName, description, avatarUrl, xchAddress, lastOfferId } = user
   const [copied, setCopied] = useState(false)
   const [collectionTab, setCollectionTab] = useState('my') // 'my' | 'others'
+  // Infinite scroll state
+  const [ownedList, setOwnedList] = useState(() => ownedPfps)
+  const [ownedPage, setOwnedPage] = useState(1) // next page index (0 preloaded)
+  const [ownedMore, setOwnedMore] = useState(ownedHasMore)
+  const [othersList, setOthersList] = useState(() => otherOwners)
+  const [othersPage, setOthersPage] = useState(1)
+  const [othersMore, setOthersMore] = useState(othersHasMore)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const sentinelRef = useRef(null)
+  const [intersectionSupported, setIntersectionSupported] = useState(true)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !('IntersectionObserver' in window)) setIntersectionSupported(false)
+  }, [])
+
+  const mapRow = useCallback((r, idx, prefix='dyn') => ({
+    id: r.nft_id || r.id || `${prefix}-${idx}`,
+    image: r.thumbnail_uri || r.image_url || r.generated_pfp_url || '',
+    pfpName: r.pfp_name || r.name || `#${r.nft_id || idx + 1}`,
+    pfpUsername: r.pfp_username || r.username || null
+  }), [])
+
+  const loadMore = useCallback(async () => {
+    if (isLoadingMore) return
+    const isMy = collectionTab === 'my'
+    if (isMy && !ownedMore) return
+    if (!isMy && !othersMore) return
+    setIsLoadingMore(true)
+    try {
+      const supabase = getSupabaseClient()
+      if (!supabase) return
+      const currentPage = isMy ? ownedPage : othersPage
+      const from = currentPage * pageSize
+      const to = from + pageSize - 1
+      const viewName = isMy ? 'get_user_page_owned_pfps' : 'get_user_page_other_owners'
+      const { data, error } = await supabase
+        .from(viewName)
+        .select('*')
+        .ilike('username', username)
+        .range(from, to)
+      if (error) throw error
+      if (Array.isArray(data) && data.length > 0) {
+        const mapped = data.map((r, i) => mapRow(r, currentPage * pageSize + i, isMy ? 'owned' : 'other'))
+        if (isMy) {
+          setOwnedList(prev => [...prev, ...mapped])
+          setOwnedPage(p => p + 1)
+          setOwnedMore(data.length === pageSize)
+        } else {
+          setOthersList(prev => [...prev, ...mapped])
+          setOthersPage(p => p + 1)
+          setOthersMore(data.length === pageSize)
+        }
+      } else {
+        if (isMy) setOwnedMore(false); else setOthersMore(false)
+      }
+    } catch (e) {
+      console.error('Failed to load more collection rows', e)
+      if (collectionTab === 'my') setOwnedMore(false); else setOthersMore(false)
+    } finally {
+      setIsLoadingMore(false)
+    }
+  }, [collectionTab, isLoadingMore, ownedMore, othersMore, ownedPage, othersPage, pageSize, username, mapRow])
+
+  // Re-observe sentinel when tab changes
+  useEffect(() => {
+    if (!intersectionSupported) return
+    const el = sentinelRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => { if (entry.isIntersecting) loadMore() })
+    }, { rootMargin: '300px' })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [loadMore, intersectionSupported, collectionTab])
 
   // Build canonical URLs for social cards
   const isLocal = rootHostForLinks && rootHostForLinks.includes('localhost')
@@ -326,7 +405,7 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], roo
             )}
           </div>
           {(() => {
-            const list = collectionTab === 'my' ? ownedPfps : otherOwners
+            const list = collectionTab === 'my' ? ownedList : othersList
             if (!list || list.length === 0) {
               return <div style={{ textAlign: 'center', opacity: 0.55, fontSize: 14 }}>{collectionTab === 'my' ? 'No owned PFPs to display yet.' : 'No other owner PFPs to display.'}</div>
             }
@@ -372,9 +451,18 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], roo
                     </div>
                   )
                 })}
+                <div ref={sentinelRef} style={{ height: 1, gridColumn: '1 / -1' }} />
               </div>
             )
           })()}
+          {(collectionTab === 'my' ? ownedMore : othersMore) && !intersectionSupported && (
+            <div style={{ textAlign: 'center', marginTop: 16 }}>
+              <Button size='small' onClick={loadMore} loading={isLoadingMore} disabled={isLoadingMore}>Load more</Button>
+            </div>
+          )}
+          {isLoadingMore && (
+            <div style={{ textAlign: 'center', marginTop: 12, fontSize: 12, opacity: 0.6 }}>Loading…</div>
+          )}
         </div>
       </main>
       <footer className={styles.footer}>
