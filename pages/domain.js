@@ -318,6 +318,13 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], roo
               onClick={() => setCollectionTab('others')}
             />
           </Menu>
+          <div style={{ margin: '4px 0 18px', fontSize: 13, lineHeight: 1.4, color: 'var(--color-text-subtle)', maxWidth: 760 }}>
+            {collectionTab === 'my' ? (
+              <span>Send go4me PFPs to the address above and they will show up here.</span>
+            ) : (
+              <span>These collectors own your PFP. Why not return the favor?</span>
+            )}
+          </div>
           {(() => {
             const list = collectionTab === 'my' ? ownedPfps : otherOwners
             if (!list || list.length === 0) {
