@@ -292,20 +292,22 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
         <meta name="twitter:image" content={ogImage} />
         <meta name="twitter:site" content="@go4mebot" />
       </Head>
-      <main className={styles.main} style={{ justifyContent: 'flex-start' }}>
-  <div style={{ display: 'flex', flexDirection: 'row', gap: 40, alignItems: 'flex-start', flexWrap: 'nowrap', marginTop: '2rem', justifyContent: 'center', marginLeft: 'auto', marginRight: 'auto', maxWidth: 1000 }}>
-          <div style={{ flex: '0 0 auto', display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
-            <a
-              href={avatarUrl || '#'}
-              target={avatarUrl ? '_blank' : undefined}
-              rel="noreferrer noopener"
-              aria-label={avatarUrl ? `Open full-size avatar for ${username}` : undefined}
-              style={{ position: 'relative', width: 225, height: 225, display: 'block' }}
-            >
-              <Image src={avatarUrl} alt={`${username} avatar`} layout='fill' objectFit='cover' />
-            </a>
+  <main className={styles.main} style={{ justifyContent: 'flex-start', padding: '1.25rem 0 1.5rem' }}>
+  <div className={styles.profileHeader} style={{ marginTop: '1rem', width: '100%', maxWidth: 1100, marginLeft: 'auto', marginRight: 'auto', alignSelf: 'stretch' }}>
+          <div className={styles.profileLeft}>
+            <div className={styles.avatarWrap}>
+              <a
+                href={avatarUrl || '#'}
+                target={avatarUrl ? '_blank' : undefined}
+                rel="noreferrer noopener"
+                aria-label={avatarUrl ? `Open full-size avatar for ${username}` : undefined}
+                className={styles.avatarBox}
+              >
+                <Image src={avatarUrl} alt={`${username} avatar`} layout='fill' objectFit='cover' />
+              </a>
+            </div>
           </div>
-          <div style={{ flex: '1 1 0', minWidth: 320, textAlign: 'left', maxWidth: 520, minHeight: 170, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <div className={styles.profileRight}>
             <h1 style={{ margin: 0, fontSize: 48, lineHeight: 1.05 }}>{fullName}</h1>
             <div style={{ fontWeight: 400, fontSize: 24, marginTop: 6 }}>
               <a
@@ -322,106 +324,106 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
               <p style={{ margin: '18px 0 16px', fontSize: 18, lineHeight: 1.4, whiteSpace: 'pre-wrap' }}>{linkify(description)}</p>
             )}
 
+            {xchAddress && (
+              <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                {lastOfferId && (
+                  <>
+                    <Button
+                      as='a'
+                      href={`https://dexie.space/offers/${lastOfferId}`}
+                      target='_blank'
+                      rel='noreferrer'
+                      size='tiny'
+                      basic
+                      color='blue'
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 10px' }}
+                      aria-label='View offer on Dexie'
+                      title='Dexie'
+                    >
+                      <Image
+                        src="https://raw.githubusercontent.com/dexie-space/dexie-kit/main/svg/duck.svg"
+                        alt="Dexie"
+                        width={18}
+                        height={18}
+                      />
+                      <Icon name='external' size='small' />
+                    </Button>
+                    <Button
+                      as='a'
+                      href={`https://mintgarden.io/offers/${lastOfferId}`}
+                      target='_blank'
+                      rel='noreferrer'
+                      size='tiny'
+                      basic
+                      color='green'
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 10px' }}
+                      aria-label='View offer on Mintgarden'
+                      title='Mintgarden'
+                    >
+                      <Image
+                        src="https://mintgarden.io/mint-logo-round.svg"
+                        alt="MintGarden"
+                        width={18}
+                        height={18}
+                      />
+                      <Icon name='external' size='small' />
+                    </Button>
+                  </>
+                )}
+                {(() => {
+                  const full = xchAddress
+                  const display = full.length > 20 ? `${full.slice(0,8)}...${full.slice(-8)}` : full
+                  return (
+                    <code
+                      title={full}
+                      style={{
+                        background: 'var(--color-card-bg, #111)',
+                        padding: '4px 8px',
+                        borderRadius: 6,
+                        fontSize: 14,
+                        lineHeight: '18px',
+                        color: '#bbb',
+                        maxWidth: 520,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        flex: '0 1 auto'
+                      }}
+                      aria-label='XCH address'
+                    >
+                      {display}
+                    </code>
+                  )
+                })()}
+                <button
+                  onClick={handleCopy}
+                  aria-label='Copy XCH address'
+                  style={{
+                    cursor: 'pointer',
+                    background: copied ? 'var(--color-link, #0b5)' : 'var(--color-card-bg, #1b1b1b)',
+                    color: copied ? '#fff' : 'var(--color-text, #eee)',
+                    border: '1px solid var(--color-border, #333)',
+                    padding: '6px 10px',
+                    fontSize: 12,
+                    borderRadius: 6,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    fontWeight: 500,
+                    transition: 'background .15s, color .15s, border-color .15s',
+                    flex: '0 0 auto'
+                  }}
+                >
+                  {copied ? 'Copied!' : 'Copy'}
+                </button>
+              </div>
+            )}
+
           </div>
         </div>
-        {xchAddress && (
-          <div style={{ marginTop: 28, display: 'flex', alignItems: 'stretch', justifyContent: 'center', width: '100%' }}>
-            <div style={{ display: 'flex', gap: 14, alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', maxWidth: 1100, padding: '0 20px', textAlign: 'center' }}>
-              {lastOfferId && (
-                <div style={{ display: 'flex', gap: 10, flex: '0 0 auto' }}>
-                  <Button
-                    as='a'
-                    href={`https://dexie.space/offers/${lastOfferId}`}
-                    target='_blank'
-                    rel='noreferrer'
-                    size='tiny'
-                    basic
-                    color='blue'
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 10px' }}
-                    aria-label='View offer on Dexie'
-                    title='Dexie'
-                  >
-                    <Image
-                      src="https://raw.githubusercontent.com/dexie-space/dexie-kit/main/svg/duck.svg"
-                      alt="Dexie"
-                      width={18}
-                      height={18}
-                    />
-                    <Icon name='external' size='small' />
-                  </Button>
-                  <Button
-                    as='a'
-                    href={`https://mintgarden.io/offers/${lastOfferId}`}
-                    target='_blank'
-                    rel='noreferrer'
-                    size='tiny'
-                    basic
-                    color='green'
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 10px' }}
-                    aria-label='View offer on Mintgarden'
-                    title='Mintgarden'
-                  >
-                    <Image
-                      src="https://mintgarden.io/mint-logo-round.svg"
-                      alt="MintGarden"
-                      width={18}
-                      height={18}
-                    />
-                    <Icon name='external' size='small' />
-                  </Button>
-                </div>
-              )}
-              {(() => {
-                const full = xchAddress
-                const display = full.length > 20 ? `${full.slice(0,8)}...${full.slice(-8)}` : full
-                return (
-          <code
-                    title={full}
-                    style={{
-                      background: 'var(--color-card-bg, #111)',
-                      padding: '4px 8px',
-                      borderRadius: 6,
-                      fontSize: 14,
-                      lineHeight: '18px',
-                      color: '#bbb',
-            maxWidth: 520,
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-            flex: '0 1 auto'
-                    }}
-                    aria-label='XCH address'
-                  >
-                    {display}
-                  </code>
-                )
-              })()}
-              <button
-                onClick={handleCopy}
-                aria-label='Copy XCH address'
-                style={{
-                  cursor: 'pointer',
-                  background: copied ? 'var(--color-link, #0b5)' : 'var(--color-card-bg, #1b1b1b)',
-                  color: copied ? '#fff' : 'var(--color-text, #eee)',
-                  border: '1px solid var(--color-border, #333)',
-                  padding: '6px 10px',
-                  fontSize: 12,
-                  borderRadius: 6,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  fontWeight: 500,
-                  transition: 'background .15s, color .15s, border-color .15s',
-                  flex: '0 0 auto'
-                }}
-              >
-                {copied ? 'Copied!' : 'Copy'}
-              </button>
-            </div>
-          </div>
-        )}
-        {/* Collection Tabs */}
-        <div style={{ marginTop: 48, width: '100%', maxWidth: 1100, marginLeft: 'auto', marginRight: 'auto' }}>
+        
+    {/* Collection Tabs */}
+  <div style={{ marginTop: 30, width: '100%', maxWidth: 1100, marginLeft: 'auto', marginRight: 'auto', alignSelf: 'stretch' }}>
           <Menu secondary pointing style={{ marginBottom: 10 }}>
             <Menu.Item
               name='my'
