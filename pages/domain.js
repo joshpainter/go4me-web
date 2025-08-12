@@ -52,9 +52,9 @@ export async function getServerSideProps(ctx) {
 
       // Attempt to load owned PFP NFTs (best-effort; swallow errors so profile still renders)
       try {
-        const { data: ownedData, error: ownedError } = await supabase
+        const { data: ownedData, count: ownedCount, error: ownedError } = await supabase
           .from('get_user_page_owned_pfps')
-          .select('*')
+          .select('*', { count: 'exact' })
           .ilike('username', username)
           .range(0, PAGE_SIZE - 1)
         if (ownedError) throw ownedError
@@ -69,6 +69,8 @@ export async function getServerSideProps(ctx) {
             }
           })
           ownedHasMore = ownedData.length === PAGE_SIZE
+          // Attach count
+          ownedPfps._totalCount = typeof ownedCount === 'number' ? ownedCount : ownedData.length
         }
       } catch (ownedErr) {
         console.warn('Owned PFP fetch failed (non-fatal)', ownedErr)
@@ -76,9 +78,9 @@ export async function getServerSideProps(ctx) {
 
       // Attempt to load other owners collection (same shape)
       try {
-        const { data: othersData, error: othersError } = await supabase
+        const { data: othersData, count: othersCount, error: othersError } = await supabase
           .from('get_user_page_other_owners')
-          .select('*')
+          .select('*', { count: 'exact' })
           .ilike('username', username)
           .range(0, PAGE_SIZE - 1)
         if (othersError) throw othersError
@@ -93,6 +95,8 @@ export async function getServerSideProps(ctx) {
             }
           })
           othersHasMore = othersData.length === PAGE_SIZE
+          // Attach count
+          otherOwners._totalCount = typeof othersCount === 'number' ? othersCount : othersData.length
         }
       } catch (othersErr) {
         console.warn('Other owners fetch failed (non-fatal)', othersErr)
@@ -116,10 +120,12 @@ export async function getServerSideProps(ctx) {
   }
   if (portPart) rootHostForLinks += ':' + portPart
 
-  return { props: { user, ownedPfps, otherOwners, ownedHasMore, othersHasMore, pageSize: PAGE_SIZE, rootHostForLinks } }
+  const ownedCount = (ownedPfps && ownedPfps._totalCount) ? ownedPfps._totalCount : (Array.isArray(ownedPfps) ? ownedPfps.length : 0)
+  const othersCount = (otherOwners && otherOwners._totalCount) ? otherOwners._totalCount : (Array.isArray(otherOwners) ? otherOwners.length : 0)
+  return { props: { user, ownedPfps, otherOwners, ownedHasMore, othersHasMore, pageSize: PAGE_SIZE, rootHostForLinks, ownedCount, othersCount } }
 }
 
-export default function DomainPage({ user, ownedPfps = [], otherOwners = [], ownedHasMore = false, othersHasMore = false, pageSize = 60, rootHostForLinks }) {
+export default function DomainPage({ user, ownedPfps = [], otherOwners = [], ownedHasMore = false, othersHasMore = false, pageSize = 60, rootHostForLinks, ownedCount = 0, othersCount = 0 }) {
   const { username, fullName, description, avatarUrl, xchAddress, lastOfferId } = user
   const [copied, setCopied] = useState(false)
   const [collectionTab, setCollectionTab] = useState('my') // 'my' | 'others'
@@ -418,15 +424,19 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
         <div style={{ marginTop: 48, width: '100%', maxWidth: 1100, marginLeft: 'auto', marginRight: 'auto' }}>
           <Menu secondary pointing style={{ marginBottom: 10 }}>
             <Menu.Item
-              name='My Collection'
+              name='my'
               active={collectionTab === 'my'}
               onClick={() => setCollectionTab('my')}
-            />
+            >
+              My Collection ({ownedCount || 0})
+            </Menu.Item>
             <Menu.Item
-              name='Other Owners'
+              name='others'
               active={collectionTab === 'others'}
               onClick={() => setCollectionTab('others')}
-            />
+            >
+              Other Owners ({othersCount || 0})
+            </Menu.Item>
           </Menu>
           <div style={{ margin: '4px 0 18px', fontSize: 13, lineHeight: 1.4, color: 'var(--color-text-subtle)', maxWidth: 760 }}>
             {collectionTab === 'my' ? (
