@@ -235,6 +235,37 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
       console.error('Copy failed', e)
     }
   }
+
+  // Turn URLs in description into clickable links (http(s):// and www.)
+  const linkify = useCallback((text) => {
+    if (!text || typeof text !== 'string') return text
+    const nodes = []
+    const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/gi
+    let lastIndex = 0
+    let match
+    while ((match = urlRegex.exec(text)) !== null) {
+      const start = match.index
+      let url = match[0]
+      // Strip common trailing punctuation from URL display
+      const trailingMatch = url.match(/[),.;:!?]+$/)
+      let trailing = ''
+      if (trailingMatch) {
+        trailing = trailingMatch[0]
+        url = url.slice(0, -trailing.length)
+      }
+      if (start > lastIndex) nodes.push(text.slice(lastIndex, start))
+      const href = url.startsWith('http') ? url : `https://${url}`
+      nodes.push(
+        <a key={`u-${start}`} href={href} target="_blank" rel="noreferrer noopener" style={{ color: 'var(--color-link, #3aa0ff)' }}>
+          {url}
+        </a>
+      )
+      if (trailing) nodes.push(trailing)
+      lastIndex = start + match[0].length
+    }
+    if (lastIndex < text.length) nodes.push(text.slice(lastIndex))
+    return nodes
+  }, [])
   return (
     <div className={styles.container}>
       <Head>
@@ -282,7 +313,7 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
               </a>
             </div>
             {description && (
-              <p style={{ margin: '18px 0 16px', fontSize: 18, lineHeight: 1.4, whiteSpace: 'pre-wrap' }}>{description}</p>
+              <p style={{ margin: '18px 0 16px', fontSize: 18, lineHeight: 1.4, whiteSpace: 'pre-wrap' }}>{linkify(description)}</p>
             )}
 
           </div>
@@ -418,10 +449,8 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
                       {subHref ? (
                         <a
                           href={subHref}
-                          target='_blank'
-                          rel='noreferrer noopener'
                           className={styles.cardImgWrap}
-                          aria-label={`Open ${item.pfpUsername}.go4.me in new tab`}
+                          aria-label={`Open ${item.pfpUsername}.go4.me`}
                         >
                           <Image src={item.image} alt={item.pfpName || item.pfpUsername || 'pfp'} layout='fill' objectFit='cover' />
                         </a>
@@ -438,8 +467,6 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
                           <div className={styles.username} style={{ fontSize: 12 }} title={`@${item.pfpUsername}`}>
                             <a
                               href={`https://x.com/${item.pfpUsername}`}
-                              target='_blank'
-                              rel='noreferrer noopener'
                               style={{ color: 'inherit', textDecoration: 'none' }}
                               aria-label={`View @${item.pfpUsername} on X`}
                             >

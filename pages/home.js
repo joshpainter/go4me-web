@@ -416,10 +416,8 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
         {u.username ? (
                   <a
           href={`//${u.username}.${(rootHostForLinks || 'go4.me')}/`}
-                    target='_blank'
-                    rel='noreferrer noopener'
                     className={styles.cardImgWrap}
-                    aria-label={`Open ${u.username}.go4.me in new tab`}
+          aria-label={`Open ${u.username}.go4.me`}
                   >
                     <Image src={u.avatarUrl} alt={`${u.username} avatar`} layout='fill' objectFit='cover' />
                   </a>
@@ -433,10 +431,8 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                     <div className={styles.username}>
                       <a
         href={`//${u.username}.${(rootHostForLinks || 'go4.me')}/`}
-                        target='_blank'
-                        rel='noreferrer noopener'
         style={{ color: 'inherit', textDecoration: 'none' }}
-        aria-label={`Open ${u.username}.${(rootHostForLinks || 'go4.me')} in new tab`}
+    aria-label={`Open ${u.username}.${(rootHostForLinks || 'go4.me')}`}
                       >
                         @{u.username}
                       </a>
