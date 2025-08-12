@@ -292,7 +292,7 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
         <meta name="twitter:image" content={ogImage} />
         <meta name="twitter:site" content="@go4mebot" />
       </Head>
-  <main className={styles.main} style={{ justifyContent: 'flex-start', padding: '1.25rem 0 1.5rem' }}>
+  <main className={styles.main} style={{ justifyContent: 'flex-start', paddingBottom: 88 }}>
   <div className={styles.profileHeader} style={{ marginTop: '1rem', width: '100%', maxWidth: 1100, marginLeft: 'auto', marginRight: 'auto', alignSelf: 'stretch' }}>
           <div className={styles.profileLeft}>
             <div className={styles.avatarWrap}>
@@ -503,8 +503,8 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
             <div style={{ textAlign: 'center', marginTop: 12, fontSize: 12, opacity: 0.6 }}>Loading…</div>
           )}
         </div>
-      </main>
-      <footer className={styles.footer}>
+  </main>
+  <footer className={styles.stickyFooter}>
         {rootHostForLinks ? (
           <a href={`//${rootHostForLinks}/`} aria-label="Back to leaderboard home" style={{ fontSize: 14, textDecoration: 'none' }}>
             ← Back to Leaderboard
@@ -514,7 +514,7 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
             ← Back to Leaderboard
           </Link>
         )}
-      </footer>
+  </footer>
     </div>
   )
 }

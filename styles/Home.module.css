@@ -28,6 +28,23 @@
   flex-grow: 1;
 }
 
+/* Sticky footer for domain page */
+.stickyFooter {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 10px 16px;
+  border-top: 1px solid var(--color-border);
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: saturate(120%) blur(6px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+.stickyFooter a { flex-grow: 0; }
+
 .title a {
   color: #0070f3;
   text-decoration: none;
