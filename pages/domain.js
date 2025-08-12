@@ -44,7 +44,7 @@ export async function getServerSideProps(ctx) {
           username: row.username,
           fullName: row.name || '',
           description: row.description || '',
-          avatarUrl: row.generated_pfp_url || row.avatar_url || '',
+          avatarUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png',
           xchAddress: row.xch_address || '',
           lastOfferId: row.last_offerid || row.last_offer_id || null,
         }
@@ -60,7 +60,7 @@ export async function getServerSideProps(ctx) {
         if (ownedError) throw ownedError
         if (Array.isArray(ownedData)) {
           ownedPfps = ownedData.map((r, idx) => {
-            const image = r.thumbnail_uri || r.image_url || r.generated_pfp_url
+            const image = r.thumbnail_uri
             return {
               id: r.nft_id || r.id || `owned-${idx}`,
               image,
@@ -86,7 +86,7 @@ export async function getServerSideProps(ctx) {
         if (othersError) throw othersError
         if (Array.isArray(othersData)) {
           otherOwners = othersData.map((r, idx) => {
-            const image = r.thumbnail_uri || ''
+            const image = r.thumbnail_uri
             return {
               id: r.nft_id || r.id || `other-${idx}`,
               image,

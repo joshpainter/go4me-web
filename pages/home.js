@@ -84,10 +84,10 @@ export async function getServerSideProps(context) {
       const avgTimeToSell = row.average_time_to_sell ?? 0
       const user = {
         // Use a stable unique id consistently across SSR + client pagination to avoid duplicates
-        id: row.author_id || row.id || row.user_id || row.username,
-        username: row.username || '',
-        fullName: row.full_name || '',
-        avatarUrl: row.generated_pfp_url,
+        id: row.author_id,
+        username: row.username,
+        fullName: row.name,
+        avatarUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png',
         totalSold: row.total_sold ?? 0,
         totalTradedXCH: totalSalesAmount / MOJO_PER_XCH,
         totalRoyaltiesXCH: (totalSalesAmount / MOJO_PER_XCH) * 0.10,
@@ -96,8 +96,8 @@ export async function getServerSideProps(context) {
         lastOfferId: row.last_offerid,
         rankCopiesSold: row.rank_copies_sold,
         rankTotalTradedValue: row.rank_total_traded_value,
-  rankLastSale: row.rank_last_sale,
-        _search: ((row.username || '') + ' ' + (row.full_name || '')).toLowerCase(),
+        rankLastSale: row.rank_last_sale,
+        _search: ((row.username) + ' ' + (row.name)).toLowerCase(),
       }
       user.displayTotalTradedXCH = formatXCH(user.totalTradedXCH)
       user.displayTotalRoyaltiesXCH = formatXCH(user.totalRoyaltiesXCH)
@@ -191,10 +191,10 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
           const avgSalesAmount = row.xch_average_sale_amount ?? row.xch_average_sales_amount ?? 0
           const avgTimeToSell = row.average_time_to_sell ?? 0
           const user = {
-            id: row.author_id || row.id || row.user_id || row.username,
-            username: row.username || row.handle || 'unknown',
-            fullName: row.full_name || row.name || '',
-            avatarUrl: row.generated_pfp_url || row.avatar_url || '/templates/pfp0001.png',
+            id: row.author_id,
+            username: row.username,
+            fullName: row.name,
+            avatarUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png',
             totalSold: row.total_sold ?? 0,
             totalTradedXCH: totalSalesAmount / MOJO_PER_XCH,
             totalRoyaltiesXCH: (totalSalesAmount / MOJO_PER_XCH) * 0.10,
@@ -205,7 +205,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
             rankCopiesSold: row.rank_copies_sold,
             rankTotalTradedValue: row.rank_total_traded_value,
             rankLastSale: row.rank_last_sale,
-            _search: ((row.username || row.handle || '') + ' ' + (row.full_name || row.name || '')).toLowerCase(),
+            _search: ((row.username) + ' ' + (row.name)).toLowerCase(),
           }
           user.displayTotalTradedXCH = formatXCH(user.totalTradedXCH)
           user.displayTotalRoyaltiesXCH = formatXCH(user.totalRoyaltiesXCH)
@@ -258,10 +258,10 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
         const avgTimeToSell = row.average_time_to_sell ?? 0
         const user = {
           // Maintain identical id derivation logic as SSR to prevent duplicate entries when merging pages
-          id: row.author_id || row.id || row.user_id || row.username,
-          username: row.username || row.handle || 'unknown',
-          fullName: row.full_name || row.name || '',
-          avatarUrl: row.generated_pfp_url || row.avatar_url || '/templates/pfp0001.png',
+          id: row.author_id,
+          username: row.username,
+          fullName: row.name,
+          avatarUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png',
           totalSold: row.total_sold ?? 0,
           totalTradedXCH: totalSalesAmount / MOJO_PER_XCH,
           totalRoyaltiesXCH: (totalSalesAmount / MOJO_PER_XCH) * 0.10,
@@ -272,7 +272,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
           rankCopiesSold: row.rank_copies_sold,
           rankTotalTradedValue: row.rank_total_traded_value,
           rankLastSale: row.rank_last_sale,
-          _search: ((row.username || row.handle || '') + ' ' + (row.full_name || row.name || '')).toLowerCase(),
+          _search: ((row.username) + ' ' + (row.name)).toLowerCase(),
         }
         user.displayTotalTradedXCH = formatXCH(user.totalTradedXCH)
         user.displayTotalRoyaltiesXCH = formatXCH(user.totalRoyaltiesXCH)
