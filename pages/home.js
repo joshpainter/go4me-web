@@ -380,7 +380,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
             title='Claim your go4me PFP on X'
           >
             <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 20, height: 20, fontSize: 18, lineHeight: 1, fontWeight: 800, marginRight: 8 }}>𝕏</span>
-            Claim your go4me PFP on X!
+            Claim your free go4me PFP on X!
           </Button>
         </div>
       </Container>
