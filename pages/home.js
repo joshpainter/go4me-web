@@ -338,7 +338,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
           {/* Banner Image using Next.js Image */}
           <div style={{ borderRadius: 8, overflow: 'hidden' }}>
             <Image
-              src="https://go4.me/collection-banner.png"
+              src="/collection-banner.png"
               alt="go4.me collection banner"
               layout="responsive"
               width={900}
@@ -349,7 +349,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
           {/* Center-bottom overlay icon (approx 1/3 overlapping the banner) */}
           <div style={{ position: 'absolute', left: '50%', bottom: -120, transform: 'translateX(-50%)' }}>
             <Image
-              src="https://go4.me/collection-icon.png"
+              src="/collection-icon.png"
               alt="go4.me collection icon"
               width={180}
               height={180}
