@@ -268,9 +268,11 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
       }
       if (start > lastIndex) nodes.push(text.slice(lastIndex, start))
       const href = url.startsWith('http') ? url : `https://${url}`
+  // For display, drop protocol (keep www. if present) and trailing slash
+  const displayText = url.replace(/^https?:\/\//i, '').replace(/\/$/, '')
       nodes.push(
         <a key={`u-${start}`} href={href} target="_blank" rel="noreferrer noopener" style={{ color: 'var(--color-link, #3aa0ff)' }}>
-          {url}
+          {displayText}
         </a>
       )
       if (trailing) nodes.push(trailing)
