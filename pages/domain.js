@@ -309,6 +309,20 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
         )}
         <div className={styles.topNavActions}>
           <Button
+            as='a'
+            href={`https://x.com/intent/tweet?text=Hi @go4mebot! My XCH address is: `}
+            target='_blank'
+            rel='noreferrer'
+            size='small'
+            basic
+            color='grey'
+            aria-label='Claim your go4me PFP on X'
+            title='Claim your go4me PFP on X'
+          >
+            <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 16, height: 16, fontSize: 15, lineHeight: 1, fontWeight: 800, marginRight: 6 }}>𝕏</span>
+            Claim your free go4me PFP on X!
+          </Button>
+          <Button
             type='button'
             onClick={toggleTheme}
             basic

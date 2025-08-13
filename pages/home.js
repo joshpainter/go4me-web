@@ -1,7 +1,8 @@
 import Head from 'next/head'
+import Script from 'next/script'
 import Image from 'next/image'
 import styles from '../styles/Home.module.css'
-import { Header, Segment, Container, Menu, Input, Label, Button, Icon } from 'semantic-ui-react'
+import { Header, Segment, Container, Menu, Input, Button, Icon } from 'semantic-ui-react'
 import { useTheme } from './_app'
 import { useMemo, useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/router'
@@ -325,6 +326,11 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
   }, [loadedUsers, view])
 
   const { theme, toggleTheme } = useTheme()
+  const shareUrl = useMemo(() => {
+    const host = rootHostForLinks || ''
+    const isLocal = host.includes('localhost') || host.startsWith('127.0.0.1')
+    return `${isLocal ? 'http' : 'https'}://${host}`
+  }, [rootHostForLinks])
 
   return (
     <div className={styles.container}>
@@ -332,6 +338,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
         <title>go4.me</title>
   <link rel="icon" href="/collection-icon.png" />
       </Head>
+      <Script id="x-widgets" strategy="afterInteractive" src="https://platform.twitter.com/widgets.js" />
 
       <Container textAlign='center' style={{ paddingTop: 20, paddingBottom: 10 }}>
         <div style={{ width: '100%', maxWidth: 900, margin: '0 auto', position: 'relative', marginBottom: 120 }}>
@@ -359,6 +366,22 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
         </div>
         <div style={{ marginTop: 14, color: '#666', fontSize: 16 }}>
           Claim your free, custom go4.me PFP and earn royalties whenever others purchase it!<br /> Simply share your XCH address and tag <a href='https://x.com/go4mebot' target='_blank' rel='noreferrer'>@go4mebot</a> on X to kick things off!
+        </div>
+        <div style={{ marginTop: 12 }}>
+          <Button
+            as='a'
+            href={`https://x.com/intent/tweet?text=Hi @go4mebot! My XCH address is: `}
+            target='_blank'
+            rel='noreferrer'
+            size='large'
+            basic
+            color='grey'
+            aria-label='Claim your go4me PFP on X'
+            title='Claim your go4me PFP on X'
+          >
+            <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 20, height: 20, fontSize: 18, lineHeight: 1, fontWeight: 800, marginRight: 8 }}>𝕏</span>
+            Claim your go4me PFP on X!
+          </Button>
         </div>
       </Container>
 
