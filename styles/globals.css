@@ -78,3 +78,23 @@ a {
   border-color: var(--color-link) !important;
 }
 [data-theme='dark'] .ui.menu .item > i.icon { color: var(--color-text-subtle) !important; }
+
+/* Dark mode: make Semantic UI Input darker and readable */
+[data-theme='dark'] .ui.input > input {
+  background: var(--color-bg-alt) !important;
+  color: var(--color-text) !important;
+  border-color: var(--color-border) !important;
+}
+[data-theme='dark'] .ui.input > input::placeholder {
+  color: var(--color-text-subtle) !important;
+  opacity: 1;
+}
+[data-theme='dark'] .ui.icon.input > i.icon {
+  color: var(--color-text-subtle) !important;
+}
+[data-theme='dark'] .ui.input > input:focus {
+  background: var(--color-bg-alt) !important;
+  color: var(--color-text) !important;
+  border-color: var(--color-link) !important;
+  box-shadow: none !important;
+}
