@@ -45,6 +45,35 @@
 }
 .stickyFooter a { flex-grow: 0; }
 
+/* Sticky top navbar for domain page */
+.stickyTopbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: saturate(120%) blur(6px);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  z-index: 1100;
+}
+[data-theme='dark'] .stickyTopbar {
+  background: rgba(15, 17, 21, 0.6);
+}
+.topNavLink {
+  font-size: 14px;
+  text-decoration: none;
+  color: var(--color-text);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.topNavActions { display: flex; align-items: center; gap: 8px; }
+
 .title a {
   color: #0070f3;
   text-decoration: none;

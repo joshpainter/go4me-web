@@ -5,6 +5,7 @@ import styles from '../styles/Home.module.css'
 import { getSupabaseClient } from '../lib/supabaseClient'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Button, Icon, Menu } from 'semantic-ui-react'
+import { useTheme } from './_app'
 
 export async function getServerSideProps(ctx) {
   const { req, query } = ctx
@@ -139,6 +140,7 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const sentinelRef = useRef(null)
   const [intersectionSupported, setIntersectionSupported] = useState(true)
+  const { theme, toggleTheme } = useTheme()
 
   useEffect(() => {
     if (typeof window !== 'undefined' && !('IntersectionObserver' in window)) setIntersectionSupported(false)
@@ -292,7 +294,35 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
         <meta name="twitter:image" content={ogImage} />
         <meta name="twitter:site" content="@go4mebot" />
       </Head>
-  <main className={styles.main} style={{ justifyContent: 'flex-start', paddingBottom: 88 }}>
+  {/* Sticky top bar */}
+  <div className={styles.stickyTopbar}>
+        {rootHostForLinks ? (
+          <a href={`//${rootHostForLinks}/`} aria-label="Back to leaderboard home" className={styles.topNavLink}>
+            <Image src="/collection-icon.png" alt="go4.me" width={40} height={40} />
+            ← Back to Leaderboard
+          </a>
+        ) : (
+          <Link href="/" aria-label="Back to leaderboard home" className={styles.topNavLink}>
+            <Image src="/collection-icon.png" alt="go4.me" width={40} height={40} />
+            ← Back to Leaderboard
+          </Link>
+        )}
+        <div className={styles.topNavActions}>
+          <Button
+            type='button'
+            onClick={toggleTheme}
+            basic
+            color='grey'
+            size='small'
+            aria-label='Toggle dark mode'
+            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            icon
+          >
+            <Icon name={theme === 'dark' ? 'sun' : 'moon'} />
+          </Button>
+        </div>
+      </div>
+  <main className={styles.main} style={{ justifyContent: 'flex-start', paddingTop: 64, paddingBottom: 24 }}>
   <div className={styles.profileHeader} style={{ marginTop: '1rem', width: '100%', maxWidth: 1100, marginLeft: 'auto', marginRight: 'auto', alignSelf: 'stretch' }}>
           <div className={styles.profileLeft}>
             <div className={styles.avatarWrap}>
@@ -504,17 +534,7 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
           )}
         </div>
   </main>
-  <footer className={styles.stickyFooter}>
-        {rootHostForLinks ? (
-          <a href={`//${rootHostForLinks}/`} aria-label="Back to leaderboard home" style={{ fontSize: 14, textDecoration: 'none' }}>
-            ← Back to Leaderboard
-          </a>
-        ) : (
-          <Link href="/" aria-label="Back to leaderboard home" style={{ fontSize: 14, textDecoration: 'none' }}>
-            ← Back to Leaderboard
-          </Link>
-        )}
-  </footer>
+  {/* Footer removed; link moved to top bar */}
     </div>
   )
 }
