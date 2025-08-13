@@ -3,7 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import styles from '../styles/Home.module.css'
 import { getSupabaseClient } from '../lib/supabaseClient'
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Button, Icon, Menu } from 'semantic-ui-react'
 import { useTheme } from './_app'
 
@@ -47,7 +47,8 @@ export async function getServerSideProps(ctx) {
           description: row.description || '',
           avatarUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png',
           xchAddress: row.xch_address || '',
-          lastOfferId: row.last_offerid || row.last_offer_id || null,
+          lastOfferId: row.last_offerid || '',
+          totalBadgeScore: row.total_badge_score || 0,
         }
       }
 
@@ -127,7 +128,11 @@ export async function getServerSideProps(ctx) {
 }
 
 export default function DomainPage({ user, ownedPfps = [], otherOwners = [], ownedHasMore = false, othersHasMore = false, pageSize = 60, rootHostForLinks, ownedCount = 0, othersCount = 0 }) {
-  const { username, fullName, description, avatarUrl, xchAddress, lastOfferId } = user
+  const { username, fullName, description, avatarUrl, xchAddress, lastOfferId, totalBadgeScore = 0 } = user
+  const formattedBadgeScore = useMemo(() => {
+    const n = Number(totalBadgeScore)
+    return Number.isFinite(n) ? new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(n) : '0'
+  }, [totalBadgeScore])
   const [copied, setCopied] = useState(false)
   const [collectionTab, setCollectionTab] = useState('my') // 'my' | 'others'
   // Infinite scroll state
@@ -486,7 +491,9 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
           </Menu>
           <div style={{ margin: '4px 0 18px', fontSize: 13, lineHeight: 1.4, color: 'var(--color-text-subtle)', maxWidth: 760 }}>
             {collectionTab === 'my' ? (
-              <span>Send go4me PFPs to the address above and they will show up here.</span>
+              <>
+                <span>Send go4me PFPs to the address above and they will show up here. Your current Badge Score for $G4M airdrops is {formattedBadgeScore}!</span>
+              </>
             ) : (
               <span>These collectors own your PFP. Why not return the favor?</span>
             )}
