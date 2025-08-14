@@ -24,6 +24,98 @@ const formatDuration = (ms) => {
   return `${s}s`
 }
 
+// Card image with flip interaction: front = new PFP (avatarUrl), back = original (xPfpUrl) in a circle mask
+function PfpFlipCard({ user, rootHostForLinks }) {
+  const [isFlipped, setIsFlipped] = useState(false)
+  const [isTouch, setIsTouch] = useState(false)
+  const profileHref = user.username ? `//${user.username}.${(rootHostForLinks || 'go4.me')}/` : undefined
+  const commonAlt = `${user.username || 'user'} avatar`
+
+  const flipInnerStyle = {
+    position: 'absolute',
+    inset: 0,
+    transformStyle: 'preserve-3d',
+    transition: 'transform 360ms cubic-bezier(0.2, 0.7, 0.2, 1)',
+    transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)'
+  }
+  const faceStyle = {
+    position: 'absolute',
+    inset: 0,
+    backfaceVisibility: 'hidden',
+    WebkitBackfaceVisibility: 'hidden',
+    borderRadius: 8,
+    overflow: 'hidden'
+  }
+  const backStyle = {
+    ...faceStyle,
+    transform: 'rotateY(180deg)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
+  }
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const touchCapable = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0
+    setIsTouch(!!touchCapable)
+  }, [])
+
+  return (
+    <div
+      className={styles.cardImgWrap}
+      style={{ position: 'relative' }}
+  onMouseEnter={() => { if (!isTouch) setIsFlipped(true) }}
+  onMouseLeave={() => { if (!isTouch) setIsFlipped(false) }}
+    >
+      {/* Flip toggle button in upper-left, matching rank badge spacing/size */}
+
+      <div
+        title={isFlipped ? 'Show new PFP' : 'Show original PFP'}
+        onClick={(e) => { e.stopPropagation(); e.preventDefault(); setIsFlipped(v => !v) }}
+        className={styles.rankBadge}
+  style={{ top: 0, left: 0, right: 'auto', zIndex: 5, border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', letterSpacing: 0, lineHeight: 1, backgroundColor: 'var(--badge-bg-solid)', color: 'var(--badge-fg-solid)' }}
+      >
+        <Icon name='refresh' style={{ margin: 0 }} />
+      </div>
+
+      {/* Flip container */}
+      <div style={{ position: 'absolute', inset: 0, perspective: 900 }}>
+        <div style={flipInnerStyle}>
+          {/* Front: New PFP */}
+          <div style={faceStyle}>
+            {profileHref ? (
+              <a href={profileHref} aria-label={`Open ${user.username}.go4.me`}>
+                <div style={{ position: 'absolute', inset: 0 }}>
+                  <Image src={user.avatarUrl} alt={commonAlt} layout='fill' objectFit='cover' />
+                </div>
+              </a>
+            ) : (
+              <div style={{ position: 'absolute', inset: 0 }}>
+                <Image src={user.avatarUrl} alt={commonAlt} layout='fill' objectFit='cover' />
+              </div>
+            )}
+          </div>
+
+          {/* Back: Original PFP in a circle mask */}
+          <div style={backStyle}>
+            {profileHref ? (
+              <a href={profileHref} aria-label={`Open ${user.username}.go4.me`} style={{ position: 'absolute', inset: 0 }}>
+                <div style={{ position: 'absolute', top: '50%', left: '50%', width: '80%', height: '80%', transform: 'translate(-50%, -50%)', borderRadius: '50%', overflow: 'hidden', boxShadow: '0 8px 20px rgba(0,0,0,0.25)' }}>
+                  <Image src={user.xPfpUrl || user.avatarUrl} alt={commonAlt} layout='fill' objectFit='cover' />
+                </div>
+              </a>
+            ) : (
+              <div style={{ position: 'absolute', top: '50%', left: '50%', width: '80%', height: '80%', transform: 'translate(-50%, -50%)', borderRadius: '50%', overflow: 'hidden', boxShadow: '0 8px 20px rgba(0,0,0,0.25)' }}>
+                <Image src={user.xPfpUrl || user.avatarUrl} alt={commonAlt} layout='fill' objectFit='cover' />
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export async function getServerSideProps(context) {
   context.res.setHeader(
     'Cache-Control',
@@ -89,6 +181,7 @@ export async function getServerSideProps(context) {
         username: row.username,
         fullName: row.name,
         avatarUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png',
+        xPfpUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png',
         totalSold: row.total_sold ?? 0,
         totalTradedXCH: totalSalesAmount / MOJO_PER_XCH,
         totalRoyaltiesXCH: (totalSalesAmount / MOJO_PER_XCH) * 0.10,
@@ -196,6 +289,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
             username: row.username,
             fullName: row.name,
             avatarUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png',
+            xPfpUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png',
             totalSold: row.total_sold ?? 0,
             totalTradedXCH: totalSalesAmount / MOJO_PER_XCH,
             totalRoyaltiesXCH: (totalSalesAmount / MOJO_PER_XCH) * 0.10,
@@ -263,6 +357,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
           username: row.username,
           fullName: row.name,
           avatarUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png',
+          xPfpUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png',
           totalSold: row.total_sold ?? 0,
           totalTradedXCH: totalSalesAmount / MOJO_PER_XCH,
           totalRoyaltiesXCH: (totalSalesAmount / MOJO_PER_XCH) * 0.10,
@@ -431,24 +526,12 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
           <div className={styles.lbGrid}>
             {renderList.map((u, idx) => (
               <div key={u.id} className={styles.lbCard}>
-                <div className={styles.rankBadge}>#{
+                <div className={styles.rankBadge} style={{ right: 8, left: 'auto', backgroundColor: 'var(--badge-bg-solid)', color: 'var(--badge-fg-solid)' }}>#{
                   view === 'totalTraded' ? (u.rankTotalTradedValue || u.rankCopiesSold || idx + 1)
                     : view === 'recentTrades' ? (u.rankLastSale || idx + 1)
                       : (u.rankCopiesSold || idx + 1)
                 }</div>
-        {u.username ? (
-                  <a
-          href={`//${u.username}.${(rootHostForLinks || 'go4.me')}/`}
-                    className={styles.cardImgWrap}
-          aria-label={`Open ${u.username}.go4.me`}
-                  >
-                    <Image src={u.avatarUrl} alt={`${u.username} avatar`} layout='fill' objectFit='cover' />
-                  </a>
-                ) : (
-                  <div className={styles.cardImgWrap}>
-                    <Image src={u.avatarUrl} alt={`${u.username || 'user'} avatar`} layout='fill' objectFit='cover' />
-                  </div>
-                )}
+                <PfpFlipCard user={u} rootHostForLinks={rootHostForLinks} />
                 <div className={styles.cardBody}>
       {u.username ? (
                     <div className={styles.username}>

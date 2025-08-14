@@ -27,6 +27,9 @@ body {
   --color-link-hover: #3291ff;
   --color-card-bg: #ffffff;
   --color-rank-badge-bg: rgba(0,0,0,0.65);
+  /* badge theme variables */
+  --badge-bg-solid: rgba(0, 0, 0, 0.6);
+  --badge-fg-solid: #ffffff;
   --shadow-elev-1: 0 2px 4px rgba(0,0,0,0.06);
   --shadow-elev-2: 0 4px 16px rgba(0,0,0,0.12);
   --skeleton-stop-1: #eee;
@@ -44,6 +47,9 @@ body {
   --color-link-hover: #4b92ff;
   --color-card-bg: #171b21;
   --color-rank-badge-bg: rgba(255,255,255,0.28);
+  /* badge theme variables */
+  --badge-bg-solid: rgba(255, 255, 255, 0.7); /* softer light for contrast on dark */
+  --badge-fg-solid: #111111; /* dark text/icon on light badge */
   --shadow-elev-1: 0 2px 4px rgba(0,0,0,0.6);
   --shadow-elev-2: 0 4px 16px rgba(0,0,0,0.7);
   --skeleton-stop-1: #2a2f36;

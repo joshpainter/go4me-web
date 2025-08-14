@@ -7,6 +7,95 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Button, Icon, Menu } from 'semantic-ui-react'
 import { useTheme } from './_app'
 
+// Flip component for the main profile PFP on the domain page
+function DomainPfpFlip({ avatarUrl, xPfpUrl, username, linkHref }) {
+  const [isFlipped, setIsFlipped] = useState(false)
+  const [isTouch, setIsTouch] = useState(false)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const touchCapable = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0
+    setIsTouch(!!touchCapable)
+  }, [])
+
+  const flipInnerStyle = {
+    position: 'absolute',
+    inset: 0,
+    transformStyle: 'preserve-3d',
+    transition: 'transform 360ms cubic-bezier(0.2, 0.7, 0.2, 1)',
+    transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)'
+  }
+  const faceStyle = {
+    position: 'absolute',
+    inset: 0,
+    backfaceVisibility: 'hidden',
+    WebkitBackfaceVisibility: 'hidden',
+    borderRadius: 12,
+    overflow: 'hidden'
+  }
+  const backStyle = {
+    ...faceStyle,
+    transform: 'rotateY(180deg)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
+  }
+
+  const commonAlt = `${username || 'user'} avatar`
+
+  return (
+    <div
+      className={styles.avatarBox}
+      style={{ position: 'absolute', inset: 0 }}
+      onMouseEnter={() => { if (!isTouch) setIsFlipped(true) }}
+      onMouseLeave={() => { if (!isTouch) setIsFlipped(false) }}
+    >
+      {/* Flip toggle pill in upper-left, matching badge styling */}
+      <div
+        className={styles.rankBadge}
+        title={isFlipped ? 'Show new PFP' : 'Show original PFP'}
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsFlipped(v => !v) }}
+        style={{ top: 0, left: 0, right: 'auto', zIndex: 5, border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', letterSpacing: 0, lineHeight: 1, backgroundColor: 'var(--badge-bg-solid)', color: 'var(--badge-fg-solid)' }}
+      >
+        <Icon name='refresh' style={{ margin: 0 }} />
+      </div>
+
+      {/* Flip container */}
+      <div style={{ position: 'absolute', inset: 0, perspective: 900 }}>
+        <div style={flipInnerStyle}>
+          {/* Front: New PFP */}
+          <div style={faceStyle}>
+            {linkHref ? (
+              <a href={linkHref} target='_blank' rel='noreferrer noopener' aria-label={username ? `Open full-size avatar for ${username}` : 'Open full-size avatar'} style={{ position: 'absolute', inset: 0 }}>
+                <Image src={avatarUrl} alt={commonAlt} layout='fill' objectFit='cover' />
+              </a>
+            ) : (
+              <div style={{ position: 'absolute', inset: 0 }}>
+                <Image src={avatarUrl} alt={commonAlt} layout='fill' objectFit='cover' />
+              </div>
+            )}
+          </div>
+
+          {/* Back: Original PFP in a circle mask */}
+          <div style={backStyle}>
+            {linkHref ? (
+              <a href={linkHref} target='_blank' rel='noreferrer noopener' aria-label={username ? `Open full-size avatar for ${username}` : 'Open full-size avatar'} style={{ position: 'absolute', inset: 0 }}>
+                <div style={{ position: 'absolute', top: '50%', left: '50%', width: '88%', height: '88%', transform: 'translate(-50%, -50%)', borderRadius: '50%', overflow: 'hidden' }}>
+                  <Image src={xPfpUrl || avatarUrl} alt={commonAlt} layout='fill' objectFit='cover' />
+                </div>
+              </a>
+            ) : (
+              <div style={{ position: 'absolute', top: '50%', left: '50%', width: '88%', height: '88%', transform: 'translate(-50%, -50%)', borderRadius: '50%', overflow: 'hidden' }}>
+                <Image src={xPfpUrl || avatarUrl} alt={commonAlt} layout='fill' objectFit='cover' />
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export async function getServerSideProps(ctx) {
   const { req, query } = ctx
   let username = (query.pfp || query.username || '').toString().trim()
@@ -46,6 +135,7 @@ export async function getServerSideProps(ctx) {
           fullName: row.name || '',
           description: row.description || '',
           avatarUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png',
+          xPfpUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png',
           xchAddress: row.xch_address || '',
           lastOfferId: row.last_offerid || '',
           totalBadgeScore: row.total_badge_score || 0,
@@ -128,7 +218,7 @@ export async function getServerSideProps(ctx) {
 }
 
 export default function DomainPage({ user, ownedPfps = [], otherOwners = [], ownedHasMore = false, othersHasMore = false, pageSize = 60, rootHostForLinks, ownedCount = 0, othersCount = 0 }) {
-  const { username, fullName, description, avatarUrl, xchAddress, lastOfferId, totalBadgeScore = 0 } = user
+  const { username, fullName, description, avatarUrl, xPfpUrl, xchAddress, lastOfferId, totalBadgeScore = 0 } = user
   const formattedBadgeScore = useMemo(() => {
     const n = Number(totalBadgeScore)
     return Number.isFinite(n) ? new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(n) : '0'
@@ -347,15 +437,7 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
   <div className={styles.profileHeader} style={{ marginTop: '1rem', width: '100%', maxWidth: 1100, marginLeft: 'auto', marginRight: 'auto', alignSelf: 'stretch' }}>
           <div className={styles.profileLeft}>
             <div className={styles.avatarWrap}>
-              <a
-                href={avatarUrl || '#'}
-                target={avatarUrl ? '_blank' : undefined}
-                rel="noreferrer noopener"
-                aria-label={avatarUrl ? `Open full-size avatar for ${username}` : undefined}
-                className={styles.avatarBox}
-              >
-                <Image src={avatarUrl} alt={`${username} avatar`} layout='fill' objectFit='cover' />
-              </a>
+              <DomainPfpFlip avatarUrl={avatarUrl} xPfpUrl={xPfpUrl} username={username} linkHref={avatarUrl || undefined} />
             </div>
           </div>
           <div className={styles.profileRight}>
