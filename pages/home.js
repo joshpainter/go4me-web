@@ -462,6 +462,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
             size='small'
             aria-label='Toggle dark mode'
             title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            style={{ height: 34 }}
             icon
           >
             <Icon name={theme === 'dark' ? 'sun' : 'moon'} />
@@ -469,7 +470,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
         </div>
       </div>
 
-      <Container textAlign='center' style={{ paddingTop: 20, paddingBottom: 10 }}>
+  <Container textAlign='center' style={{ paddingTop: 84, paddingBottom: 10 }}>
         <div style={{ width: '100%', maxWidth: 900, margin: '0 auto', position: 'relative', marginBottom: 120 }}>
           {/* Banner Image using Next.js Image */}
           <div style={{ borderRadius: 8, overflow: 'hidden' }}>
@@ -508,15 +509,14 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
             aria-label='Claim your go4me PFP on X'
             title='Claim your go4me PFP on X'
           >
-            <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 20, height: 20, fontSize: 18, lineHeight: 1, fontWeight: 800, marginRight: 8 }}>𝕏</span>
-            Claim your free go4me PFP on X!
+            Claim your free #1 go4me PFP on <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 20, height: 20, fontSize: 18, fontWeight: 800}}>𝕏</span>
           </Button>
         </div>
       </Container>
 
   {/* Search input moved to sticky top bar */}
 
-      <Container style={{ marginTop: 10 }}>
+      <Container style={{ marginTop: 30 }}>
         <Menu secondary pointing>
           <Menu.Item
             name='Total sold'

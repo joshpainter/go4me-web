@@ -527,9 +527,9 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
             color='grey'
             aria-label='Claim your go4me PFP on X'
             title='Claim your go4me PFP on X'
+            style={{ height: 34 }}
           >
-            <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 16, height: 16, fontSize: 15, lineHeight: 1, fontWeight: 800, marginRight: 6 }}>𝕏</span>
-            Claim your free go4me PFP on X!
+Claim your free #1 go4me PFP on <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 20, fontSize: 18, fontWeight: 800}}>𝕏</span>
           </Button>
           <Button
             type='button'
@@ -539,6 +539,7 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
             size='small'
             aria-label='Toggle dark mode'
             title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            style={{ height: 34 }}
             icon
           >
             <Icon name={theme === 'dark' ? 'sun' : 'moon'} />
@@ -570,9 +571,57 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
             )}
 
             {xchAddress && (
-              <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+              <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                  {(() => {
+                    const full = xchAddress
+                    const display = full.length > 20 ? `${full.slice(0,8)}...${full.slice(-8)}` : full
+                    return (
+                      <code
+                        title={full}
+                        style={{
+                          background: 'var(--color-card-bg, #111)',
+                          padding: '4px 8px',
+                          borderRadius: 6,
+                          fontSize: 14,
+                          lineHeight: '18px',
+                          color: '#bbb',
+                          maxWidth: 520,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          flex: '0 1 auto'
+                        }}
+                        aria-label='XCH address'
+                      >
+                        {display}
+                      </code>
+                    )
+                  })()}
+                  <button
+                    onClick={handleCopy}
+                    aria-label='Copy XCH address'
+                    style={{
+                      cursor: 'pointer',
+                      background: copied ? 'var(--color-link, #0b5)' : 'var(--color-card-bg, #1b1b1b)',
+                      color: copied ? '#fff' : 'var(--color-text, #eee)',
+                      border: '1px solid var(--color-border, #333)',
+                      padding: '6px 10px',
+                      fontSize: 12,
+                      borderRadius: 6,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      fontWeight: 500,
+                      transition: 'background .15s, color .15s, border-color .15s',
+                      flex: '0 0 auto'
+                    }}
+                  >
+                    {copied ? 'Copied!' : 'Copy'}
+                  </button>
+                </div>
                 {lastOfferId && (
-                  <>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                     <Button
                       as='a'
                       href={`https://dexie.space/offers/${lastOfferId}`}
@@ -585,6 +634,7 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
                       aria-label='View offer on Dexie'
                       title='Dexie'
                     >
+                      Get Latest Offer from Dexie
                       <Image
                         src="https://raw.githubusercontent.com/dexie-space/dexie-kit/main/svg/duck.svg"
                         alt="Dexie"
@@ -605,6 +655,7 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
                       aria-label='View offer on Mintgarden'
                       title='Mintgarden'
                     >
+                      Get Latest Offer from Mintgarden
                       <Image
                         src="https://mintgarden.io/mint-logo-round.svg"
                         alt="MintGarden"
@@ -613,54 +664,8 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
                       />
                       <Icon name='external' size='small' />
                     </Button>
-                  </>
+                  </div>
                 )}
-                {(() => {
-                  const full = xchAddress
-                  const display = full.length > 20 ? `${full.slice(0,8)}...${full.slice(-8)}` : full
-                  return (
-                    <code
-                      title={full}
-                      style={{
-                        background: 'var(--color-card-bg, #111)',
-                        padding: '4px 8px',
-                        borderRadius: 6,
-                        fontSize: 14,
-                        lineHeight: '18px',
-                        color: '#bbb',
-                        maxWidth: 520,
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        flex: '0 1 auto'
-                      }}
-                      aria-label='XCH address'
-                    >
-                      {display}
-                    </code>
-                  )
-                })()}
-                <button
-                  onClick={handleCopy}
-                  aria-label='Copy XCH address'
-                  style={{
-                    cursor: 'pointer',
-                    background: copied ? 'var(--color-link, #0b5)' : 'var(--color-card-bg, #1b1b1b)',
-                    color: copied ? '#fff' : 'var(--color-text, #eee)',
-                    border: '1px solid var(--color-border, #333)',
-                    padding: '6px 10px',
-                    fontSize: 12,
-                    borderRadius: 6,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 4,
-                    fontWeight: 500,
-                    transition: 'background .15s, color .15s, border-color .15s',
-                    flex: '0 0 auto'
-                  }}
-                >
-                  {copied ? 'Copied!' : 'Copy'}
-                </button>
               </div>
             )}
 
