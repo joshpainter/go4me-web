@@ -253,6 +253,80 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
   const [rawSearch, setRawSearch] = useState(initialQuery || '')
   const [query, setQuery] = useState(initialQuery || '')
 
+  // Birthday: celebrate hoffmang on Aug 14 only (client-side)
+  const isHoffBirthday = useMemo(() => {
+    if (!username) return false
+    if (String(username).toLowerCase() !== 'hoffmang') return false
+    if (typeof window === 'undefined') return false
+    const now = new Date()
+    return now.getMonth() === 7 && now.getDate() === 14 // August is month 7 (0-indexed)
+  }, [username])
+  const [showBday, setShowBday] = useState(false)
+
+  useEffect(() => {
+    if (!isHoffBirthday) return
+  setShowBday(true)
+    // Lightweight confetti animation without external libs
+    const duration = 5000
+    const end = Date.now() + duration
+    const canvas = document.createElement('canvas')
+    canvas.style.position = 'fixed'
+    canvas.style.inset = '0'
+    canvas.style.zIndex = '1200'
+    canvas.style.pointerEvents = 'none'
+    document.body.appendChild(canvas)
+    const ctx = canvas.getContext('2d')
+    const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight }
+    resize()
+    window.addEventListener('resize', resize)
+    const colors = ['#ff577f','#ff884b','#ffd384','#baddff','#a2de96','#c77dff']
+    const rand = (min, max) => Math.random() * (max - min) + min
+    let fallingOut = false // after duration, stop respawning and let pieces fall off-screen
+    const particles = Array.from({ length: 160 }).map(() => ({
+      x: Math.random() * canvas.width,
+      y: rand(-canvas.height * 0.3, -10),
+      r: rand(4, 8),
+      color: colors[(Math.random() * colors.length) | 0],
+      vx: rand(-2, 2),
+      vy: rand(2, 5),
+      ay: 0.05,
+      rot: rand(0, 360),
+      vr: rand(-5, 5),
+      shape: Math.random() < 0.5 ? 'rect' : 'circle',
+      alive: true
+    }))
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      const now = Date.now()
+      if (!fallingOut && now >= end) fallingOut = true
+      for (const p of particles) {
+        if (!p.alive) continue
+        p.x += p.vx; p.y += p.vy; p.vy += p.ay; p.rot += p.vr
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate((p.rot * Math.PI) / 180); ctx.fillStyle = p.color
+        if (p.shape === 'rect') ctx.fillRect(-p.r, -p.r, p.r * 2, p.r * 2)
+        else { ctx.beginPath(); ctx.arc(0, 0, p.r, 0, Math.PI * 2); ctx.fill() }
+        ctx.restore()
+        if (p.y - p.r > canvas.height) {
+          if (fallingOut) {
+            p.alive = false // stop drawing this particle; it's off-screen now
+          } else {
+            // respawn during active burst
+            p.x = Math.random() * canvas.width; p.y = -10; p.vy = rand(2, 5); p.vx = rand(-2, 2)
+          }
+        }
+      }
+      // Keep animating while burst is active or until all particles have fallen off
+      if (!fallingOut || particles.some(p => p.alive)) {
+        requestAnimationFrame(draw)
+      } else {
+        window.removeEventListener('resize', resize)
+        try { document.body.removeChild(canvas) } catch {}
+      }
+    }
+  const raf = requestAnimationFrame(draw)
+  return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', resize); try { document.body.removeChild(canvas) } catch {} }
+  }, [isHoffBirthday])
+
   useEffect(() => {
     if (typeof window !== 'undefined' && !('IntersectionObserver' in window)) setIntersectionSupported(false)
   }, [])
@@ -547,7 +621,14 @@ Claim your free #1 go4me PFP on <span aria-hidden="true" style={{ display: 'inli
         </div>
       </div>
   <main className={styles.main} style={{ justifyContent: 'flex-start', paddingTop: 64, paddingBottom: 24 }}>
-  <div className={styles.profileHeader} style={{ marginTop: '1rem', width: '100%', maxWidth: 1100, marginLeft: 'auto', marginRight: 'auto', alignSelf: 'stretch' }}>
+  {/* Birthday banner under the sticky nav, above profile name */}
+  {showBday && (
+    <div style={{ width: '100%', maxWidth: 1100, margin: '0.75rem auto 0.25rem', padding: '10px 14px', background: 'linear-gradient(90deg, #fff3cd, #ffe8a1)', border: '1px solid #ffecb5', color: '#775500', borderRadius: 10, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center' }}>
+      <span role="img" aria-label="party popper">🎉</span>
+      Happy Birthday, {'@' + username}! 🎂
+    </div>
+  )}
+  <div className={styles.profileHeader} style={{ marginTop: '0.5rem', width: '100%', maxWidth: 1100, marginLeft: 'auto', marginRight: 'auto', alignSelf: 'stretch' }}>
           <div className={styles.profileLeft}>
             <div className={styles.avatarWrap}>
               <DomainPfpFlip avatarUrl={avatarUrl} xPfpUrl={xPfpUrl} username={username} linkHref={avatarUrl || undefined} />
@@ -566,6 +647,7 @@ Claim your free #1 go4me PFP on <span aria-hidden="true" style={{ display: 'inli
                 @{username}
               </a>
             </div>
+            {/* Birthday banner moved above; keeping name clean here */}
             {description && (
               <p style={{ margin: '18px 0 16px', fontSize: 18, lineHeight: 1.4, whiteSpace: 'pre-wrap' }}>{linkify(description)}</p>
             )}
