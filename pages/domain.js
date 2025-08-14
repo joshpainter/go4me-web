@@ -4,8 +4,9 @@ import Link from 'next/link'
 import styles from '../styles/Home.module.css'
 import { getSupabaseClient } from '../lib/supabaseClient'
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { Button, Icon, Menu } from 'semantic-ui-react'
+import { Button, Icon, Menu, Input } from 'semantic-ui-react'
 import { useTheme } from './_app'
+import { useRouter } from 'next/router'
 
 // Flip component for the main profile PFP on the domain page
 function DomainPfpFlip({ avatarUrl, xPfpUrl, username, linkHref }) {
@@ -99,6 +100,7 @@ function DomainPfpFlip({ avatarUrl, xPfpUrl, username, linkHref }) {
 export async function getServerSideProps(ctx) {
   const { req, query } = ctx
   let username = (query.pfp || query.username || '').toString().trim()
+  const searchQ = (query.q || '').toString().trim()
 
   if (!username) {
     // Derive from host header if reaching /domain directly
@@ -144,11 +146,16 @@ export async function getServerSideProps(ctx) {
 
       // Attempt to load owned PFP NFTs (best-effort; swallow errors so profile still renders)
       try {
-        const { data: ownedData, count: ownedCount, error: ownedError } = await supabase
+        let ownedQuery = supabase
           .from('get_user_page_owned_pfps')
           .select('*', { count: 'exact' })
           .ilike('username', username)
           .range(0, PAGE_SIZE - 1)
+        if (searchQ) {
+          // Filter by pfp username or name
+          ownedQuery = ownedQuery.or(`pfp_username.ilike.%${searchQ}%,pfp_name.ilike.%${searchQ}%`)
+        }
+        const { data: ownedData, count: ownedCount, error: ownedError } = await ownedQuery
         if (ownedError) throw ownedError
         if (Array.isArray(ownedData)) {
           ownedPfps = ownedData.map((r, idx) => {
@@ -170,11 +177,15 @@ export async function getServerSideProps(ctx) {
 
       // Attempt to load other owners collection (same shape)
       try {
-        const { data: othersData, count: othersCount, error: othersError } = await supabase
+        let othersQuery = supabase
           .from('get_user_page_other_owners')
           .select('*', { count: 'exact' })
           .ilike('username', username)
           .range(0, PAGE_SIZE - 1)
+        if (searchQ) {
+          othersQuery = othersQuery.or(`pfp_username.ilike.%${searchQ}%,pfp_name.ilike.%${searchQ}%`)
+        }
+        const { data: othersData, count: othersCount, error: othersError } = await othersQuery
         if (othersError) throw othersError
         if (Array.isArray(othersData)) {
           otherOwners = othersData.map((r, idx) => {
@@ -214,10 +225,10 @@ export async function getServerSideProps(ctx) {
 
   const ownedCount = (ownedPfps && ownedPfps._totalCount) ? ownedPfps._totalCount : (Array.isArray(ownedPfps) ? ownedPfps.length : 0)
   const othersCount = (otherOwners && otherOwners._totalCount) ? otherOwners._totalCount : (Array.isArray(otherOwners) ? otherOwners.length : 0)
-  return { props: { user, ownedPfps, otherOwners, ownedHasMore, othersHasMore, pageSize: PAGE_SIZE, rootHostForLinks, ownedCount, othersCount } }
+  return { props: { user, ownedPfps, otherOwners, ownedHasMore, othersHasMore, pageSize: PAGE_SIZE, rootHostForLinks, ownedCount, othersCount, initialQuery: searchQ } }
 }
 
-export default function DomainPage({ user, ownedPfps = [], otherOwners = [], ownedHasMore = false, othersHasMore = false, pageSize = 60, rootHostForLinks, ownedCount = 0, othersCount = 0 }) {
+export default function DomainPage({ user, ownedPfps = [], otherOwners = [], ownedHasMore = false, othersHasMore = false, pageSize = 60, rootHostForLinks, ownedCount = 0, othersCount = 0, initialQuery = '' }) {
   const { username, fullName, description, avatarUrl, xPfpUrl, xchAddress, lastOfferId, totalBadgeScore = 0 } = user
   const formattedBadgeScore = useMemo(() => {
     const n = Number(totalBadgeScore)
@@ -232,10 +243,15 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
   const [othersList, setOthersList] = useState(() => otherOwners)
   const [othersPage, setOthersPage] = useState(1)
   const [othersMore, setOthersMore] = useState(othersHasMore)
+  const [ownedTotalCount, setOwnedTotalCount] = useState(ownedCount || 0)
+  const [othersTotalCount, setOthersTotalCount] = useState(othersCount || 0)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const sentinelRef = useRef(null)
   const [intersectionSupported, setIntersectionSupported] = useState(true)
   const { theme, toggleTheme } = useTheme()
+  const router = useRouter()
+  const [rawSearch, setRawSearch] = useState(initialQuery || '')
+  const [query, setQuery] = useState(initialQuery || '')
 
   useEffect(() => {
     if (typeof window !== 'undefined' && !('IntersectionObserver' in window)) setIntersectionSupported(false)
@@ -261,11 +277,15 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
       const from = currentPage * pageSize
       const to = from + pageSize - 1
       const viewName = isMy ? 'get_user_page_owned_pfps' : 'get_user_page_other_owners'
-      const { data, error } = await supabase
+      let qb = supabase
         .from(viewName)
         .select('*')
         .ilike('username', username)
         .range(from, to)
+      if (query) {
+        qb = qb.or(`pfp_username.ilike.%${query}%,pfp_name.ilike.%${query}%`)
+      }
+      const { data, error } = await qb
       if (error) throw error
       if (Array.isArray(data) && data.length > 0) {
         const mapped = data.map((r, i) => mapRow(r, currentPage * pageSize + i, isMy ? 'owned' : 'other'))
@@ -288,6 +308,80 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
       setIsLoadingMore(false)
     }
   }, [collectionTab, isLoadingMore, ownedMore, othersMore, ownedPage, othersPage, pageSize, username, mapRow])
+
+  // Debounce search input -> query and sync URL (?q=) without navigation
+  useEffect(() => {
+    const t = setTimeout(() => {
+      const newQ = rawSearch.trim()
+      setQuery(newQ)
+      // update URL shallowly
+      const desiredQuery = { ...(router.query || {}) }
+      if (newQ) desiredQuery.q = newQ; else delete desiredQuery.q
+      router.replace({ pathname: router.pathname, query: desiredQuery }, undefined, { shallow: true })
+    }, 300)
+    return () => clearTimeout(t)
+  }, [rawSearch])
+
+  // When query changes: reset current tab list and fetch first page; also refresh counts
+  useEffect(() => {
+    const supabase = getSupabaseClient()
+    if (!supabase) return
+    let cancelled = false
+    const fetchCounts = async () => {
+      try {
+        // Owned count
+        let ownedCountQ = supabase
+          .from('get_user_page_owned_pfps')
+          .select('*', { count: 'exact', head: true })
+          .ilike('username', username)
+        if (query) ownedCountQ = ownedCountQ.or(`pfp_username.ilike.%${query}%,pfp_name.ilike.%${query}%`)
+        const ownedResp = await ownedCountQ
+        if (!cancelled) setOwnedTotalCount(ownedResp.count || 0)
+        // Others count
+        let othersCountQ = supabase
+          .from('get_user_page_other_owners')
+          .select('*', { count: 'exact', head: true })
+          .ilike('username', username)
+        if (query) othersCountQ = othersCountQ.or(`pfp_username.ilike.%${query}%,pfp_name.ilike.%${query}%`)
+        const othersResp = await othersCountQ
+        if (!cancelled) setOthersTotalCount(othersResp.count || 0)
+      } catch (e) {
+        console.error('Failed to refresh counts', e)
+      }
+    }
+    const fetchFirstPage = async () => {
+      try {
+        const isMy = collectionTab === 'my'
+        const viewName = isMy ? 'get_user_page_owned_pfps' : 'get_user_page_other_owners'
+        let qb = supabase
+          .from(viewName)
+          .select('*')
+          .ilike('username', username)
+          .range(0, pageSize - 1)
+        if (query) qb = qb.or(`pfp_username.ilike.%${query}%,pfp_name.ilike.%${query}%`)
+        const { data, error } = await qb
+        if (error) throw error
+        const mapped = Array.isArray(data) ? data.map((r, i) => mapRow(r, i, isMy ? 'owned' : 'other')) : []
+        if (cancelled) return
+        if (isMy) {
+          setOwnedList(mapped)
+          setOwnedPage(1)
+          setOwnedMore((data || []).length === pageSize)
+        } else {
+          setOthersList(mapped)
+          setOthersPage(1)
+          setOthersMore((data || []).length === pageSize)
+        }
+      } catch (e) {
+        console.error('Failed to refresh first page', e)
+        if (collectionTab === 'my') { setOwnedList([]); setOwnedMore(false); setOwnedPage(1) }
+        else { setOthersList([]); setOthersMore(false); setOthersPage(1) }
+      }
+    }
+    fetchCounts()
+    fetchFirstPage()
+    return () => { cancelled = true }
+  }, [query, collectionTab, pageSize, username, mapRow])
 
   // Re-observe sentinel when tab changes
   useEffect(() => {
@@ -391,7 +485,7 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
         <meta name="twitter:image" content={ogImage} />
         <meta name="twitter:site" content="@go4mebot" />
       </Head>
-  {/* Sticky top bar */}
+  {/* Sticky top bar with centered search */}
   <div className={styles.stickyTopbar}>
         {rootHostForLinks ? (
           <a href={`//${rootHostForLinks}/`} aria-label="Back to leaderboard home" className={styles.topNavLink}>
@@ -404,6 +498,17 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
             ← Back to Leaderboard
           </Link>
         )}
+        {/* Center: search */}
+        <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <Input
+            icon='search'
+            size='large'
+            placeholder='Search this page…'
+            value={rawSearch}
+            onChange={(e, { value }) => setRawSearch(value)}
+            style={{ width: '100%', maxWidth: 520 }}
+          />
+        </div>
         <div className={styles.topNavActions}>
           <Button
             as='a'
@@ -563,14 +668,14 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
               active={collectionTab === 'my'}
               onClick={() => setCollectionTab('my')}
             >
-              My Collection ({ownedCount || 0})
+              My Collection ({ownedTotalCount || 0})
             </Menu.Item>
             <Menu.Item
               name='others'
               active={collectionTab === 'others'}
               onClick={() => setCollectionTab('others')}
             >
-              Other Owners ({othersCount || 0})
+              Other Owners ({othersTotalCount || 0})
             </Menu.Item>
           </Menu>
           <div style={{ margin: '4px 0 18px', fontSize: 13, lineHeight: 1.4, color: 'var(--color-text-subtle)', maxWidth: 760 }}>

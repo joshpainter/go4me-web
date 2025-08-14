@@ -435,6 +435,40 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
       </Head>
       <Script id="x-widgets" strategy="afterInteractive" src="https://platform.twitter.com/widgets.js" />
 
+      {/* Sticky top bar (matches domain page style) */}
+      <div className={styles.stickyTopbar}>
+        {/* Left: gopher logo (no back link on home) */}
+        <div className={styles.topNavLink} aria-label="go4.me">
+          <Image src="/collection-icon.png" alt="go4.me" width={40} height={40} />
+        </div>
+        {/* Middle: search input */}
+        <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <Input
+            icon='search'
+            size='large'
+            placeholder='Search by username or name…'
+            value={rawSearch}
+            onChange={(e, { value }) => setRawSearch(value)}
+            style={{ width: '100%', maxWidth: 520 }}
+          />
+        </div>
+        {/* Right: actions (theme toggle) */}
+        <div className={styles.topNavActions}>
+          <Button
+            type='button'
+            onClick={toggleTheme}
+            basic
+            color='grey'
+            size='small'
+            aria-label='Toggle dark mode'
+            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            icon
+          >
+            <Icon name={theme === 'dark' ? 'sun' : 'moon'} />
+          </Button>
+        </div>
+      </div>
+
       <Container textAlign='center' style={{ paddingTop: 20, paddingBottom: 10 }}>
         <div style={{ width: '100%', maxWidth: 900, margin: '0 auto', position: 'relative', marginBottom: 120 }}>
           {/* Banner Image using Next.js Image */}
@@ -480,28 +514,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
         </div>
       </Container>
 
-      <Container style={{ marginTop: 20, marginBottom: 10, display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'stretch' }}>
-        <Input
-          icon='search'
-          size='large'
-          placeholder='Search by username or name…'
-          value={rawSearch}
-          onChange={(e, { value }) => setRawSearch(value)}
-          style={{ flex: 1, minWidth: 220 }}
-        />
-        <Button
-          type='button'
-          onClick={toggleTheme}
-          basic
-          color='grey'
-          style={{ flex: '0 0 auto', height: 46, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 14px' }}
-          aria-label='Toggle dark mode'
-          title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-          icon
-        >
-          <Icon name={theme === 'dark' ? 'sun' : 'moon'} />
-        </Button>
-      </Container>
+  {/* Search input moved to sticky top bar */}
 
       <Container style={{ marginTop: 10 }}>
         <Menu secondary pointing>

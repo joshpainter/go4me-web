@@ -2,6 +2,22 @@
 
 const nextConfig = {
   reactStrictMode: true,
+  async headers() {
+    return [
+      {
+        source: '/collection-icon.png',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }
+        ]
+      },
+      {
+        source: '/collection-banner.png',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }
+        ]
+      }
+    ]
+  },
   images: {
     // Cache optimized images on the CDN for a long time (in seconds)
     // These avatars and PFP thumbnails are immutable, so a 1-year TTL is safe
