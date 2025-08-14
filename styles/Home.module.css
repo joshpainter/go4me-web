@@ -74,6 +74,28 @@
 }
 .topNavActions { display: flex; align-items: center; gap: 8px; }
 
+/* Birthday banner under sticky topbar */
+.birthdayBanner {
+  /* inside <main>, which already has top padding for sticky nav */
+  margin: 22px auto 22px;
+  max-width: 1100px;
+  width: 100%;
+  padding: 12px 16px; /* more vertical breathing room */
+  border: 1px solid rgba(212, 161, 0, 0.55);
+  background: rgba(212, 161, 0, 0.30); /* darker, richer info yellow in light mode */
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+}
+[data-theme='dark'] .birthdayBanner {
+  background: rgba(212, 161, 0, 0.22); /* darker shade in dark mode */
+  border-color: rgba(212, 161, 0, 0.45);
+}
+
 .title a {
   color: #0070f3;
   text-decoration: none;

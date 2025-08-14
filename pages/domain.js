@@ -8,8 +8,63 @@ import { Button, Icon, Menu, Input } from 'semantic-ui-react'
 import { useTheme } from './_app'
 import { useRouter } from 'next/router'
 
+// Lazy-load canvas-confetti on the client
+let _confetti = null
+async function loadConfetti() {
+  if (typeof window === 'undefined') return null
+  if (_confetti) return _confetti
+  try {
+    const mod = await import('canvas-confetti')
+    _confetti = mod.default || mod
+    return _confetti
+  } catch (e) {
+    console.warn('Confetti failed to load', e)
+    return null
+  }
+}
+
+// Realistic confetti sequence (with staggered pops), with optional origin near an element
+async function runBirthdayConfetti(opts = {}) {
+  const confetti = await loadConfetti()
+  if (!confetti) return
+  const randomInRange = (min, max) => Math.random() * (max - min) + min
+
+  const pops = Math.max(1, opts.pops ?? 12) // roughly 3x
+  const delayStep = opts.delayStepMs ?? 140
+  const palette = opts.colors || ['#ff4d4d', '#ffd166', '#06d6a0', '#118ab2', '#9b5de5']
+  const baseOrigin = opts.origin || { x: 0.5, y: 0.4 }
+
+  const centerBurst = (scale = 1, x = baseOrigin.x, y = baseOrigin.y) => {
+    confetti({
+      particleCount: Math.round(110 * scale),
+      startVelocity: 40 * scale + randomInRange(-6, 6),
+      spread: 60,
+      origin: { x, y },
+      gravity: 1.15,
+      scalar: 1 + randomInRange(-0.08, 0.15),
+      drift: randomInRange(-0.3, 0.3),
+      colors: palette,
+      zIndex: 9999
+    })
+  }
+
+  // Initial strong center pop
+  centerBurst(1.15)
+
+  // Staggered follow-up pops with slight positional jitter
+  for (let i = 1; i < pops; i++) {
+    const delay = i * delayStep
+    setTimeout(() => {
+      const dx = randomInRange(-0.06, 0.06)
+      const dy = randomInRange(-0.06, 0.02)
+      const scale = Math.max(0.6, 1 - i * 0.12)
+      centerBurst(scale, baseOrigin.x + dx, baseOrigin.y + dy)
+    }, delay)
+  }
+}
+
 // Flip component for the main profile PFP on the domain page
-function DomainPfpFlip({ avatarUrl, xPfpUrl, username, linkHref }) {
+function DomainPfpFlip({ avatarUrl, xPfpUrl, username, linkHref, avatarRef }) {
   const [isFlipped, setIsFlipped] = useState(false)
   const [isTouch, setIsTouch] = useState(false)
 
@@ -48,6 +103,7 @@ function DomainPfpFlip({ avatarUrl, xPfpUrl, username, linkHref }) {
     <div
       className={styles.avatarBox}
       style={{ position: 'absolute', inset: 0 }}
+      ref={avatarRef}
       onMouseEnter={() => { if (!isTouch) setIsFlipped(true) }}
       onMouseLeave={() => { if (!isTouch) setIsFlipped(false) }}
     >
@@ -252,80 +308,8 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
   const router = useRouter()
   const [rawSearch, setRawSearch] = useState(initialQuery || '')
   const [query, setQuery] = useState(initialQuery || '')
-
-  // Birthday: celebrate hoffmang on Aug 14 only (client-side)
-  const isHoffBirthday = useMemo(() => {
-    if (!username) return false
-    if (String(username).toLowerCase() !== 'hoffmang') return false
-    if (typeof window === 'undefined') return false
-    const now = new Date()
-    return now.getMonth() === 7 && now.getDate() === 14 // August is month 7 (0-indexed)
-  }, [username])
-  const [showBday, setShowBday] = useState(false)
-
-  useEffect(() => {
-    if (!isHoffBirthday) return
-  setShowBday(true)
-    // Lightweight confetti animation without external libs
-    const duration = 5000
-    const end = Date.now() + duration
-    const canvas = document.createElement('canvas')
-    canvas.style.position = 'fixed'
-    canvas.style.inset = '0'
-    canvas.style.zIndex = '1200'
-    canvas.style.pointerEvents = 'none'
-    document.body.appendChild(canvas)
-    const ctx = canvas.getContext('2d')
-    const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight }
-    resize()
-    window.addEventListener('resize', resize)
-    const colors = ['#ff577f','#ff884b','#ffd384','#baddff','#a2de96','#c77dff']
-    const rand = (min, max) => Math.random() * (max - min) + min
-    let fallingOut = false // after duration, stop respawning and let pieces fall off-screen
-    const particles = Array.from({ length: 160 }).map(() => ({
-      x: Math.random() * canvas.width,
-      y: rand(-canvas.height * 0.3, -10),
-      r: rand(4, 8),
-      color: colors[(Math.random() * colors.length) | 0],
-      vx: rand(-2, 2),
-      vy: rand(2, 5),
-      ay: 0.05,
-      rot: rand(0, 360),
-      vr: rand(-5, 5),
-      shape: Math.random() < 0.5 ? 'rect' : 'circle',
-      alive: true
-    }))
-    const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      const now = Date.now()
-      if (!fallingOut && now >= end) fallingOut = true
-      for (const p of particles) {
-        if (!p.alive) continue
-        p.x += p.vx; p.y += p.vy; p.vy += p.ay; p.rot += p.vr
-        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate((p.rot * Math.PI) / 180); ctx.fillStyle = p.color
-        if (p.shape === 'rect') ctx.fillRect(-p.r, -p.r, p.r * 2, p.r * 2)
-        else { ctx.beginPath(); ctx.arc(0, 0, p.r, 0, Math.PI * 2); ctx.fill() }
-        ctx.restore()
-        if (p.y - p.r > canvas.height) {
-          if (fallingOut) {
-            p.alive = false // stop drawing this particle; it's off-screen now
-          } else {
-            // respawn during active burst
-            p.x = Math.random() * canvas.width; p.y = -10; p.vy = rand(2, 5); p.vx = rand(-2, 2)
-          }
-        }
-      }
-      // Keep animating while burst is active or until all particles have fallen off
-      if (!fallingOut || particles.some(p => p.alive)) {
-        requestAnimationFrame(draw)
-      } else {
-        window.removeEventListener('resize', resize)
-        try { document.body.removeChild(canvas) } catch {}
-      }
-    }
-  const raf = requestAnimationFrame(draw)
-  return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', resize); try { document.body.removeChild(canvas) } catch {} }
-  }, [isHoffBirthday])
+  const [didCelebrate, setDidCelebrate] = useState(false)
+  const avatarRef = useRef(null)
 
   useEffect(() => {
     if (typeof window !== 'undefined' && !('IntersectionObserver' in window)) setIntersectionSupported(false)
@@ -491,6 +475,38 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
   const metaTitle = fullName ? `${fullName} (@${username}) on go4.me` : `@${username} on go4.me`
   const metaDesc = description ? description.slice(0, 200) : 'Claim your free, custom go4.me PFP and earn royalties whenever others purchase it.'
 
+  // Trigger confetti for @hoffmang on birthday window or via ?party=1
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const isHoff = (username || '').toLowerCase() === 'hoffmang'
+    if (!isHoff) return
+    const url = new URL(window.location.href)
+    const force = url.searchParams.get('party') === '1'
+    const now = new Date()
+    const mm = String(now.getMonth() + 1).padStart(2, '0')
+    const dd = String(now.getDate()).padStart(2, '0')
+    const inWindow = (mm === '08' && (dd === '14' || dd === '15' || dd === '16'))
+    if ((force || inWindow) && !didCelebrate) {
+      setDidCelebrate(true)
+      // Aim near the avatar's upper-left
+      let origin = { x: 0.5, y: 0.4 }
+      try {
+        const el = avatarRef.current
+        if (el) {
+          const rect = el.getBoundingClientRect()
+          const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 1)
+          const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 1)
+          const offsetPx = Math.max(6, Math.min(24, rect.height * 0.1))
+          origin = {
+            x: Math.max(0, Math.min(1, (rect.left + rect.width * 0.5) / vw)),
+            y: Math.max(0, Math.min(1, (rect.bottom + offsetPx) / vh))
+          }
+        }
+      } catch {}
+      runBirthdayConfetti({ origin })
+    }
+  }, [username, didCelebrate])
+
   const handleCopy = async () => {
     if (!xchAddress) return
     try {
@@ -605,6 +621,7 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
           >
 Claim your free #1 go4me PFP on <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 20, fontSize: 18, fontWeight: 800}}>𝕏</span>
           </Button>
+          {false && username && username.toLowerCase() === 'hoffmang' && (<span />)}
           <Button
             type='button'
             onClick={toggleTheme}
@@ -621,17 +638,40 @@ Claim your free #1 go4me PFP on <span aria-hidden="true" style={{ display: 'inli
         </div>
       </div>
   <main className={styles.main} style={{ justifyContent: 'flex-start', paddingTop: 64, paddingBottom: 24 }}>
-  {/* Birthday banner under the sticky nav, above profile name */}
-  {showBday && (
-    <div style={{ width: '100%', maxWidth: 1100, margin: '0.75rem auto 0.25rem', padding: '10px 14px', background: 'linear-gradient(90deg, #fff3cd, #ffe8a1)', border: '1px solid #ffecb5', color: '#775500', borderRadius: 10, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center' }}>
-      <span role="img" aria-label="party popper">🎉</span>
-      Happy Birthday, {'@' + username}! 🎂
+  {username && username.toLowerCase() === 'hoffmang' && (
+    <div className={styles.birthdayBanner} role='status' aria-live='polite'>
+      <span style={{ fontWeight: 600 }}>Happy Birthday @{username}!</span>
+      <Button
+        type='button'
+        onClick={() => {
+          let origin = { x: 0.5, y: 0.4 }
+          try {
+            const el = avatarRef.current
+            if (el) {
+              const rect = el.getBoundingClientRect()
+              const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 1)
+              const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 1)
+              const offsetPx = Math.max(6, Math.min(24, rect.height * 0.1))
+              origin = { x: Math.max(0, Math.min(1, (rect.left + rect.width * 0.5) / vw)), y: Math.max(0, Math.min(1, (rect.bottom + offsetPx) / vh)) }
+            }
+          } catch {}
+          runBirthdayConfetti({ origin })
+          setDidCelebrate(true)
+        }}
+        color='pink'
+        size='small'
+        aria-label="Celebrate Hoffmang's birthday"
+        title="Celebrate Hoffmang's birthday"
+        style={{ height: 30, marginLeft: 10 }}
+      >
+        🎉 Celebrate
+      </Button>
     </div>
   )}
-  <div className={styles.profileHeader} style={{ marginTop: '0.5rem', width: '100%', maxWidth: 1100, marginLeft: 'auto', marginRight: 'auto', alignSelf: 'stretch' }}>
+  <div className={styles.profileHeader} style={{ marginTop: (username && username.toLowerCase() === 'hoffmang') ? '0' : '1rem', width: '100%', maxWidth: 1100, marginLeft: 'auto', marginRight: 'auto', alignSelf: 'stretch' }}>
           <div className={styles.profileLeft}>
             <div className={styles.avatarWrap}>
-              <DomainPfpFlip avatarUrl={avatarUrl} xPfpUrl={xPfpUrl} username={username} linkHref={avatarUrl || undefined} />
+              <DomainPfpFlip avatarUrl={avatarUrl} xPfpUrl={xPfpUrl} username={username} linkHref={avatarUrl || undefined} avatarRef={avatarRef} />
             </div>
           </div>
           <div className={styles.profileRight}>
@@ -647,7 +687,6 @@ Claim your free #1 go4me PFP on <span aria-hidden="true" style={{ display: 'inli
                 @{username}
               </a>
             </div>
-            {/* Birthday banner moved above; keeping name clean here */}
             {description && (
               <p style={{ margin: '18px 0 16px', fontSize: 18, lineHeight: 1.4, whiteSpace: 'pre-wrap' }}>{linkify(description)}</p>
             )}
