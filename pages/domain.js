@@ -309,15 +309,22 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
     }
   }, [collectionTab, isLoadingMore, ownedMore, othersMore, ownedPage, othersPage, pageSize, username, mapRow])
 
-  // Debounce search input -> query and sync URL (?q=) without navigation
+  // Debounce search input -> query and sync URL (?q=) without changing pathname (preserve rewrites)
   useEffect(() => {
     const t = setTimeout(() => {
       const newQ = rawSearch.trim()
       setQuery(newQ)
-      // update URL shallowly
-      const desiredQuery = { ...(router.query || {}) }
-      if (newQ) desiredQuery.q = newQ; else delete desiredQuery.q
-      router.replace({ pathname: router.pathname, query: desiredQuery }, undefined, { shallow: true })
+      // Use History API to avoid exposing the internal /domain route when behind rewrites
+      if (typeof window !== 'undefined') {
+        try {
+          const url = new URL(window.location.href)
+          if (newQ) url.searchParams.set('q', newQ)
+          else url.searchParams.delete('q')
+          window.history.replaceState({}, '', url.toString())
+        } catch (_) {
+          // no-op
+        }
+      }
     }, 300)
     return () => clearTimeout(t)
   }, [rawSearch])
