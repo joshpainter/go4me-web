@@ -445,3 +445,19 @@
   .profileRight h1 { margin-top: 4px; margin-bottom: 4px; }
   .profileRight p { margin-top: 6px; margin-bottom: 4px; }
 }
+
+/* Helpers to fix 3D flip artifacts on some browsers (e.g., Safari) */
+.backfaceHidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0); /* promote to its own layer */
+}
+.backfaceHidden * {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
+}
+.preserve3d {
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+}

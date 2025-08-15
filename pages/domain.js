@@ -24,13 +24,15 @@ function DomainPfpFlip({ avatarUrl, xPfpUrl, username, linkHref, rankCopiesSold 
     inset: 0,
     transformStyle: 'preserve-3d',
     transition: 'transform 360ms cubic-bezier(0.2, 0.7, 0.2, 1)',
-    transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)'
+    willChange: 'transform',
+    transform: (isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)') + ' translateZ(0)'
   }
   const faceStyle = {
     position: 'absolute',
     inset: 0,
     backfaceVisibility: 'hidden',
     WebkitBackfaceVisibility: 'hidden',
+    transform: 'translateZ(0)',
     borderRadius: 12,
     overflow: 'hidden'
   }
@@ -66,10 +68,10 @@ function DomainPfpFlip({ avatarUrl, xPfpUrl, username, linkHref, rankCopiesSold 
       </div>
 
       {/* Flip container */}
-      <div style={{ position: 'absolute', inset: 0, perspective: 900 }}>
-        <div style={flipInnerStyle}>
+      <div style={{ position: 'absolute', inset: 0, perspective: 900 }} className={styles.preserve3d}>
+        <div style={flipInnerStyle} className={styles.preserve3d}>
           {/* Front: New PFP */}
-          <div style={faceStyle}>
+          <div style={faceStyle} className={styles.backfaceHidden}>
             {linkHref ? (
               <a href={linkHref} target='_blank' rel='noreferrer noopener' aria-label={username ? `Open full-size avatar for ${username}` : 'Open full-size avatar'} style={{ position: 'absolute', inset: 0 }}>
                 <Image src={avatarUrl} alt={commonAlt} layout='fill' objectFit='cover' />
@@ -82,7 +84,7 @@ function DomainPfpFlip({ avatarUrl, xPfpUrl, username, linkHref, rankCopiesSold 
           </div>
 
           {/* Back: Original PFP in a circle mask */}
-          <div style={backStyle}>
+          <div style={backStyle} className={styles.backfaceHidden}>
             {linkHref ? (
               <a href={linkHref} target='_blank' rel='noreferrer noopener' aria-label={username ? `Open full-size avatar for ${username}` : 'Open full-size avatar'} style={{ position: 'absolute', inset: 0 }}>
                 <div style={{ position: 'absolute', top: '50%', left: '50%', width: '88%', height: '88%', transform: 'translate(-50%, -50%)', borderRadius: '50%', overflow: 'hidden' }}>
@@ -124,13 +126,15 @@ function PfpFlipThumb({
     inset: 0,
     transformStyle: 'preserve-3d',
     transition: 'transform 360ms cubic-bezier(0.2, 0.7, 0.2, 1)',
-    transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)'
+    willChange: 'transform',
+    transform: (isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)') + ' translateZ(0)'
   }
   const faceStyle = {
     position: 'absolute',
     inset: 0,
     backfaceVisibility: 'hidden',
     WebkitBackfaceVisibility: 'hidden',
+  transform: 'translateZ(0)',
     borderRadius: 8,
     overflow: 'hidden'
   }
@@ -152,10 +156,10 @@ function PfpFlipThumb({
     >
       {/* Removed inline flip button for grid cards; hover flips on desktop, tap toggles on touch */}
 
-      <div style={{ position: 'absolute', inset: 0, perspective: 900 }}>
-        <div style={flipInnerStyle}>
+      <div style={{ position: 'absolute', inset: 0, perspective: 900 }} className={styles.preserve3d}>
+        <div style={flipInnerStyle} className={styles.preserve3d}>
           {/* Front */}
-          <div style={faceStyle}>
+          <div style={faceStyle} className={styles.backfaceHidden}>
             {profileHref ? (
               <a href={profileHref} aria-label={username ? `Open ${username}.go4.me` : 'Open profile'}>
                 <div style={{ position: 'absolute', inset: 0 }}>
@@ -169,7 +173,7 @@ function PfpFlipThumb({
             )}
           </div>
           {/* Back (circle mask) */}
-          <div style={backStyle}>
+          <div style={backStyle} className={styles.backfaceHidden}>
             {profileHref ? (
               <a href={profileHref} aria-label={username ? `Open ${username}.go4.me` : 'Open profile'} style={{ position: 'absolute', inset: 0 }}>
                 <div style={{ position: 'absolute', top: '50%', left: '50%', width: '80%', height: '80%', transform: 'translate(-50%, -50%)', borderRadius: '50%', overflow: 'hidden', boxShadow: '0 8px 20px rgba(0,0,0,0.25)' }}>
