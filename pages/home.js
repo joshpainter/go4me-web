@@ -810,7 +810,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                         <span className={styles.miniBadge} title='Next edition number'>
                           Next Edition #{(u.lastNftSeriesNumber ?? 0) + 1}
                         </span>
-                        <span className={styles.miniBadge} title='Estimated time to mint'>
+                        <span className={`${styles.miniBadge} ${styles.warningBadge}`} title='Estimated time to mint'>
                           Time to Mint ~{formatEtaMinutes(u.rankQueuePosition ?? 0)}
                         </span>
                       </div>
