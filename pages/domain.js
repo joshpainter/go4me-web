@@ -8,63 +8,8 @@ import { Button, Icon, Menu, Input } from 'semantic-ui-react'
 import { useTheme } from './_app'
 import { useRouter } from 'next/router'
 
-// Lazy-load canvas-confetti on the client
-let _confetti = null
-async function loadConfetti() {
-  if (typeof window === 'undefined') return null
-  if (_confetti) return _confetti
-  try {
-    const mod = await import('canvas-confetti')
-    _confetti = mod.default || mod
-    return _confetti
-  } catch (e) {
-    console.warn('Confetti failed to load', e)
-    return null
-  }
-}
-
-// Realistic confetti sequence (with staggered pops), with optional origin near an element
-async function runBirthdayConfetti(opts = {}) {
-  const confetti = await loadConfetti()
-  if (!confetti) return
-  const randomInRange = (min, max) => Math.random() * (max - min) + min
-
-  const pops = Math.max(1, opts.pops ?? 12) // roughly 3x
-  const delayStep = opts.delayStepMs ?? 140
-  const palette = opts.colors || ['#ff4d4d', '#ffd166', '#06d6a0', '#118ab2', '#9b5de5']
-  const baseOrigin = opts.origin || { x: 0.5, y: 0.4 }
-
-  const centerBurst = (scale = 1, x = baseOrigin.x, y = baseOrigin.y) => {
-    confetti({
-      particleCount: Math.round(110 * scale),
-      startVelocity: 40 * scale + randomInRange(-6, 6),
-      spread: 60,
-      origin: { x, y },
-      gravity: 1.15,
-      scalar: 1 + randomInRange(-0.08, 0.15),
-      drift: randomInRange(-0.3, 0.3),
-      colors: palette,
-      zIndex: 9999
-    })
-  }
-
-  // Initial strong center pop
-  centerBurst(1.15)
-
-  // Staggered follow-up pops with slight positional jitter
-  for (let i = 1; i < pops; i++) {
-    const delay = i * delayStep
-    setTimeout(() => {
-      const dx = randomInRange(-0.06, 0.06)
-      const dy = randomInRange(-0.06, 0.02)
-      const scale = Math.max(0.6, 1 - i * 0.12)
-      centerBurst(scale, baseOrigin.x + dx, baseOrigin.y + dy)
-    }, delay)
-  }
-}
-
 // Flip component for the main profile PFP on the domain page
-function DomainPfpFlip({ avatarUrl, xPfpUrl, username, linkHref, avatarRef }) {
+function DomainPfpFlip({ avatarUrl, xPfpUrl, username, linkHref }) {
   const [isFlipped, setIsFlipped] = useState(false)
   const [isTouch, setIsTouch] = useState(false)
 
@@ -103,7 +48,6 @@ function DomainPfpFlip({ avatarUrl, xPfpUrl, username, linkHref, avatarRef }) {
     <div
       className={styles.avatarBox}
       style={{ position: 'absolute', inset: 0 }}
-      ref={avatarRef}
       onMouseEnter={() => { if (!isTouch) setIsFlipped(true) }}
       onMouseLeave={() => { if (!isTouch) setIsFlipped(false) }}
     >
@@ -308,8 +252,7 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
   const router = useRouter()
   const [rawSearch, setRawSearch] = useState(initialQuery || '')
   const [query, setQuery] = useState(initialQuery || '')
-  const [didCelebrate, setDidCelebrate] = useState(false)
-  const avatarRef = useRef(null)
+  
 
   useEffect(() => {
     if (typeof window !== 'undefined' && !('IntersectionObserver' in window)) setIntersectionSupported(false)
@@ -475,37 +418,7 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
   const metaTitle = fullName ? `${fullName} (@${username}) on go4.me` : `@${username} on go4.me`
   const metaDesc = description ? description.slice(0, 200) : 'Claim your free, custom go4.me PFP and earn royalties whenever others purchase it.'
 
-  // Trigger confetti for @hoffmang on birthday window or via ?party=1
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    const isHoff = (username || '').toLowerCase() === 'hoffmang'
-    if (!isHoff) return
-    const url = new URL(window.location.href)
-    const force = url.searchParams.get('party') === '1'
-    const now = new Date()
-    const mm = String(now.getMonth() + 1).padStart(2, '0')
-    const dd = String(now.getDate()).padStart(2, '0')
-    const inWindow = (mm === '08' && (dd === '14' || dd === '15' || dd === '16'))
-    if ((force || inWindow) && !didCelebrate) {
-      setDidCelebrate(true)
-      // Aim near the avatar's upper-left
-      let origin = { x: 0.5, y: 0.4 }
-      try {
-        const el = avatarRef.current
-        if (el) {
-          const rect = el.getBoundingClientRect()
-          const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 1)
-          const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 1)
-          const offsetPx = Math.max(6, Math.min(24, rect.height * 0.1))
-          origin = {
-            x: Math.max(0, Math.min(1, (rect.left + rect.width * 0.5) / vw)),
-            y: Math.max(0, Math.min(1, (rect.bottom + offsetPx) / vh))
-          }
-        }
-      } catch {}
-      runBirthdayConfetti({ origin })
-    }
-  }, [username, didCelebrate])
+  // removed birthday confetti logic
 
   const handleCopy = async () => {
     if (!xchAddress) return
@@ -637,41 +550,11 @@ Claim your free #1 go4me PFP on <span aria-hidden="true" style={{ display: 'inli
           </Button>
         </div>
       </div>
-  <main className={styles.main} style={{ justifyContent: 'flex-start', paddingTop: 64, paddingBottom: 24 }}>
-  {username && username.toLowerCase() === 'hoffmang' && (
-    <div className={styles.birthdayBanner} role='status' aria-live='polite'>
-      <span style={{ fontWeight: 600 }}>Happy Birthday @{username}!</span>
-      <Button
-        type='button'
-        onClick={() => {
-          let origin = { x: 0.5, y: 0.4 }
-          try {
-            const el = avatarRef.current
-            if (el) {
-              const rect = el.getBoundingClientRect()
-              const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 1)
-              const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 1)
-              const offsetPx = Math.max(6, Math.min(24, rect.height * 0.1))
-              origin = { x: Math.max(0, Math.min(1, (rect.left + rect.width * 0.5) / vw)), y: Math.max(0, Math.min(1, (rect.bottom + offsetPx) / vh)) }
-            }
-          } catch {}
-          runBirthdayConfetti({ origin })
-          setDidCelebrate(true)
-        }}
-        color='pink'
-        size='small'
-        aria-label="Celebrate Hoffmang's birthday"
-        title="Celebrate Hoffmang's birthday"
-        style={{ height: 30, marginLeft: 10 }}
-      >
-        🎉 Celebrate
-      </Button>
-    </div>
-  )}
+  <main className={styles.main} style={{ justifyContent: 'flex-start', paddingTop: 84, paddingBottom: 24 }}>
   <div className={styles.profileHeader} style={{ marginTop: (username && username.toLowerCase() === 'hoffmang') ? '0' : '1rem', width: '100%', maxWidth: 1100, marginLeft: 'auto', marginRight: 'auto', alignSelf: 'stretch' }}>
-          <div className={styles.profileLeft}>
+      <div className={styles.profileLeft}>
             <div className={styles.avatarWrap}>
-              <DomainPfpFlip avatarUrl={avatarUrl} xPfpUrl={xPfpUrl} username={username} linkHref={avatarUrl || undefined} avatarRef={avatarRef} />
+        <DomainPfpFlip avatarUrl={avatarUrl} xPfpUrl={xPfpUrl} username={username} linkHref={avatarUrl || undefined} />
             </div>
           </div>
           <div className={styles.profileRight}>
