@@ -1,4 +1,5 @@
 import Head from 'next/head'
+import Link from 'next/link'
 import Script from 'next/script'
 import Image from 'next/image'
 import styles from '../styles/Home.module.css'
@@ -504,46 +505,39 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
       </div>
 
   <Container textAlign='center' style={{ paddingTop: 84, paddingBottom: 10 }}>
-        <div style={{ width: '100%', maxWidth: 900, margin: '0 auto', position: 'relative', marginBottom: 120 }}>
-          {/* Banner Image using Next.js Image */}
-          <div style={{ borderRadius: 8, overflow: 'hidden' }}>
-            <Image
-              src="/collection-banner.png"
-              alt="go4.me collection banner"
-              layout="responsive"
-              width={900}
-              height={300}
-              priority
-            />
-          </div>
-          {/* Center-bottom overlay icon (approx 1/3 overlapping the banner) */}
-          <div style={{ position: 'absolute', left: '50%', bottom: -120, transform: 'translateX(-50%)' }}>
-            <Image
-              src="/collection-icon.png"
-              alt="go4.me collection icon"
-              width={180}
-              height={180}
-              style={{ filter: 'drop-shadow(0 8px 12px rgba(0,0,0,0.35))' }}
-            />
-          </div>
+        <div style={{ width: '100%', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+          <Image
+            src="/collection-icon.png"
+            alt="go4.me collection icon"
+            width={180}
+            height={180}
+            style={{ filter: 'drop-shadow(0 8px 12px rgba(0,0,0,0.35))' }}
+            priority
+          />
         </div>
-        <div style={{ marginTop: 14, color: '#666', fontSize: 16 }}>
+  <div id='how-it-works' style={{ marginTop: 14, color: '#666', fontSize: 16 }}>
           Claim your free, custom go4.me PFP and earn royalties whenever others purchase it!<br /> Simply share your XCH address and tag <a href='https://x.com/go4mebot' target='_blank' rel='noreferrer'>@go4mebot</a> on X to kick things off!
         </div>
-        <div style={{ marginTop: 12 }}>
-          <Button
-            as='a'
+        <div style={{ marginTop: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <a
             href={`https://x.com/intent/tweet?text=Hi @go4mebot! My XCH address is: `}
             target='_blank'
             rel='noreferrer'
-            size='large'
-            basic
-            color='grey'
+            className={styles.ctaButton}
             aria-label='Claim your go4me PFP on X'
             title='Claim your go4me PFP on X'
           >
             Claim your free #1 go4me PFP on <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 20, height: 20, fontSize: 18, fontWeight: 800}}>𝕏</span>
-          </Button>
+          </a>
+          <Link href="/how-it-works" passHref>
+            <a
+              className={`${styles.ctaButton} ${styles.ctaButtonLight}`}
+              aria-label='How does it work?'
+              title='How does it work?'
+            >
+              How does it work?
+            </a>
+          </Link>
         </div>
       </Container>
 

@@ -239,6 +239,142 @@
 .lbSkeletonImg { width: 100%; padding-top: 100%; border-radius: 8px; }
 .lbSkeletonLine { height: 12px; margin-top: 8px; }
 
+/* Primary CTA: rounded 3D button */
+.ctaButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 24px;
+  border-radius: 999px; /* fully rounded pill */
+  background: linear-gradient(180deg, #7ab0ff 0%, #2f77ff 100%);
+  color: #fff !important;
+  border: 1px solid #2f6dff;
+  text-decoration: none !important;
+  font-weight: 700;
+  letter-spacing: .25px;
+  box-shadow:
+    0 10px 22px rgba(47, 109, 255, 0.38),  /* drop */
+    0 2px 6px rgba(47, 109, 255, 0.25),
+    inset 0 1px 0 rgba(255,255,255,0.25),   /* top highlight */
+    inset 0 -1px 0 rgba(0,0,0,0.08);       /* bottom shade */
+  transition: transform 80ms ease, box-shadow 140ms ease, filter 140ms ease;
+}
+.ctaButton:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 12px 26px rgba(47, 109, 255, 0.46),
+    0 4px 10px rgba(47, 109, 255, 0.28),
+    inset 0 1px 0 rgba(255,255,255,0.3),
+    inset 0 -1px 0 rgba(0,0,0,0.1);
+  filter: brightness(1.04);
+}
+.ctaButton:active {
+  transform: translateY(0);
+  box-shadow:
+    0 8px 16px rgba(47, 109, 255, 0.34),
+    0 2px 6px rgba(47, 109, 255, 0.22),
+    inset 0 0 0 rgba(255,255,255,0),
+    inset 0 -1px 0 rgba(0,0,0,0.12);
+  filter: brightness(0.99);
+}
+.ctaButton:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px rgba(255,255,255,0.9),
+    0 0 0 4px rgba(47, 109, 255, 0.85),
+    0 10px 22px rgba(47, 109, 255, 0.38),
+    inset 0 1px 0 rgba(255,255,255,0.25),
+    inset 0 -1px 0 rgba(0,0,0,0.08);
+}
+[data-theme='dark'] .ctaButton {
+  background: linear-gradient(180deg, #4a86ff 0%, #1f5fe6 100%);
+  border-color: #2b64e8;
+  box-shadow:
+    0 10px 22px rgba(16, 36, 94, 0.6),
+    0 2px 6px rgba(16, 36, 94, 0.45),
+    inset 0 1px 0 rgba(255,255,255,0.18),
+    inset 0 -1px 0 rgba(0,0,0,0.22);
+}
+[data-theme='dark'] .ctaButton:hover {
+  box-shadow:
+    0 12px 26px rgba(16, 36, 94, 0.7),
+    0 4px 10px rgba(16, 36, 94, 0.52),
+    inset 0 1px 0 rgba(255,255,255,0.22),
+    inset 0 -1px 0 rgba(0,0,0,0.24);
+  filter: brightness(1.02);
+}
+[data-theme='dark'] .ctaButton:active {
+  box-shadow:
+    0 8px 16px rgba(16, 36, 94, 0.55),
+    0 2px 6px rgba(16, 36, 94, 0.42),
+    inset 0 -1px 0 rgba(0,0,0,0.28);
+}
+[data-theme='dark'] .ctaButton:focus-visible {
+  box-shadow:
+    0 0 0 2px rgba(15,17,21,0.85),
+    0 0 0 4px rgba(66, 124, 255, 0.9),
+    0 10px 22px rgba(16, 36, 94, 0.6),
+    inset 0 1px 0 rgba(255,255,255,0.18),
+    inset 0 -1px 0 rgba(0,0,0,0.22);
+}
+
+/* Lighter shade variant for secondary CTA */
+.ctaButtonLight {
+  /* much lighter background to reduce emphasis */
+  background: linear-gradient(180deg, #e6f0ff 0%, #c9ddff 100%);
+  border-color: #b3ceff;
+  color: #163a7a !important; /* darker text for readability on pale bg */
+  box-shadow:
+    0 8px 18px rgba(47, 109, 255, 0.18),
+    0 2px 6px rgba(47, 109, 255, 0.12),
+    inset 0 1px 0 rgba(255,255,255,0.4),
+    inset 0 -1px 0 rgba(0,0,0,0.04);
+  font-weight: 600; /* slightly less bold than primary */
+}
+.ctaButtonLight:hover {
+  box-shadow:
+    0 10px 20px rgba(47, 109, 255, 0.22),
+    0 3px 8px rgba(47, 109, 255, 0.14),
+    inset 0 1px 0 rgba(255,255,255,0.45),
+    inset 0 -1px 0 rgba(0,0,0,0.05);
+  filter: none; /* keep subtle */
+  transform: none; /* cancel base hover lift */
+}
+.ctaButtonLight:active {
+  box-shadow:
+    0 6px 14px rgba(47, 109, 255, 0.16),
+    0 2px 6px rgba(47, 109, 255, 0.12),
+    inset 0 -1px 0 rgba(0,0,0,0.06);
+}
+[data-theme='dark'] .ctaButtonLight {
+  /* make it very subtle in dark mode */
+  background: linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.06) 100%);
+  border-color: rgba(255,255,255,0.18);
+  color: #e6eeff !important;
+  box-shadow:
+    0 6px 14px rgba(0, 0, 0, 0.4),
+    0 2px 6px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255,255,255,0.16),
+    inset 0 -1px 0 rgba(0,0,0,0.22);
+  font-weight: 600;
+}
+[data-theme='dark'] .ctaButtonLight:hover {
+  box-shadow:
+    0 8px 16px rgba(0, 0, 0, 0.46),
+    0 3px 8px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255,255,255,0.18),
+    inset 0 -1px 0 rgba(0,0,0,0.24);
+  transform: none;
+  filter: none;
+}
+[data-theme='dark'] .ctaButtonLight:active {
+  box-shadow:
+    0 6px 14px rgba(0, 0, 0, 0.5),
+    0 2px 6px rgba(0, 0, 0, 0.38),
+    inset 0 -1px 0 rgba(0,0,0,0.26);
+}
+
 @media (max-width: 640px) {
   .lbGrid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
   .lbCard { padding: 6px 6px 8px; }
