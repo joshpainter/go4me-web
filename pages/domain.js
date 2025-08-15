@@ -308,7 +308,7 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
     } finally {
       setIsLoadingMore(false)
     }
-  }, [collectionTab, isLoadingMore, ownedMore, othersMore, ownedPage, othersPage, pageSize, username, mapRow])
+  }, [collectionTab, isLoadingMore, ownedMore, othersMore, ownedPage, othersPage, pageSize, username, mapRow, query])
 
   // Debounce search input -> query and sync URL (?q=) without changing pathname (preserve rewrites)
   useEffect(() => {
@@ -503,9 +503,11 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
             ← Back to Leaderboard
           </a>
         ) : (
-          <Link href="/" aria-label="Back to leaderboard home" className={styles.topNavLink}>
-            <Image src="/collection-icon.png" alt="go4.me" width={40} height={40} />
-            ← Back to Leaderboard
+          <Link href="/" passHref>
+            <a aria-label="Back to leaderboard home" className={styles.topNavLink}>
+              <Image src="/collection-icon.png" alt="go4.me" width={40} height={40} />
+              ← Back to Leaderboard
+            </a>
           </Link>
         )}
         {/* Center: search */}

@@ -11,6 +11,25 @@ import { getSupabaseClient } from '../lib/supabaseClient'
 const MOJO_PER_XCH = 1e12
 // Simple formatting helpers
 const formatXCH = (n) => new Intl.NumberFormat(undefined, { maximumFractionDigits: 4 }).format(n);
+const formatInt = (n) => new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(n ?? 0);
+const formatRelativeAgo = (ms) => {
+  if (!ms) return '—'
+  const diff = Date.now() - ms
+  if (diff < 0) return 'just now'
+  const s = Math.floor(diff / 1000)
+  if (s < 5) return 'just now'
+  if (s < 60) return `${s} second${s === 1 ? '' : 's'} ago`
+  const m = Math.floor(s / 60)
+  if (m < 60) return `${m} minute${m === 1 ? '' : 's'} ago`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `${h} hour${h === 1 ? '' : 's'} ago`
+  const d = Math.floor(h / 24)
+  if (d < 30) return `${d} day${d === 1 ? '' : 's'} ago`
+  const mo = Math.floor(d / 30)
+  if (mo < 12) return `${mo} month${mo === 1 ? '' : 's'} ago`
+  const y = Math.floor(mo / 12)
+  return `${y} year${y === 1 ? '' : 's'} ago`
+}
 const formatDuration = (ms) => {
   if (!ms) return '—'
   const seconds = Math.floor(ms / 1000)
@@ -150,6 +169,7 @@ export async function getServerSideProps(context) {
     const orderMap = {
       totalSold: { column: 'rank_copies_sold', ascending: true },
       totalTraded: { column: 'rank_total_traded_value', ascending: true },
+      badgeScore: { column: 'rank_total_badge_score', ascending: true },
       recentTrades: { column: 'rank_last_sale', ascending: true }
     }
     const orderSpec = orderMap[currentView] || orderMap.totalSold
@@ -188,9 +208,12 @@ export async function getServerSideProps(context) {
         averageSaleXCH: avgSalesAmount / MOJO_PER_XCH,
         avgTimeToSellMs: avgTimeToSell,
         lastOfferId: row.last_offerid,
+  lastSaleAtMs: row.last_sale_at ? new Date(row.last_sale_at).getTime() : null,
         rankCopiesSold: row.rank_copies_sold,
         rankTotalTradedValue: row.rank_total_traded_value,
-        rankLastSale: row.rank_last_sale,
+  rankLastSale: row.rank_last_sale,
+  rankTotalBadgeScore: row.rank_total_badge_score,
+  totalBadgeScore: row.total_badge_score || 0,
         _search: ((row.username) + ' ' + (row.name)).toLowerCase(),
       }
       user.displayTotalTradedXCH = formatXCH(user.totalTradedXCH)
@@ -266,6 +289,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
         const orderMap = {
           totalSold: { column: 'rank_copies_sold', ascending: true },
           totalTraded: { column: 'rank_total_traded_value', ascending: true },
+          badgeScore: { column: 'rank_total_badge_score', ascending: true },
           recentTrades: { column: 'rank_last_sale', ascending: true }
         }
         const orderSpec = orderMap[view] || orderMap.totalSold
@@ -297,9 +321,12 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
             avgTimeToSellMs: avgTimeToSell,
             latestPrice: row.latest_price_xch ?? row.last_price ?? 0,
             lastOfferId: row.last_offerid,
+            lastSaleAtMs: row.last_sale_at ? new Date(row.last_sale_at).getTime() : null,
             rankCopiesSold: row.rank_copies_sold,
             rankTotalTradedValue: row.rank_total_traded_value,
             rankLastSale: row.rank_last_sale,
+            rankTotalBadgeScore: row.rank_total_badge_score,
+            totalBadgeScore: row.total_badge_score || 0,
             _search: ((row.username) + ' ' + (row.name)).toLowerCase(),
           }
           user.displayTotalTradedXCH = formatXCH(user.totalTradedXCH)
@@ -334,6 +361,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
       const orderMap = {
         totalSold: { column: 'total_sold', ascending: false },
         totalTraded: { column: 'total_traded_value', ascending: false },
+        badgeScore: { column: 'rank_total_badge_score', ascending: true },
         recentTrades: { column: 'rank_last_sale', ascending: true }
       }
       const orderSpec = orderMap[view] || orderMap.totalSold
@@ -365,9 +393,12 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
           avgTimeToSellMs: avgTimeToSell,
           latestPrice: row.latest_price_xch ?? row.last_price ?? 0,
           lastOfferId: row.last_offerid,
+          lastSaleAtMs: row.last_sale_at ? new Date(row.last_sale_at).getTime() : null,
           rankCopiesSold: row.rank_copies_sold,
           rankTotalTradedValue: row.rank_total_traded_value,
           rankLastSale: row.rank_last_sale,
+          rankTotalBadgeScore: row.rank_total_badge_score,
+          totalBadgeScore: row.total_badge_score || 0,
           _search: ((row.username) + ' ' + (row.name)).toLowerCase(),
         }
         user.displayTotalTradedXCH = formatXCH(user.totalTradedXCH)
@@ -414,11 +445,13 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
   const renderList = useMemo(() => {
     // Data already server-ordered; fallback sort if needed
     const arr = [...loadedUsers]
-    if (view === 'totalTraded') arr.sort((a, b) => (a.rankTotalTradedValue || 0) - (b.rankTotalTradedValue || 0))
+  if (view === 'totalTraded') arr.sort((a, b) => (a.rankTotalTradedValue || 0) - (b.rankTotalTradedValue || 0))
+  else if (view === 'badgeScore') arr.sort((a, b) => (a.rankTotalBadgeScore || 0) - (b.rankTotalBadgeScore || 0))
   else if (view === 'recentTrades') arr.sort((a, b) => (a.rankLastSale || 0) - (b.rankLastSale || 0))
-    else arr.sort((a, b) => (a.rankCopiesSold || 0) - (b.rankCopiesSold || 0))
+  else arr.sort((a, b) => (a.rankCopiesSold || 0) - (b.rankCopiesSold || 0))
     return arr
   }, [loadedUsers, view])
+
 
   const { theme, toggleTheme } = useTheme()
   const shareUrl = useMemo(() => {
@@ -529,6 +562,11 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
             onClick={() => setView('totalTraded')}
           />
           <Menu.Item
+            name='Badge Score'
+            active={view === 'badgeScore'}
+            onClick={() => setView('badgeScore')}
+          />
+          <Menu.Item
             name='Recent Trades'
             active={view === 'recentTrades'}
             onClick={() => setView('recentTrades')}
@@ -541,6 +579,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
               <div key={u.id} className={styles.lbCard}>
                 <div className={styles.rankBadge} style={{ right: 8, left: 'auto', backgroundColor: 'var(--badge-bg-solid)', color: 'var(--badge-fg-solid)' }}>#{
                   view === 'totalTraded' ? (u.rankTotalTradedValue || u.rankCopiesSold || idx + 1)
+                    : view === 'badgeScore' ? (u.rankTotalBadgeScore || idx + 1)
                     : view === 'recentTrades' ? (u.rankLastSale || idx + 1)
                       : (u.rankCopiesSold || idx + 1)
                 }</div>
@@ -560,61 +599,148 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                     <div className={styles.username}>@{u.username}</div>
                   )}
                   {u.fullName && <div className={styles.fullName}>{u.fullName}</div>}
-                  <div className={styles.statsRow}>
-                    <span title='Total sold'>Total Sold: {u.totalSold} ({formatXCH(u.totalTradedXCH)} XCH)</span>
-                  </div>
-                  <div className={styles.statsRowSmall}>
-                    <span title='Royalties'>Total Royalties: {formatXCH(u.totalRoyaltiesXCH ?? (u.totalTradedXCH * 0.10))} XCH</span>
-                  </div>
-                  <div className={styles.statsRowSmall}>
-                    <span title='Avg Sale Price'>Avg Sales Price: {formatXCH(u.averageSaleXCH)} XCH</span>
-                  </div>
-                  <div style={{ marginTop: 'auto', paddingTop: 8, textAlign: 'center', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
-                    {u.lastOfferId && (
-                      <>
-                        <Button
-                          as='a'
-                          href={`https://dexie.space/offers/${u.lastOfferId}`}
-                          target='_blank'
-                          rel='noreferrer'
-                          size='tiny'
-                          basic
-                          color='blue'
-                          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px' }}
-                          aria-label='Dexie'
-                          title='Dexie'
-                        >
-                          <Image
-                            src="https://raw.githubusercontent.com/dexie-space/dexie-kit/main/svg/duck.svg"
-                            alt="Dexie"
-                            width={22}
-                            height={22}
-                          />
-                          <Icon name='external' size='small' />
-                        </Button>
-                        <Button
-                          as='a'
-                          href={`https://mintgarden.io/offers/${u.lastOfferId}`}
-                          target='_blank'
-                          rel='noreferrer'
-                          size='tiny'
-                          basic
-                          color='green'
-                          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px' }}
-                          aria-label='Mintgarden'
-                          title='Mintgarden'
-                        >
-                          <Image
-                            src="https://mintgarden.io/mint-logo-round.svg"
-                            alt="MintGarden"
-                            width={22}
-                            height={22}
-                          />
-                          <Icon name='external' size='small' />
-                        </Button>
-                      </>
-                    )}
-                  </div>
+                  {view === 'totalSold' && (
+                    <>
+                      <div className={styles.badgeRow}>
+                        <span className={styles.miniBadge} title='Total sold'>Sold {u.totalSold}</span>
+                        <span className={styles.miniBadge} title='XCH total sold'>{formatXCH(u.totalTradedXCH)} XCH</span>
+                        <span className={styles.miniBadge} title='Royalties'>Royalties {formatXCH(u.totalRoyaltiesXCH ?? (u.totalTradedXCH * 0.10))} XCH</span>
+                      </div>
+                      {u.lastOfferId && (
+                        <div className={styles.badgeRow}>
+                          <a
+                            href={`https://dexie.space/offers/${u.lastOfferId}`}
+                            target='_blank'
+                            rel='noreferrer noopener'
+                            className={styles.miniBadge}
+                            aria-label='View latest offer on Dexie'
+                            title='Dexie'
+                          >
+                            <Image
+                              src="https://raw.githubusercontent.com/dexie-space/dexie-kit/main/svg/duck.svg"
+                              alt="Dexie"
+                              width={16}
+                              height={16}
+                            />
+                            Dexie
+                          </a>
+                          <a
+                            href={`https://mintgarden.io/offers/${u.lastOfferId}`}
+                            target='_blank'
+                            rel='noreferrer noopener'
+                            className={styles.miniBadge}
+                            aria-label='View latest offer on Mintgarden'
+                            title='Mintgarden'
+                          >
+                            <Image
+                              src="https://mintgarden.io/mint-logo-round.svg"
+                              alt="MintGarden"
+                              width={16}
+                              height={16}
+                            />
+                            Mintgarden
+                          </a>
+                        </div>
+                      )}
+                    </>
+                  )}
+                  {view === 'totalTraded' && (
+                    <>
+                      <div className={styles.badgeRow}>
+                        <span className={styles.miniBadge} title='XCH total sold'>{formatXCH(u.totalTradedXCH)} XCH</span>
+                        <span className={styles.miniBadge} title='Total sold'>Sold {u.totalSold}</span>
+                        <span className={styles.miniBadge} title='Royalties'>Royalties {formatXCH(u.totalRoyaltiesXCH ?? (u.totalTradedXCH * 0.10))} XCH</span>
+                      </div>
+                      {u.lastOfferId && (
+                        <div className={styles.badgeRow}>
+                          <a
+                            href={`https://dexie.space/offers/${u.lastOfferId}`}
+                            target='_blank'
+                            rel='noreferrer noopener'
+                            className={styles.miniBadge}
+                            aria-label='View latest offer on Dexie'
+                            title='Dexie'
+                          >
+                            <Image
+                              src="https://raw.githubusercontent.com/dexie-space/dexie-kit/main/svg/duck.svg"
+                              alt="Dexie"
+                              width={16}
+                              height={16}
+                            />
+                            Dexie
+                          </a>
+                          <a
+                            href={`https://mintgarden.io/offers/${u.lastOfferId}`}
+                            target='_blank'
+                            rel='noreferrer noopener'
+                            className={styles.miniBadge}
+                            aria-label='View latest offer on Mintgarden'
+                            title='Mintgarden'
+                          >
+                            <Image
+                              src="https://mintgarden.io/mint-logo-round.svg"
+                              alt="MintGarden"
+                              width={16}
+                              height={16}
+                            />
+                            Mintgarden
+                          </a>
+                        </div>
+                      )}
+                    </>
+                  )}
+                  {view === 'badgeScore' && (
+                    <>
+                      <div className={styles.badgeRow}>
+                        <span className={styles.miniBadge} title='Score'>Score {formatInt(u.totalBadgeScore)}</span>
+                      </div>
+                    </>
+                  )}
+                  {view === 'recentTrades' && u.lastSaleAtMs && (
+                    <div className={styles.badgeRow}>
+                      <span className={styles.miniBadge} title={new Date(u.lastSaleAtMs).toLocaleString()}>Last sale {formatRelativeAgo(u.lastSaleAtMs)}</span>
+                    </div>
+                  )}
+                  {(view !== 'totalSold' && view !== 'totalTraded') && (
+                    <>
+                      {u.lastOfferId && (
+                        <div className={styles.badgeRow}>
+                          <a
+                            href={`https://dexie.space/offers/${u.lastOfferId}`}
+                            target='_blank'
+                            rel='noreferrer noopener'
+                            className={styles.miniBadge}
+                            aria-label='View latest offer on Dexie'
+                            title='Dexie'
+                          >
+                            <Image
+                              src="https://raw.githubusercontent.com/dexie-space/dexie-kit/main/svg/duck.svg"
+                              alt="Dexie"
+                              width={16}
+                              height={16}
+                            />
+                            Dexie
+                          </a>
+                          <a
+                            href={`https://mintgarden.io/offers/${u.lastOfferId}`}
+                            target='_blank'
+                            rel='noreferrer noopener'
+                            className={styles.miniBadge}
+                            aria-label='View latest offer on Mintgarden'
+                            title='Mintgarden'
+                          >
+                            <Image
+                              src="https://mintgarden.io/mint-logo-round.svg"
+                              alt="MintGarden"
+                              width={16}
+                              height={16}
+                            />
+                            Mintgarden
+                          </a>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
               </div>
             ))}
