@@ -270,6 +270,29 @@
     inset 0 -1px 0 rgba(0,0,0,0.22);
 }
 
+/* Warning badge (yellow) */
+.warningBadge {
+  background: linear-gradient(180deg, #fff4c2 0%, #ffe58a 100%);
+  color: #6b4e00;
+  border-color: #ffd666;
+  box-shadow:
+    0 6px 14px rgba(255, 214, 102, 0.25),
+    0 2px 6px rgba(255, 214, 102, 0.18),
+    inset 0 1px 0 rgba(255,255,255,0.4),
+    inset 0 -1px 0 rgba(0,0,0,0.06);
+  font-weight: 600;
+}
+[data-theme='dark'] .warningBadge {
+  background: linear-gradient(180deg, rgba(255, 229, 138, 0.18) 0%, rgba(255, 229, 138, 0.12) 100%);
+  color: #ffe58a;
+  border-color: rgba(255, 229, 138, 0.32);
+  box-shadow:
+    0 6px 14px rgba(0, 0, 0, 0.45),
+    0 2px 6px rgba(0, 0, 0, 0.36),
+    inset 0 1px 0 rgba(255,255,255,0.16),
+    inset 0 -1px 0 rgba(0,0,0,0.22);
+}
+
 .lbSkeletonCard { position: relative; border: 1px solid var(--color-border); border-radius: 12px; padding: 8px; min-height: 280px; background: var(--color-card-bg); }
 .lbSkeletonImg { width: 100%; padding-top: 100%; border-radius: 8px; }
 .lbSkeletonLine { height: 12px; margin-top: 8px; }

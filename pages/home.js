@@ -210,6 +210,7 @@ export async function getServerSideProps(context) {
         averageSaleXCH: avgSalesAmount / MOJO_PER_XCH,
         avgTimeToSellMs: avgTimeToSell,
         lastOfferId: row.last_offerid,
+  lastOfferStatus: row.last_offer_status,
   lastSaleAtMs: row.last_sale_at ? new Date(row.last_sale_at).getTime() : null,
         rankCopiesSold: row.rank_copies_sold,
         rankFewestCopiesSold: row.rank_fewest_copies_sold,
@@ -325,6 +326,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
             avgTimeToSellMs: avgTimeToSell,
             latestPrice: row.latest_price_xch ?? row.last_price ?? 0,
             lastOfferId: row.last_offerid,
+            lastOfferStatus: row.last_offer_status,
             lastSaleAtMs: row.last_sale_at ? new Date(row.last_sale_at).getTime() : null,
             rankCopiesSold: row.rank_copies_sold,
             rankFewestCopiesSold: row.rank_fewest_copies_sold,
@@ -399,6 +401,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
           avgTimeToSellMs: avgTimeToSell,
           latestPrice: row.latest_price_xch ?? row.last_price ?? 0,
           lastOfferId: row.last_offerid,
+          lastOfferStatus: row.last_offer_status,
           lastSaleAtMs: row.last_sale_at ? new Date(row.last_sale_at).getTime() : null,
           rankCopiesSold: row.rank_copies_sold,
           rankTotalTradedValue: row.rank_total_traded_value,
@@ -614,7 +617,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                         <span className={styles.miniBadge} title='XCH total sold'>{formatXCH(u.totalTradedXCH)} XCH</span>
                         <span className={styles.miniBadge} title='Royalties'>Royalties {formatXCH(u.totalRoyaltiesXCH ?? (u.totalTradedXCH * 0.10))} XCH</span>
                       </div>
-                      {u.lastOfferId && (
+                      {u.lastOfferId && u.lastOfferStatus === 0 && (
                         <div className={styles.badgeRow}>
                           <a
                             href={`https://dexie.space/offers/${u.lastOfferId}`}
@@ -650,6 +653,11 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                           </a>
                         </div>
                       )}
+                      {(!u.lastOfferId || u.lastOfferStatus !== 0) && (
+                        <div className={styles.badgeRow}>
+                          <span className={`${styles.miniBadge} ${styles.warningBadge}`}>Next Copy Coming Soon!</span>
+                        </div>
+                      )}
                     </>
                   )}
                   {view === 'totalTraded' && (
@@ -659,7 +667,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                         <span className={styles.miniBadge} title='Total sold'>Sold {u.totalSold}</span>
                         <span className={styles.miniBadge} title='Royalties'>Royalties {formatXCH(u.totalRoyaltiesXCH ?? (u.totalTradedXCH * 0.10))} XCH</span>
                       </div>
-                      {u.lastOfferId && (
+                      {u.lastOfferId && u.lastOfferStatus === 0 && (
                         <div className={styles.badgeRow}>
                           <a
                             href={`https://dexie.space/offers/${u.lastOfferId}`}
@@ -693,6 +701,11 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                             />
                             Mintgarden
                           </a>
+                        </div>
+                      )}
+                      {(!u.lastOfferId || u.lastOfferStatus !== 0) && (
+                        <div className={styles.badgeRow}>
+                          <span className={`${styles.miniBadge} ${styles.warningBadge}`}>Next Copy Coming Soon!</span>
                         </div>
                       )}
                     </>
@@ -711,7 +724,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                   )}
                   {(view !== 'totalSold' && view !== 'totalTraded' && view !== 'rarest') && (
                     <>
-                      {u.lastOfferId && (
+                      {u.lastOfferId && u.lastOfferStatus === 0 && (
                         <div className={styles.badgeRow}>
                           <a
                             href={`https://dexie.space/offers/${u.lastOfferId}`}
@@ -745,6 +758,11 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                             />
                             Mintgarden
                           </a>
+                        </div>
+                      )}
+                      {(!u.lastOfferId || u.lastOfferStatus !== 0) && (
+                        <div className={styles.badgeRow}>
+                          <span className={`${styles.miniBadge} ${styles.warningBadge}`}>Next Copy Coming Soon!</span>
                         </div>
                       )}
                     </>

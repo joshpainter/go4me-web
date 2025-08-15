@@ -235,6 +235,7 @@ export async function getServerSideProps(ctx) {
           xPfpUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png',
           xchAddress: row.xch_address || '',
           lastOfferId: row.last_offerid || '',
+      lastOfferStatus: row.last_offer_status ?? null,
       totalBadgeScore: row.total_badge_score || 0,
       rankCopiesSold: row.rank_copies_sold || null,
         }
@@ -255,7 +256,7 @@ export async function getServerSideProps(ctx) {
         const { data: ownedData, count: ownedCount, error: ownedError } = await ownedQuery
         if (ownedError) throw ownedError
         if (Array.isArray(ownedData)) {
-          ownedPfps = ownedData.map((r, idx) => {
+      ownedPfps = ownedData.map((r, idx) => {
             const pfpUsername = r.pfp_username || r.username || null
             const cid = r.pfp_ipfs_cid || r.pfpCid || r.cid || null
             // Primary image from Supabase view
@@ -269,7 +270,9 @@ export async function getServerSideProps(ctx) {
               frontUrl,
               backUrl,
               pfpName: r.pfp_name || r.name || `#${r.nft_id || idx + 1}`,
-              pfpUsername
+        pfpUsername,
+        lastOfferId: r.last_offerid || r.lastOfferId || null,
+        lastOfferStatus: (r.last_offer_status ?? r.lastOfferStatus ?? null)
             }
           })
           ownedHasMore = ownedData.length === PAGE_SIZE
@@ -293,7 +296,7 @@ export async function getServerSideProps(ctx) {
         const { data: othersData, count: othersCount, error: othersError } = await othersQuery
         if (othersError) throw othersError
         if (Array.isArray(othersData)) {
-          otherOwners = othersData.map((r, idx) => {
+      otherOwners = othersData.map((r, idx) => {
             const pfpUsername = r.pfp_username || r.username || null
             const cid = r.pfp_ipfs_cid || r.pfpCid || r.cid || null
             const dataUri = r.pfp_data_uri || ''
@@ -304,7 +307,9 @@ export async function getServerSideProps(ctx) {
               frontUrl,
               backUrl,
               pfpName: r.pfp_name || r.name || `#${r.nft_id || idx + 1}`,
-              pfpUsername
+        pfpUsername,
+        lastOfferId: r.last_offerid || r.lastOfferId || null,
+        lastOfferStatus: (r.last_offer_status ?? r.lastOfferStatus ?? null)
             }
           })
           othersHasMore = othersData.length === PAGE_SIZE
@@ -379,7 +384,9 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
       frontUrl,
       backUrl,
       pfpName: r.pfp_name || r.name || `#${r.nft_id || idx + 1}`,
-      pfpUsername
+  pfpUsername,
+  lastOfferId: r.last_offerid || r.lastOfferId || null,
+  lastOfferStatus: (r.last_offer_status ?? r.lastOfferStatus ?? null)
     }
   }, [])
 
@@ -764,7 +771,7 @@ Claim your free #1 go4me PFP on <span aria-hidden="true" style={{ display: 'inli
                     {copied ? 'Copied!' : 'Copy'}
                   </button>
                 </div>
-                {lastOfferId && (
+                {lastOfferId && user?.lastOfferStatus === 0 && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                     <Button
                       as='a'
@@ -808,6 +815,11 @@ Claim your free #1 go4me PFP on <span aria-hidden="true" style={{ display: 'inli
                       />
                       <Icon name='external' size='small' />
                     </Button>
+                  </div>
+                )}
+                {(!lastOfferId || user?.lastOfferStatus !== 0) && (
+                  <div className={styles.badgeRow} style={{ marginTop: 2 }}>
+                    <span className={`${styles.miniBadge} ${styles.warningBadge}`}>Next Copy Coming Soon!</span>
                   </div>
                 )}
               </div>
@@ -875,6 +887,48 @@ Claim your free #1 go4me PFP on <span aria-hidden="true" style={{ display: 'inli
                             >
                               @{item.pfpUsername}
                             </a>
+                          </div>
+                        )}
+                        {collectionTab === 'others' && (
+                          <div className={styles.badgeRow}>
+                            {item.lastOfferId && item.lastOfferStatus === 0 ? (
+                              <>
+                                <a
+                                  href={`https://dexie.space/offers/${item.lastOfferId}`}
+                                  target='_blank'
+                                  rel='noreferrer noopener'
+                                  className={styles.miniBadge}
+                                  aria-label='View latest offer on Dexie'
+                                  title='Dexie'
+                                >
+                                  <Image
+                                    src="https://raw.githubusercontent.com/dexie-space/dexie-kit/main/svg/duck.svg"
+                                    alt="Dexie"
+                                    width={16}
+                                    height={16}
+                                  />
+                                  Dexie
+                                </a>
+                                <a
+                                  href={`https://mintgarden.io/offers/${item.lastOfferId}`}
+                                  target='_blank'
+                                  rel='noreferrer noopener'
+                                  className={styles.miniBadge}
+                                  aria-label='View latest offer on Mintgarden'
+                                  title='Mintgarden'
+                                >
+                                  <Image
+                                    src="https://mintgarden.io/mint-logo-round.svg"
+                                    alt="MintGarden"
+                                    width={16}
+                                    height={16}
+                                  />
+                                  Mintgarden
+                                </a>
+                              </>
+                            ) : (
+                              <span className={`${styles.miniBadge} ${styles.warningBadge}`}>Next Copy Coming Soon!</span>
+                            )}
                           </div>
                         )}
                       </div>
