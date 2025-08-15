@@ -551,7 +551,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
             onClick={() => setView('totalSold')}
           />
           <Menu.Item
-            name='Total traded value'
+            name='Total Traded Value'
             active={view === 'totalTraded'}
             onClick={() => setView('totalTraded')}
           />
@@ -559,6 +559,12 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
             name='Badge Score'
             active={view === 'badgeScore'}
             onClick={() => setView('badgeScore')}
+          />
+          <Menu.Item
+            name='rarest'
+            content='Rarest go4s'
+            active={view === 'rarest'}
+            onClick={() => setView('rarest')}
           />
           <Menu.Item
             name='Recent Trades'

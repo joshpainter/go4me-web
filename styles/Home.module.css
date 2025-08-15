@@ -240,6 +240,36 @@
   text-decoration: none;
 }
 
+/* Larger variant for prominent badges (e.g., main profile Badge Score) */
+.largeBadge {
+  font-size: 12px;
+  line-height: 1.05;
+  padding: 7px 10px;
+  font-weight: 600;
+}
+
+/* Primary blue variant to match the home page CTA button */
+.primaryBadge {
+  background: linear-gradient(180deg, #7ab0ff 0%, #2f77ff 100%);
+  color: #fff;
+  border-color: #2f6dff;
+  box-shadow:
+    0 6px 14px rgba(47, 109, 255, 0.18),
+    0 2px 6px rgba(47, 109, 255, 0.12),
+    inset 0 1px 0 rgba(255,255,255,0.25),
+    inset 0 -1px 0 rgba(0,0,0,0.08);
+}
+[data-theme='dark'] .primaryBadge {
+  background: linear-gradient(180deg, #4a86ff 0%, #1f5fe6 100%);
+  border-color: #2b64e8;
+  color: #fff;
+  box-shadow:
+    0 6px 14px rgba(16, 36, 94, 0.6),
+    0 2px 6px rgba(16, 36, 94, 0.45),
+    inset 0 1px 0 rgba(255,255,255,0.18),
+    inset 0 -1px 0 rgba(0,0,0,0.22);
+}
+
 .lbSkeletonCard { position: relative; border: 1px solid var(--color-border); border-radius: 12px; padding: 8px; min-height: 280px; background: var(--color-card-bg); }
 .lbSkeletonImg { width: 100%; padding-top: 100%; border-radius: 8px; }
 .lbSkeletonLine { height: 12px; margin-top: 8px; }

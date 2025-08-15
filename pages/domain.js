@@ -693,6 +693,26 @@ Claim your free #1 go4me PFP on <span aria-hidden="true" style={{ display: 'inli
             {xchAddress && (
               <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                  {rootHostForLinks ? (
+                    <a
+                      href={`//${rootHostForLinks}/how-it-works`}
+                      className={`${styles.miniBadge} ${styles.largeBadge} ${styles.primaryBadge}`}
+                      title='Learn about $G4M airdrops and scoring'
+                      aria-label='Learn about $G4M airdrops and scoring'
+                    >
+                      Badge Score {formattedBadgeScore}
+                    </a>
+                  ) : (
+                    <Link href="/how-it-works" passHref>
+                      <a
+                        className={`${styles.miniBadge} ${styles.largeBadge} ${styles.primaryBadge}`}
+                        title='Learn about $G4M airdrops and scoring'
+                        aria-label='Learn about $G4M airdrops and scoring'
+                      >
+                        Badge Score {formattedBadgeScore}
+                      </a>
+                    </Link>
+                  )}
                   {(() => {
                     const full = xchAddress
                     const display = full.length > 20 ? `${full.slice(0,8)}...${full.slice(-8)}` : full
@@ -813,7 +833,7 @@ Claim your free #1 go4me PFP on <span aria-hidden="true" style={{ display: 'inli
           <div style={{ margin: '4px 0 18px', fontSize: 13, lineHeight: 1.4, color: 'var(--color-text-subtle)', maxWidth: 760 }}>
             {collectionTab === 'my' ? (
               <>
-                <span>Send go4me PFPs to the address above and they will show up here. Your current Badge Score for $G4M airdrops is {formattedBadgeScore}!</span>
+                <span>Send go4me PFPs to the address above and they will show up here.</span>
               </>
             ) : (
               <span>These collectors own your PFP. Why not return the favor?</span>
