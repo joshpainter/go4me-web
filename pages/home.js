@@ -251,6 +251,8 @@ export async function getServerSideProps(context) {
         rankTotalTradedValue: row.rank_total_traded_value,
   rankLastSale: row.rank_last_sale,
   rankTotalBadgeScore: row.rank_total_badge_score,
+  // Expose queue minutes if present on this view so we can show ETA on Coming Soon badges
+  rankQueuePosition: row.rank_queue_position ?? null,
   totalBadgeScore: row.total_badge_score || 0,
         _search: ((row.username) + ' ' + (row.name)).toLowerCase(),
       }
@@ -390,6 +392,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
             rankTotalTradedValue: row.rank_total_traded_value,
             rankLastSale: row.rank_last_sale,
             rankTotalBadgeScore: row.rank_total_badge_score,
+            rankQueuePosition: row.rank_queue_position ?? null,
             totalBadgeScore: row.total_badge_score || 0,
             _search: ((row.username) + ' ' + (row.name)).toLowerCase(),
           }
@@ -488,6 +491,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
           rankFewestCopiesSold: row.rank_fewest_copies_sold,
           rankLastSale: row.rank_last_sale,
           rankTotalBadgeScore: row.rank_total_badge_score,
+          rankQueuePosition: row.rank_queue_position ?? null,
           totalBadgeScore: row.total_badge_score || 0,
           _search: ((row.username) + ' ' + (row.name)).toLowerCase(),
         }
@@ -742,7 +746,11 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                       )}
                       {(!u.lastOfferId || u.lastOfferStatus !== 0) && (
                         <div className={styles.badgeRow}>
-                          <span className={`${styles.miniBadge} ${styles.warningBadge}`}>Next Copy Coming Soon!</span>
+                          <span className={`${styles.miniBadge} ${styles.warningBadge}`}>
+                            {Number.isFinite(u?.rankQueuePosition) && (u.rankQueuePosition ?? 0) > 0
+                              ? `Next mint in ~${formatEtaMinutes(u.rankQueuePosition)}`
+                              : 'Next Copy Coming Soon!'}
+                          </span>
                         </div>
                       )}
                     </>
@@ -792,7 +800,11 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                       )}
                       {(!u.lastOfferId || u.lastOfferStatus !== 0) && (
                         <div className={styles.badgeRow}>
-                          <span className={`${styles.miniBadge} ${styles.warningBadge}`}>Next Copy Coming Soon!</span>
+                          <span className={`${styles.miniBadge} ${styles.warningBadge}`}>
+                            {Number.isFinite(u?.rankQueuePosition) && (u.rankQueuePosition ?? 0) > 0
+                              ? `Next mint in ~${formatEtaMinutes(u.rankQueuePosition)}`
+                              : 'Next Copy Coming Soon!'}
+                          </span>
                         </div>
                       )}
                     </>
@@ -811,7 +823,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                           Next Edition #{(u.lastNftSeriesNumber ?? 0) + 1}
                         </span>
                         <span className={`${styles.miniBadge} ${styles.warningBadge}`} title='Estimated time to mint'>
-                          Time to Mint ~{formatEtaMinutes(u.rankQueuePosition ?? 0)}
+                          Next mint in ~{formatEtaMinutes(u.rankQueuePosition ?? 0)}
                         </span>
                       </div>
                     </>
@@ -861,7 +873,11 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                       )}
                       {(!u.lastOfferId || u.lastOfferStatus !== 0) && (
                         <div className={styles.badgeRow}>
-                          <span className={`${styles.miniBadge} ${styles.warningBadge}`}>Next Copy Coming Soon!</span>
+                          <span className={`${styles.miniBadge} ${styles.warningBadge}`}>
+                            {Number.isFinite(u?.rankQueuePosition) && (u.rankQueuePosition ?? 0) > 0
+                              ? `Next mint in ~${formatEtaMinutes(u.rankQueuePosition)}`
+                              : 'Next Copy Coming Soon!'}
+                          </span>
                         </div>
                       )}
                     </>

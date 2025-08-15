@@ -238,6 +238,8 @@ export async function getServerSideProps(ctx) {
       lastOfferStatus: row.last_offer_status ?? null,
       totalBadgeScore: row.total_badge_score || 0,
       rankCopiesSold: row.rank_copies_sold || null,
+      // Queue minutes for ETA under the profile Coming Soon badge
+      rankQueuePosition: row.rank_queue_position ?? null,
         }
       }
 
@@ -256,7 +258,7 @@ export async function getServerSideProps(ctx) {
         const { data: ownedData, count: ownedCount, error: ownedError } = await ownedQuery
         if (ownedError) throw ownedError
         if (Array.isArray(ownedData)) {
-      ownedPfps = ownedData.map((r, idx) => {
+          ownedPfps = ownedData.map((r, idx) => {
             const pfpUsername = r.pfp_username || r.username || null
             const cid = r.pfp_ipfs_cid || r.pfpCid || r.cid || null
             // Primary image from Supabase view
@@ -272,7 +274,8 @@ export async function getServerSideProps(ctx) {
               pfpName: r.pfp_name || r.name || `#${r.nft_id || idx + 1}`,
         pfpUsername,
         lastOfferId: r.last_offerid || r.lastOfferId || null,
-        lastOfferStatus: (r.last_offer_status ?? r.lastOfferStatus ?? null)
+        lastOfferStatus: (r.last_offer_status ?? r.lastOfferStatus ?? null),
+        rankQueuePosition: r.rank_queue_position ?? null
             }
           })
           ownedHasMore = ownedData.length === PAGE_SIZE
@@ -296,7 +299,7 @@ export async function getServerSideProps(ctx) {
         const { data: othersData, count: othersCount, error: othersError } = await othersQuery
         if (othersError) throw othersError
         if (Array.isArray(othersData)) {
-      otherOwners = othersData.map((r, idx) => {
+          otherOwners = othersData.map((r, idx) => {
             const pfpUsername = r.pfp_username || r.username || null
             const cid = r.pfp_ipfs_cid || r.pfpCid || r.cid || null
             const dataUri = r.pfp_data_uri || ''
@@ -309,7 +312,8 @@ export async function getServerSideProps(ctx) {
               pfpName: r.pfp_name || r.name || `#${r.nft_id || idx + 1}`,
         pfpUsername,
         lastOfferId: r.last_offerid || r.lastOfferId || null,
-        lastOfferStatus: (r.last_offer_status ?? r.lastOfferStatus ?? null)
+        lastOfferStatus: (r.last_offer_status ?? r.lastOfferStatus ?? null),
+        rankQueuePosition: r.rank_queue_position ?? null
             }
           })
           othersHasMore = othersData.length === PAGE_SIZE
@@ -386,7 +390,9 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
       pfpName: r.pfp_name || r.name || `#${r.nft_id || idx + 1}`,
   pfpUsername,
   lastOfferId: r.last_offerid || r.lastOfferId || null,
-  lastOfferStatus: (r.last_offer_status ?? r.lastOfferStatus ?? null)
+  lastOfferStatus: (r.last_offer_status ?? r.lastOfferStatus ?? null),
+  // If the view supplies queue minutes for this PFP, keep it so we can show ETA.
+  rankQueuePosition: r.rank_queue_position ?? null
     }
   }, [])
 
@@ -819,7 +825,12 @@ Claim your free #1 go4me PFP on <span aria-hidden="true" style={{ display: 'inli
                 )}
                 {(!lastOfferId || user?.lastOfferStatus !== 0) && (
                   <div className={styles.badgeRow} style={{ marginTop: 2 }}>
-                    <span className={`${styles.miniBadge} ${styles.warningBadge}`}>Next Copy Coming Soon!</span>
+                    <span className={`${styles.miniBadge} ${styles.warningBadge}`}>
+                      {/* If we ever enrich the user profile with queue minutes, render an ETA. */}
+                      {Number.isFinite(user?.rankQueuePosition) && (user.rankQueuePosition ?? 0) > 0
+                        ? `Next mint in ~${(function(mins){ const m=Math.max(0,Math.round(mins||0)); if(m>=60){const h=Math.floor(m/60),r=m%60; return r?`${h}h ${r}m`:`${h}h`; } return `${m} minute${m===1?'':'s'}`; })(user.rankQueuePosition)}`
+                        : 'Next Copy Coming Soon!'}
+                    </span>
                   </div>
                 )}
               </div>
@@ -927,7 +938,11 @@ Claim your free #1 go4me PFP on <span aria-hidden="true" style={{ display: 'inli
                                 </a>
                               </>
                             ) : (
-                              <span className={`${styles.miniBadge} ${styles.warningBadge}`}>Next Copy Coming Soon!</span>
+                              <span className={`${styles.miniBadge} ${styles.warningBadge}`}>
+                                {Number.isFinite(item?.rankQueuePosition) && (item.rankQueuePosition ?? 0) > 0
+                                  ? `Next mint in ~${(function(mins){ const m=Math.max(0,Math.round(mins||0)); if(m>=60){const h=Math.floor(m/60),r=m%60; return r?`${h}h ${r}m`:`${h}h`; } return `${m} minute${m===1?'':'s'}`; })(item.rankQueuePosition)}`
+                                  : 'Next Copy Coming Soon!'}
+                              </span>
                             )}
                           </div>
                         )}
