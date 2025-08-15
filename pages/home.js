@@ -171,7 +171,8 @@ export async function getServerSideProps(context) {
       totalSold: { column: 'rank_copies_sold', ascending: true },
       totalTraded: { column: 'rank_total_traded_value', ascending: true },
       badgeScore: { column: 'rank_total_badge_score', ascending: true },
-      recentTrades: { column: 'rank_last_sale', ascending: true }
+      recentTrades: { column: 'rank_last_sale', ascending: true },
+      rarest: { column: 'rank_fewest_copies_sold', ascending: true }
     }
     const orderSpec = orderMap[currentView] || orderMap.totalSold
 
@@ -211,6 +212,7 @@ export async function getServerSideProps(context) {
         lastOfferId: row.last_offerid,
   lastSaleAtMs: row.last_sale_at ? new Date(row.last_sale_at).getTime() : null,
         rankCopiesSold: row.rank_copies_sold,
+        rankFewestCopiesSold: row.rank_fewest_copies_sold,
         rankTotalTradedValue: row.rank_total_traded_value,
   rankLastSale: row.rank_last_sale,
   rankTotalBadgeScore: row.rank_total_badge_score,
@@ -291,7 +293,8 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
           totalSold: { column: 'rank_copies_sold', ascending: true },
           totalTraded: { column: 'rank_total_traded_value', ascending: true },
           badgeScore: { column: 'rank_total_badge_score', ascending: true },
-          recentTrades: { column: 'rank_last_sale', ascending: true }
+          recentTrades: { column: 'rank_last_sale', ascending: true },
+          rarest: { column: 'rank_fewest_copies_sold', ascending: true }
         }
         const orderSpec = orderMap[view] || orderMap.totalSold
         let qb = supabase
@@ -324,6 +327,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
             lastOfferId: row.last_offerid,
             lastSaleAtMs: row.last_sale_at ? new Date(row.last_sale_at).getTime() : null,
             rankCopiesSold: row.rank_copies_sold,
+            rankFewestCopiesSold: row.rank_fewest_copies_sold,
             rankTotalTradedValue: row.rank_total_traded_value,
             rankLastSale: row.rank_last_sale,
             rankTotalBadgeScore: row.rank_total_badge_score,
@@ -363,7 +367,8 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
         totalSold: { column: 'total_sold', ascending: false },
         totalTraded: { column: 'total_traded_value', ascending: false },
         badgeScore: { column: 'rank_total_badge_score', ascending: true },
-        recentTrades: { column: 'rank_last_sale', ascending: true }
+        recentTrades: { column: 'rank_last_sale', ascending: true },
+        rarest: { column: 'rank_fewest_copies_sold', ascending: true }
       }
       const orderSpec = orderMap[view] || orderMap.totalSold
       let qb = supabase
@@ -397,6 +402,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
           lastSaleAtMs: row.last_sale_at ? new Date(row.last_sale_at).getTime() : null,
           rankCopiesSold: row.rank_copies_sold,
           rankTotalTradedValue: row.rank_total_traded_value,
+          rankFewestCopiesSold: row.rank_fewest_copies_sold,
           rankLastSale: row.rank_last_sale,
           rankTotalBadgeScore: row.rank_total_badge_score,
           totalBadgeScore: row.total_badge_score || 0,
@@ -447,6 +453,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
     // Data already server-ordered; fallback sort if needed
     const arr = [...loadedUsers]
   if (view === 'totalTraded') arr.sort((a, b) => (a.rankTotalTradedValue || 0) - (b.rankTotalTradedValue || 0))
+  else if (view === 'rarest') arr.sort((a, b) => (a.rankFewestCopiesSold || 0) - (b.rankFewestCopiesSold || 0))
   else if (view === 'badgeScore') arr.sort((a, b) => (a.rankTotalBadgeScore || 0) - (b.rankTotalBadgeScore || 0))
   else if (view === 'recentTrades') arr.sort((a, b) => (a.rankLastSale || 0) - (b.rankLastSale || 0))
   else arr.sort((a, b) => (a.rankCopiesSold || 0) - (b.rankCopiesSold || 0))
@@ -581,7 +588,8 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                   view === 'totalTraded' ? (u.rankTotalTradedValue || u.rankCopiesSold || idx + 1)
                     : view === 'badgeScore' ? (u.rankTotalBadgeScore || idx + 1)
                     : view === 'recentTrades' ? (u.rankLastSale || idx + 1)
-                      : (u.rankCopiesSold || idx + 1)
+                    : view === 'rarest' ? (u.rankFewestCopiesSold || idx + 1)
+                    : (u.rankCopiesSold || idx + 1)
                 }</div>
                 <PfpFlipCard user={u} rootHostForLinks={rootHostForLinks} />
                 <div className={styles.cardBody}>
@@ -599,7 +607,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                     <div className={styles.username}>@{u.username}</div>
                   )}
                   {u.fullName && <div className={styles.fullName}>{u.fullName}</div>}
-                  {view === 'totalSold' && (
+                  {(view === 'totalSold' || view === 'rarest') && (
                     <>
                       <div className={styles.badgeRow}>
                         <span className={styles.miniBadge} title='Total sold'>Sold {u.totalSold}</span>
@@ -701,7 +709,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                       <span className={styles.miniBadge} title={new Date(u.lastSaleAtMs).toLocaleString()}>Last sale {formatRelativeAgo(u.lastSaleAtMs)}</span>
                     </div>
                   )}
-                  {(view !== 'totalSold' && view !== 'totalTraded') && (
+                  {(view !== 'totalSold' && view !== 'totalTraded' && view !== 'rarest') && (
                     <>
                       {u.lastOfferId && (
                         <div className={styles.badgeRow}>
