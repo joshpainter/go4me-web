@@ -92,7 +92,7 @@ function PfpFlipCard({ user, rootHostForLinks }) {
         title={isFlipped ? 'Show new PFP' : 'Show original PFP'}
         onClick={(e) => { e.stopPropagation(); e.preventDefault(); setIsFlipped(v => !v) }}
         className={styles.rankBadge}
-  style={{ top: 0, left: 0, right: 'auto', zIndex: 5, border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', letterSpacing: 0, lineHeight: 1, backgroundColor: 'var(--badge-bg-solid)', color: 'var(--badge-fg-solid)' }}
+        style={{ bottom: 8, right: 8, zIndex: 5, border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', letterSpacing: 0, lineHeight: 1, backgroundColor: 'var(--badge-bg-solid)', color: 'var(--badge-fg-solid)', top: 'auto', left: 'auto' }}
       >
         <Icon name='refresh' style={{ margin: 0 }} />
       </div>
@@ -552,7 +552,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
       <Container style={{ marginTop: 30 }}>
         <Menu secondary pointing>
           <Menu.Item
-            name='Total sold'
+            name='Total Editions Sold'
             active={view === 'totalSold'}
             onClick={() => setView('totalSold')}
           />
@@ -577,7 +577,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
           <div className={styles.lbGrid}>
             {renderList.map((u, idx) => (
               <div key={u.id} className={styles.lbCard}>
-                <div className={styles.rankBadge} style={{ right: 8, left: 'auto', backgroundColor: 'var(--badge-bg-solid)', color: 'var(--badge-fg-solid)' }}>#{
+                <div className={styles.rankBadge} style={{ backgroundColor: 'var(--badge-bg-solid)', color: 'var(--badge-fg-solid)' }}>#{
                   view === 'totalTraded' ? (u.rankTotalTradedValue || u.rankCopiesSold || idx + 1)
                     : view === 'badgeScore' ? (u.rankTotalBadgeScore || idx + 1)
                     : view === 'recentTrades' ? (u.rankLastSale || idx + 1)
