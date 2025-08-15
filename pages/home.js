@@ -44,6 +44,17 @@ const formatDuration = (ms) => {
   return `${s}s`
 }
 
+// Format minutes as minutes, or hours + minutes if >= 60
+const formatEtaMinutes = (mins) => {
+  const m = Math.max(0, Math.round(mins || 0))
+  if (m >= 60) {
+    const h = Math.floor(m / 60)
+    const r = m % 60
+    return r ? `${h}h ${r}m` : `${h}h`
+  }
+  return `${m} minute${m === 1 ? '' : 's'}`
+}
+
 // Card image with flip interaction: front = new PFP (avatarUrl), back = original (xPfpUrl) in a circle mask
 function PfpFlipCard({ user, rootHostForLinks }) {
   const [isFlipped, setIsFlipped] = useState(false)
@@ -174,26 +185,49 @@ export async function getServerSideProps(context) {
       recentTrades: { column: 'rank_last_sale', ascending: true },
       rarest: { column: 'rank_fewest_copies_sold', ascending: true }
     }
-    const orderSpec = orderMap[currentView] || orderMap.totalSold
-
-    let queryBuilder = supabase
-      .from('get_leaderboard')
-      .select('*')
-      .order(orderSpec.column, { ascending: orderSpec.ascending })
-      .range(0, PAGE_SIZE - 1)
-    if (q) {
-      // Server-side filtering on username or full name
-      queryBuilder = queryBuilder.or(`username.ilike.%${q}%`, `full_name.ilike.%${q}%`)
+    if (currentView === 'queue') {
+      let qb = supabase
+        .from('get_ungenerated_nfts')
+        .select('*')
+        .order('rank_queue_position', { ascending: true })
+        .range(0, PAGE_SIZE - 1)
+      if (q) {
+        qb = qb.or(`username.ilike.%${q}%,name.ilike.%${q}%`)
+      }
+      const resp = await qb
+      data = resp.data
+      error = resp.error
+    } else {
+      const orderSpec = orderMap[currentView] || orderMap.totalSold
+      let qb = supabase
+        .from('get_leaderboard')
+        .select('*')
+        .order(orderSpec.column, { ascending: orderSpec.ascending })
+        .range(0, PAGE_SIZE - 1)
+      if (q) {
+        qb = qb.or(`username.ilike.%${q}%,name.ilike.%${q}%`)
+      }
+      const resp = await qb
+      data = resp.data
+      error = resp.error
     }
-    const viewQuery = await queryBuilder
-
-    data = viewQuery.data
-    error = viewQuery.error
 
     if (error) throw error
 
 
     users = (data || []).map(row => {
+      if (currentView === 'queue') {
+        return {
+          id: row.author_id || row.username,
+          username: row.username,
+          fullName: row.full_name || row.name,
+          avatarUrl: row.pfp_ipfs_cid && row.username ? ('https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png') : '',
+          xPfpUrl: row.pfp_ipfs_cid && row.username ? ('https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png') : '',
+          lastNftSeriesNumber: row.last_nft_series_number ?? 0,
+          rankQueuePosition: row.rank_queue_position ?? 0,
+          _search: ((row.username || '') + ' ' + (row.full_name || row.name || '')).toLowerCase(),
+        }
+      }
       const totalSalesAmount = row.xch_total_sales_amount ?? 0
       const avgSalesAmount = row.xch_average_sales_amount ?? 0
       const avgTimeToSell = row.average_time_to_sell ?? 0
@@ -297,19 +331,42 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
           recentTrades: { column: 'rank_last_sale', ascending: true },
           rarest: { column: 'rank_fewest_copies_sold', ascending: true }
         }
-        const orderSpec = orderMap[view] || orderMap.totalSold
-        let qb = supabase
-          .from('get_leaderboard')
-          .select('*')
-          .order(orderSpec.column, { ascending: orderSpec.ascending })
-          .range(0, PAGE_SIZE - 1)
-        if (query) {
-          qb = qb.or(`username.ilike.%${query}%`, `full_name.ilike.%${query}%`)
+        let data, error
+        if (view === 'queue') {
+          let qb = supabase
+            .from('get_ungenerated_nfts')
+            .select('*')
+            .order('rank_queue_position', { ascending: true })
+            .range(0, PAGE_SIZE - 1)
+          if (query) qb = qb.or(`username.ilike.%${query}%,name.ilike.%${query}%`)
+          const resp = await qb
+          data = resp.data; error = resp.error
+        } else {
+          const orderSpec = orderMap[view] || orderMap.totalSold
+          let qb = supabase
+            .from('get_leaderboard')
+            .select('*')
+            .order(orderSpec.column, { ascending: orderSpec.ascending })
+            .range(0, PAGE_SIZE - 1)
+          if (query) qb = qb.or(`username.ilike.%${query}%,name.ilike.%${query}%`)
+          const resp = await qb
+          data = resp.data; error = resp.error
         }
-        const { data, error } = await qb
         if (error) throw error
         if (isCancelled) return
         const mapped = (data || []).map(row => {
+          if (view === 'queue') {
+            return {
+              id: row.author_id || row.username,
+              username: row.username,
+              fullName: row.full_name || row.name,
+              avatarUrl: row.pfp_ipfs_cid && row.username ? ('https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png') : '',
+              xPfpUrl: row.pfp_ipfs_cid && row.username ? ('https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png') : '',
+              lastNftSeriesNumber: row.last_nft_series_number ?? 0,
+              rankQueuePosition: row.rank_queue_position ?? 0,
+              _search: ((row.username || '') + ' ' + (row.full_name || row.name || '')).toLowerCase(),
+            }
+          }
           const totalSalesAmount = row.xch_total_sales_amount ?? row.total_traded_value ?? row.traded_xch ?? 0
           const avgSalesAmount = row.xch_average_sale_amount ?? row.xch_average_sales_amount ?? 0
           const avgTimeToSell = row.average_time_to_sell ?? 0
@@ -372,18 +429,41 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
         recentTrades: { column: 'rank_last_sale', ascending: true },
         rarest: { column: 'rank_fewest_copies_sold', ascending: true }
       }
-      const orderSpec = orderMap[view] || orderMap.totalSold
-      let qb = supabase
-        .from('get_leaderboard')
-        .select('*')
-        .order(orderSpec.column, { ascending: orderSpec.ascending })
-        .range(from, to)
-      if (query) {
-        qb = qb.or(`username.ilike.%${query}%,full_name.ilike.%${query}%`)
+      let data, error
+      if (view === 'queue') {
+        let qb = supabase
+          .from('get_ungenerated_nfts')
+          .select('*')
+          .order('rank_queue_position', { ascending: true })
+          .range(from, to)
+  if (query) qb = qb.or(`username.ilike.%${query}%,name.ilike.%${query}%`)
+        const resp = await qb
+        data = resp.data; error = resp.error
+      } else {
+        const orderSpec = orderMap[view] || orderMap.totalSold
+        let qb = supabase
+          .from('get_leaderboard')
+          .select('*')
+          .order(orderSpec.column, { ascending: orderSpec.ascending })
+          .range(from, to)
+  if (query) qb = qb.or(`username.ilike.%${query}%,name.ilike.%${query}%`)
+        const resp = await qb
+        data = resp.data; error = resp.error
       }
-      const { data, error } = await qb
       if (error) throw error
       const mapped = (data || []).map(row => {
+        if (view === 'queue') {
+          return {
+            id: row.author_id || row.username,
+            username: row.username,
+            fullName: row.full_name || row.name,
+            avatarUrl: row.pfp_ipfs_cid && row.username ? ('https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png') : '',
+            xPfpUrl: row.pfp_ipfs_cid && row.username ? ('https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png') : '',
+            lastNftSeriesNumber: row.last_nft_series_number ?? 0,
+            rankQueuePosition: row.rank_queue_position ?? 0,
+            _search: ((row.username || '') + ' ' + (row.full_name || row.name || '')).toLowerCase(),
+          }
+        }
         const totalSalesAmount = row.xch_total_sales_amount ?? row.total_traded_value ?? row.traded_xch ?? 0
         const avgSalesAmount = row.xch_average_sale_amount ?? row.xch_average_sales_amount ?? 0
         const avgTimeToSell = row.average_time_to_sell ?? 0
@@ -455,7 +535,8 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
   const renderList = useMemo(() => {
     // Data already server-ordered; fallback sort if needed
     const arr = [...loadedUsers]
-  if (view === 'totalTraded') arr.sort((a, b) => (a.rankTotalTradedValue || 0) - (b.rankTotalTradedValue || 0))
+  if (view === 'queue') arr.sort((a, b) => (a.rankQueuePosition || 0) - (b.rankQueuePosition || 0))
+  else if (view === 'totalTraded') arr.sort((a, b) => (a.rankTotalTradedValue || 0) - (b.rankTotalTradedValue || 0))
   else if (view === 'rarest') arr.sort((a, b) => (a.rankFewestCopiesSold || 0) - (b.rankFewestCopiesSold || 0))
   else if (view === 'badgeScore') arr.sort((a, b) => (a.rankTotalBadgeScore || 0) - (b.rankTotalBadgeScore || 0))
   else if (view === 'recentTrades') arr.sort((a, b) => (a.rankLastSale || 0) - (b.rankLastSale || 0))
@@ -581,6 +662,11 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
             active={view === 'recentTrades'}
             onClick={() => setView('recentTrades')}
           />
+          <Menu.Item
+            name='Queue'
+            active={view === 'queue'}
+            onClick={() => setView('queue')}
+          />
         </Menu>
 
         <Segment basic style={{ padding: 0 }}>
@@ -588,7 +674,8 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
             {renderList.map((u, idx) => (
               <div key={u.id} className={styles.lbCard}>
                 <div className={styles.rankBadge} style={{ backgroundColor: 'var(--badge-bg-solid)', color: 'var(--badge-fg-solid)' }}>#{
-                  view === 'totalTraded' ? (u.rankTotalTradedValue || u.rankCopiesSold || idx + 1)
+                  view === 'queue' ? (u.rankQueuePosition || idx + 1)
+                    : view === 'totalTraded' ? (u.rankTotalTradedValue || u.rankCopiesSold || idx + 1)
                     : view === 'badgeScore' ? (u.rankTotalBadgeScore || idx + 1)
                     : view === 'recentTrades' ? (u.rankLastSale || idx + 1)
                     : view === 'rarest' ? (u.rankFewestCopiesSold || idx + 1)
@@ -717,12 +804,24 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                       </div>
                     </>
                   )}
+                  {view === 'queue' && (
+                    <>
+                      <div className={styles.badgeRow}>
+                        <span className={styles.miniBadge} title='Next edition number'>
+                          Next Edition #{(u.lastNftSeriesNumber ?? 0) + 1}
+                        </span>
+                        <span className={styles.miniBadge} title='Estimated time to mint'>
+                          Time to Mint ~{formatEtaMinutes(u.rankQueuePosition ?? 0)}
+                        </span>
+                      </div>
+                    </>
+                  )}
                   {view === 'recentTrades' && u.lastSaleAtMs && (
                     <div className={styles.badgeRow}>
                       <span className={styles.miniBadge} title={new Date(u.lastSaleAtMs).toLocaleString()}>Last sale {formatRelativeAgo(u.lastSaleAtMs)}</span>
                     </div>
                   )}
-                  {(view !== 'totalSold' && view !== 'totalTraded' && view !== 'rarest') && (
+                  {(view !== 'totalSold' && view !== 'totalTraded' && view !== 'rarest' && view !== 'queue') && (
                     <>
                       {u.lastOfferId && u.lastOfferStatus === 0 && (
                         <div className={styles.badgeRow}>
