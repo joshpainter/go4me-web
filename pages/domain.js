@@ -9,7 +9,7 @@ import { useTheme } from './_app'
 import { useRouter } from 'next/router'
 
 // Flip component for the main profile PFP on the domain page
-function DomainPfpFlip({ avatarUrl, xPfpUrl, username, linkHref }) {
+function DomainPfpFlip({ avatarUrl, xPfpUrl, username, linkHref, rankCopiesSold }) {
   const [isFlipped, setIsFlipped] = useState(false)
   const [isTouch, setIsTouch] = useState(false)
 
@@ -51,12 +51,16 @@ function DomainPfpFlip({ avatarUrl, xPfpUrl, username, linkHref }) {
       onMouseEnter={() => { if (!isTouch) setIsFlipped(true) }}
       onMouseLeave={() => { if (!isTouch) setIsFlipped(false) }}
     >
-      {/* Flip toggle pill in upper-left, matching badge styling */}
+      {/* Rank badge in upper-left to match home cards */}
+      {Number.isFinite(rankCopiesSold) && rankCopiesSold > 0 && (
+        <div className={styles.rankBadge} style={{ top: 0, left: 0, right: 'auto', zIndex: 5, backgroundColor: 'var(--badge-bg-solid)', color: 'var(--badge-fg-solid)' }}>#{rankCopiesSold}</div>
+      )}
+      {/* Flip toggle in lower-right to match home */}
       <div
         className={styles.rankBadge}
         title={isFlipped ? 'Show new PFP' : 'Show original PFP'}
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsFlipped(v => !v) }}
-        style={{ top: 0, left: 0, right: 'auto', zIndex: 5, border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', letterSpacing: 0, lineHeight: 1, backgroundColor: 'var(--badge-bg-solid)', color: 'var(--badge-fg-solid)' }}
+        style={{ bottom: 8, right: 8, top: 'auto', left: 'auto', zIndex: 5, border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', letterSpacing: 0, lineHeight: 1, backgroundColor: 'var(--badge-bg-solid)', color: 'var(--badge-fg-solid)' }}
       >
         <Icon name='refresh' style={{ margin: 0 }} />
       </div>
@@ -88,6 +92,93 @@ function DomainPfpFlip({ avatarUrl, xPfpUrl, username, linkHref }) {
             ) : (
               <div style={{ position: 'absolute', top: '50%', left: '50%', width: '88%', height: '88%', transform: 'translate(-50%, -50%)', borderRadius: '50%', overflow: 'hidden' }}>
                 <Image src={xPfpUrl || avatarUrl} alt={commonAlt} layout='fill' objectFit='cover' />
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Flip component for collection grid thumbnails (cards)
+function PfpFlipThumb({
+  frontUrl,
+  backUrl,
+  username,
+  profileHref,
+}) {
+  const [isFlipped, setIsFlipped] = useState(false)
+  const [isTouch, setIsTouch] = useState(false)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const touchCapable = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0
+    setIsTouch(!!touchCapable)
+  }, [])
+
+  const commonAlt = username ? `${username} avatar` : 'avatar'
+
+  const flipInnerStyle = {
+    position: 'absolute',
+    inset: 0,
+    transformStyle: 'preserve-3d',
+    transition: 'transform 360ms cubic-bezier(0.2, 0.7, 0.2, 1)',
+    transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)'
+  }
+  const faceStyle = {
+    position: 'absolute',
+    inset: 0,
+    backfaceVisibility: 'hidden',
+    WebkitBackfaceVisibility: 'hidden',
+    borderRadius: 8,
+    overflow: 'hidden'
+  }
+  const backStyle = {
+    ...faceStyle,
+    transform: 'rotateY(180deg)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
+  }
+
+  return (
+    <div
+      className={styles.cardImgWrap}
+      style={{ position: 'relative' }}
+      onMouseEnter={() => { if (!isTouch) setIsFlipped(true) }}
+      onMouseLeave={() => { if (!isTouch) setIsFlipped(false) }}
+      onClick={(e) => { if (isTouch) { e.preventDefault(); setIsFlipped(v => !v) } }}
+    >
+      {/* Removed inline flip button for grid cards; hover flips on desktop, tap toggles on touch */}
+
+      <div style={{ position: 'absolute', inset: 0, perspective: 900 }}>
+        <div style={flipInnerStyle}>
+          {/* Front */}
+          <div style={faceStyle}>
+            {profileHref ? (
+              <a href={profileHref} aria-label={username ? `Open ${username}.go4.me` : 'Open profile'}>
+                <div style={{ position: 'absolute', inset: 0 }}>
+                  <Image src={frontUrl} alt={commonAlt} layout='fill' objectFit='cover' />
+                </div>
+              </a>
+            ) : (
+              <div style={{ position: 'absolute', inset: 0 }}>
+                <Image src={frontUrl} alt={commonAlt} layout='fill' objectFit='cover' />
+              </div>
+            )}
+          </div>
+          {/* Back (circle mask) */}
+          <div style={backStyle}>
+            {profileHref ? (
+              <a href={profileHref} aria-label={username ? `Open ${username}.go4.me` : 'Open profile'} style={{ position: 'absolute', inset: 0 }}>
+                <div style={{ position: 'absolute', top: '50%', left: '50%', width: '80%', height: '80%', transform: 'translate(-50%, -50%)', borderRadius: '50%', overflow: 'hidden', boxShadow: '0 8px 20px rgba(0,0,0,0.25)' }}>
+                  <Image src={backUrl} alt={commonAlt} layout='fill' objectFit='cover' />
+                </div>
+              </a>
+            ) : (
+              <div style={{ position: 'absolute', top: '50%', left: '50%', width: '80%', height: '80%', transform: 'translate(-50%, -50%)', borderRadius: '50%', overflow: 'hidden', boxShadow: '0 8px 20px rgba(0,0,0,0.25)' }}>
+                <Image src={backUrl} alt={commonAlt} layout='fill' objectFit='cover' />
               </div>
             )}
           </div>
@@ -130,7 +221,7 @@ export async function getServerSideProps(ctx) {
         .ilike('username', username)
         .limit(1)
       if (error) throw error
-      if (data && data.length > 0) {
+    if (data && data.length > 0) {
         const row = data[0]
         user = {
           username: row.username,
@@ -140,9 +231,11 @@ export async function getServerSideProps(ctx) {
           xPfpUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png',
           xchAddress: row.xch_address || '',
           lastOfferId: row.last_offerid || '',
-          totalBadgeScore: row.total_badge_score || 0,
+      totalBadgeScore: row.total_badge_score || 0,
+      rankCopiesSold: row.rank_copies_sold || null,
         }
       }
+
 
       // Attempt to load owned PFP NFTs (best-effort; swallow errors so profile still renders)
       try {
@@ -159,12 +252,20 @@ export async function getServerSideProps(ctx) {
         if (ownedError) throw ownedError
         if (Array.isArray(ownedData)) {
           ownedPfps = ownedData.map((r, idx) => {
-            const image = r.thumbnail_uri
+            const pfpUsername = r.pfp_username || r.username || null
+            const cid = r.pfp_ipfs_cid || r.pfpCid || r.cid || null
+            // Primary image from Supabase view
+            const dataUri = r.pfp_data_uri || ''
+            // Front prefers data URI; fallback to computed go4me image; last resort: any other provided url
+            const frontUrl = dataUri || ((cid && pfpUsername) ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-go4me.png` : (r.image_url || r.generated_pfp_url || ''))
+            // Back prefers computed original X image; fallback to data URI
+            const backUrl = (cid && pfpUsername) ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-x.png` : (dataUri || r.image_url || r.generated_pfp_url || '')
             return {
               id: r.nft_id || r.id || `owned-${idx}`,
-              image,
+              frontUrl,
+              backUrl,
               pfpName: r.pfp_name || r.name || `#${r.nft_id || idx + 1}`,
-              pfpUsername: r.pfp_username || r.username || null
+              pfpUsername
             }
           })
           ownedHasMore = ownedData.length === PAGE_SIZE
@@ -189,12 +290,17 @@ export async function getServerSideProps(ctx) {
         if (othersError) throw othersError
         if (Array.isArray(othersData)) {
           otherOwners = othersData.map((r, idx) => {
-            const image = r.thumbnail_uri
+            const pfpUsername = r.pfp_username || r.username || null
+            const cid = r.pfp_ipfs_cid || r.pfpCid || r.cid || null
+            const dataUri = r.pfp_data_uri || ''
+            const frontUrl = dataUri || ((cid && pfpUsername) ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-go4me.png` : (r.image_url || r.generated_pfp_url || ''))
+            const backUrl = (cid && pfpUsername) ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-x.png` : (dataUri || r.image_url || r.generated_pfp_url || '')
             return {
               id: r.nft_id || r.id || `other-${idx}`,
-              image,
+              frontUrl,
+              backUrl,
               pfpName: r.pfp_name || r.name || `#${r.nft_id || idx + 1}`,
-              pfpUsername: r.pfp_username || r.username || null
+              pfpUsername
             }
           })
           othersHasMore = othersData.length === PAGE_SIZE
@@ -258,12 +364,20 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
     if (typeof window !== 'undefined' && !('IntersectionObserver' in window)) setIntersectionSupported(false)
   }, [])
 
-  const mapRow = useCallback((r, idx, prefix='dyn') => ({
-    id: r.nft_id || r.id || `${prefix}-${idx}`,
-    image: r.thumbnail_uri || r.image_url || r.generated_pfp_url || '',
-    pfpName: r.pfp_name || r.name || `#${r.nft_id || idx + 1}`,
-    pfpUsername: r.pfp_username || r.username || null
-  }), [])
+  const mapRow = useCallback((r, idx, prefix='dyn') => {
+    const dataUri = r.pfp_data_uri || ''
+    const pfpUsername = r.pfp_username || r.username || null
+    const cid = r.pfp_ipfs_cid || r.pfpCid || r.cid || null
+    const frontUrl = dataUri || ((cid && pfpUsername) ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-go4me.png` : (r.image_url || r.generated_pfp_url || ''))
+    const backUrl = (cid && pfpUsername) ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-x.png` : (dataUri || r.image_url || r.generated_pfp_url || '')
+    return {
+      id: r.nft_id || r.id || `${prefix}-${idx}`,
+      frontUrl,
+      backUrl,
+      pfpName: r.pfp_name || r.name || `#${r.nft_id || idx + 1}`,
+      pfpUsername
+    }
+  }, [])
 
   const loadMore = useCallback(async () => {
     if (isLoadingMore) return
@@ -556,7 +670,7 @@ Claim your free #1 go4me PFP on <span aria-hidden="true" style={{ display: 'inli
   <div className={styles.profileHeader} style={{ marginTop: (username && username.toLowerCase() === 'hoffmang') ? '0' : '1rem', width: '100%', maxWidth: 1100, marginLeft: 'auto', marginRight: 'auto', alignSelf: 'stretch' }}>
       <div className={styles.profileLeft}>
             <div className={styles.avatarWrap}>
-        <DomainPfpFlip avatarUrl={avatarUrl} xPfpUrl={xPfpUrl} username={username} linkHref={avatarUrl || undefined} />
+  <DomainPfpFlip avatarUrl={avatarUrl} xPfpUrl={xPfpUrl} username={username} linkHref={avatarUrl || undefined} rankCopiesSold={user?.rankCopiesSold} />
             </div>
           </div>
           <div className={styles.profileRight}>
@@ -714,21 +828,16 @@ Claim your free #1 go4me PFP on <span aria-hidden="true" style={{ display: 'inli
               <div className={styles.lbGrid} style={{ alignItems: 'stretch' }}>
                 {list.map(item => {
                   const subHref = item.pfpUsername ? `//${item.pfpUsername}.${(rootHostForLinks || 'go4.me')}/` : null
+                  const frontUrl = item.frontUrl
+                  const backUrl = item.backUrl
                   return (
                     <div key={item.id} className={styles.lbCard} style={{ minHeight: 230 }}>
-                      {subHref ? (
-                        <a
-                          href={subHref}
-                          className={styles.cardImgWrap}
-                          aria-label={`Open ${item.pfpUsername}.go4.me`}
-                        >
-                          <Image src={item.image} alt={item.pfpName || item.pfpUsername || 'pfp'} layout='fill' objectFit='cover' />
-                        </a>
-                      ) : (
-                        <div className={styles.cardImgWrap}>
-                          <Image src={item.image} alt={item.pfpName || item.pfpUsername || 'pfp'} layout='fill' objectFit='cover' />
-                        </div>
-                      )}
+                      <PfpFlipThumb
+                        frontUrl={frontUrl}
+                        backUrl={backUrl}
+                        username={item.pfpUsername}
+                        profileHref={subHref || undefined}
+                      />
                       <div className={styles.cardBody}>
                         {item.pfpName && (
                           <div className={styles.fullName} style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text)' }} title={item.pfpName}>{item.pfpName}</div>

@@ -184,7 +184,12 @@
   min-height: 280px;
 }
 
-.lbCard:hover { box-shadow: var(--shadow-elev-2); transform: translateY(-3px); }
+.lbCard:hover {
+  /* remove hover lift; add subtle border glow */
+  transform: none;
+  border-color: var(--color-link);
+  box-shadow: var(--shadow-elev-2), 0 0 0 2px rgba(66, 124, 255, 0.22);
+}
 
 .rankBadge {
   position: absolute;
