@@ -251,7 +251,7 @@
 /* Primary blue variant to match the home page CTA button */
 .primaryBadge {
   background: linear-gradient(180deg, #7ab0ff 0%, #2f77ff 100%);
-  color: #fff;
+  color: #fff !important;
   border-color: #2f6dff;
   box-shadow:
     0 6px 14px rgba(47, 109, 255, 0.18),
@@ -259,16 +259,21 @@
     inset 0 1px 0 rgba(255,255,255,0.25),
     inset 0 -1px 0 rgba(0,0,0,0.08);
 }
+[data-theme='dark'] .primaryBadge { color: #fff !important; }
+.miniBadge.primaryBadge:hover { color: #fff !important; text-decoration: none; }
+.primaryBadge:hover { color: #fff !important; text-decoration: none; }
 [data-theme='dark'] .primaryBadge {
   background: linear-gradient(180deg, #4a86ff 0%, #1f5fe6 100%);
   border-color: #2b64e8;
-  color: #fff;
+  color: #fff !important;
   box-shadow:
     0 6px 14px rgba(16, 36, 94, 0.6),
     0 2px 6px rgba(16, 36, 94, 0.45),
     inset 0 1px 0 rgba(255,255,255,0.18),
     inset 0 -1px 0 rgba(0,0,0,0.22);
 }
+[data-theme='dark'] .miniBadge.primaryBadge:hover { color: #fff !important; }
+[data-theme='dark'] .primaryBadge:hover { color: #fff !important; }
 
 /* Warning badge (yellow) */
 .warningBadge {
