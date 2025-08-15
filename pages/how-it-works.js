@@ -135,7 +135,14 @@ export default function HowItWorks({ rootHostForLinks }) {
               Your total score will be calculated and sent to your XCH address.
             </p>
             <p>
-              What can you do with $G4M? Collect more go4me PFPs, of course! If a PFP offer for XCH expires after 7 days, it will be regenerated as a $G4M offer. If that offer also expires after another 7 days, it will be regenerated as a slightly cheaper $G4M offer. It will continue decreasing in price every 7 days until sold or until it reaches 200 $G4M, at which point it will not go lower.
+              What can you do with $G4M? Collect more go4me PFPs, of course! 
+            </p>
+          </section>
+
+          <section style={{ marginTop: 24}}>
+            <h3>Expiring Offers and Decreasing Prices</h3>
+            <p>
+              If a PFP offer for XCH expires after 7 days, it will be regenerated as a $G4M offer. If that offer also expires after another 7 days, it will be regenerated as a slightly cheaper $G4M offer. It will continue decreasing in price every 7 days until sold or until it reaches 200 $G4M, at which point it will not go lower.
             </p>
             <p>
               Once sold, the next edition will be generated and offered for the normal XCH price again for 7 days, and the cycle will repeat. And don&apos;t forget: you still get 10% royalty on every sale, including $G4M tokens!
