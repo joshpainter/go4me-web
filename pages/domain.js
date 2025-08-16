@@ -6,9 +6,7 @@ import { getSupabaseClient } from '../lib/supabaseClient'
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Button, Icon, Menu, Input } from 'semantic-ui-react'
 import { useTheme } from './_app'
-import { useRouter } from 'next/router'
-
-// Flip component for the main profile PFP on the domain page
+// Flip component for profile avatar (front: go4me PFP, back: X image)
 function DomainPfpFlip({ avatarUrl, xPfpUrl, username, linkHref, rankCopiesSold }) {
   const [isFlipped, setIsFlipped] = useState(false)
   const [isTouch, setIsTouch] = useState(false)
@@ -19,11 +17,13 @@ function DomainPfpFlip({ avatarUrl, xPfpUrl, username, linkHref, rankCopiesSold 
     setIsTouch(!!touchCapable)
   }, [])
 
+  const commonAlt = username ? `${username} avatar` : 'avatar'
+
   const flipInnerStyle = {
     position: 'absolute',
     inset: 0,
     transformStyle: 'preserve-3d',
-    transition: 'transform 360ms cubic-bezier(0.2, 0.7, 0.2, 1)',
+    transition: 'transform 420ms cubic-bezier(0.2, 0.7, 0.2, 1)',
     willChange: 'transform',
     transform: (isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)') + ' translateZ(0)'
   }
@@ -44,58 +44,32 @@ function DomainPfpFlip({ avatarUrl, xPfpUrl, username, linkHref, rankCopiesSold 
     justifyContent: 'center'
   }
 
-  const commonAlt = `${username || 'user'} avatar`
-
   return (
     <div
-      className={styles.avatarBox}
-      style={{ position: 'absolute', inset: 0 }}
+      style={{ position: 'relative', width: '100%', height: '100%' }}
       onMouseEnter={() => { if (!isTouch) setIsFlipped(true) }}
       onMouseLeave={() => { if (!isTouch) setIsFlipped(false) }}
+      onClick={(e) => { if (isTouch) { e.preventDefault(); setIsFlipped(v => !v) } }}
     >
-      {/* Rank badge in upper-left to match home cards */}
-      {Number.isFinite(rankCopiesSold) && rankCopiesSold > 0 && (
-        <div className={styles.rankBadge} style={{ top: 0, left: 0, right: 'auto', zIndex: 5, backgroundColor: 'var(--badge-bg-solid)', color: 'var(--badge-fg-solid)' }}>#{rankCopiesSold}</div>
-      )}
-      {/* Flip toggle in lower-right to match home */}
-      <div
-        className={styles.rankBadge}
-        title={isFlipped ? 'Show new PFP' : 'Show original PFP'}
-        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsFlipped(v => !v) }}
-        style={{ bottom: 8, right: 8, top: 'auto', left: 'auto', zIndex: 5, border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', letterSpacing: 0, lineHeight: 1, backgroundColor: 'var(--badge-bg-solid)', color: 'var(--badge-fg-solid)' }}
-      >
-        <Icon name='refresh' style={{ margin: 0 }} />
-      </div>
-
-      {/* Flip container */}
-      <div style={{ position: 'absolute', inset: 0, perspective: 900 }} className={styles.preserve3d}>
-        <div style={flipInnerStyle} className={styles.preserve3d}>
-          {/* Front: New PFP */}
-          <div style={faceStyle} className={styles.backfaceHidden}>
+      <div style={{ position: 'absolute', inset: 0, perspective: 1000 }}>
+        <div style={flipInnerStyle}>
+          {/* Front */}
+          <div style={faceStyle}>
             {linkHref ? (
-              <a href={linkHref} target='_blank' rel='noreferrer noopener' aria-label={username ? `Open full-size avatar for ${username}` : 'Open full-size avatar'} style={{ position: 'absolute', inset: 0 }}>
-                <Image src={avatarUrl} alt={commonAlt} layout='fill' objectFit='cover' />
+              <a href={linkHref} aria-label={username ? `Open ${username}.go4.me` : 'Open profile'} style={{ position: 'absolute', inset: 0 }}>
+                <Image src={avatarUrl || xPfpUrl} alt={commonAlt} layout='fill' objectFit='cover' />
               </a>
             ) : (
               <div style={{ position: 'absolute', inset: 0 }}>
-                <Image src={avatarUrl} alt={commonAlt} layout='fill' objectFit='cover' />
+                <Image src={avatarUrl || xPfpUrl} alt={commonAlt} layout='fill' objectFit='cover' />
               </div>
             )}
           </div>
-
-          {/* Back: Original PFP in a circle mask */}
-          <div style={backStyle} className={styles.backfaceHidden}>
-            {linkHref ? (
-              <a href={linkHref} target='_blank' rel='noreferrer noopener' aria-label={username ? `Open full-size avatar for ${username}` : 'Open full-size avatar'} style={{ position: 'absolute', inset: 0 }}>
-                <div style={{ position: 'absolute', top: '50%', left: '50%', width: '88%', height: '88%', transform: 'translate(-50%, -50%)', borderRadius: '50%', overflow: 'hidden' }}>
-                  <Image src={xPfpUrl || avatarUrl} alt={commonAlt} layout='fill' objectFit='cover' />
-                </div>
-              </a>
-            ) : (
-              <div style={{ position: 'absolute', top: '50%', left: '50%', width: '88%', height: '88%', transform: 'translate(-50%, -50%)', borderRadius: '50%', overflow: 'hidden' }}>
-                <Image src={xPfpUrl || avatarUrl} alt={commonAlt} layout='fill' objectFit='cover' />
-              </div>
-            )}
+          {/* Back (circle mask) */}
+          <div style={backStyle}>
+            <div style={{ position: 'absolute', top: '50%', left: '50%', width: '88%', height: '88%', transform: 'translate(-50%, -50%)', borderRadius: '50%', overflow: 'hidden' }}>
+              <Image src={xPfpUrl || avatarUrl} alt={commonAlt} layout='fill' objectFit='cover' />
+            </div>
           </div>
         </div>
       </div>
@@ -234,6 +208,7 @@ export async function getServerSideProps(ctx) {
           avatarUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png',
           xPfpUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png',
           xchAddress: row.xch_address || '',
+          didAddress: row.did_address || null,
           lastOfferId: row.last_offerid || '',
       lastOfferStatus: row.last_offer_status ?? null,
       totalBadgeScore: row.total_badge_score || 0,
@@ -348,12 +323,13 @@ export async function getServerSideProps(ctx) {
 }
 
 export default function DomainPage({ user, ownedPfps = [], otherOwners = [], ownedHasMore = false, othersHasMore = false, pageSize = 60, rootHostForLinks, ownedCount = 0, othersCount = 0, initialQuery = '' }) {
-  const { username, fullName, description, avatarUrl, xPfpUrl, xchAddress, lastOfferId, totalBadgeScore = 0 } = user
+  const { username, fullName, description, avatarUrl, xPfpUrl, xchAddress, didAddress, lastOfferId, totalBadgeScore = 0 } = user
   const formattedBadgeScore = useMemo(() => {
     const n = Number(totalBadgeScore)
     return Number.isFinite(n) ? new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(n) : '0'
   }, [totalBadgeScore])
-  const [copied, setCopied] = useState(false)
+  const [copiedXch, setCopiedXch] = useState(false)
+  const [copiedDid, setCopiedDid] = useState(false)
   const [collectionTab, setCollectionTab] = useState('my') // 'my' | 'others'
   // Infinite scroll state
   const [ownedList, setOwnedList] = useState(() => ownedPfps)
@@ -368,7 +344,6 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
   const sentinelRef = useRef(null)
   const [intersectionSupported, setIntersectionSupported] = useState(true)
   const { theme, toggleTheme } = useTheme()
-  const router = useRouter()
   const [rawSearch, setRawSearch] = useState(initialQuery || '')
   const [query, setQuery] = useState(initialQuery || '')
   
@@ -567,10 +542,32 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
         document.execCommand('copy')
         document.body.removeChild(ta)
       }
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1600)
+      setCopiedXch(true)
+      setTimeout(() => setCopiedXch(false), 1600)
     } catch (e) {
       console.error('Copy failed', e)
+    }
+  }
+
+  const handleCopyDid = async () => {
+    if (!didAddress) return
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(didAddress)
+      } else {
+        const ta = document.createElement('textarea')
+        ta.value = didAddress
+        ta.style.position = 'fixed'
+        ta.style.left = '-9999px'
+        document.body.appendChild(ta)
+        ta.select()
+        document.execCommand('copy')
+        document.body.removeChild(ta)
+      }
+      setCopiedDid(true)
+      setTimeout(() => setCopiedDid(false), 1600)
+    } catch (e) {
+      console.error('Copy DID failed', e)
     }
   }
 
@@ -689,6 +686,29 @@ Claim your free #1 go4me PFP on <span aria-hidden="true" style={{ display: 'inli
             <div className={styles.avatarWrap}>
   <DomainPfpFlip avatarUrl={avatarUrl} xPfpUrl={xPfpUrl} username={username} linkHref={avatarUrl || undefined} rankCopiesSold={user?.rankCopiesSold} />
             </div>
+            {/* Centered Badge Score under avatar */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: 8 }}>
+              {rootHostForLinks ? (
+                <a
+                  href={`//${rootHostForLinks}/how-it-works`}
+                  className={`${styles.miniBadge} ${styles.largeBadge} ${styles.primaryBadge}`}
+                  title='Learn about $G4M airdrops and scoring'
+                  aria-label='Learn about $G4M airdrops and scoring'
+                >
+                  Badge Score {formattedBadgeScore}
+                </a>
+              ) : (
+                <Link href="/how-it-works" passHref>
+                  <a
+                    className={`${styles.miniBadge} ${styles.largeBadge} ${styles.primaryBadge}`}
+                    title='Learn about $G4M airdrops and scoring'
+                    aria-label='Learn about $G4M airdrops and scoring'
+                  >
+                    Badge Score {formattedBadgeScore}
+                  </a>
+                </Link>
+              )}
+            </div>
           </div>
           <div className={styles.profileRight}>
             <h1 style={{ margin: 0, fontSize: 48, lineHeight: 1.05 }}>{fullName}</h1>
@@ -709,76 +729,162 @@ Claim your free #1 go4me PFP on <span aria-hidden="true" style={{ display: 'inli
 
             {xchAddress && (
               <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
+                {/* Addresses */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                  {rootHostForLinks ? (
-                    <a
-                      href={`//${rootHostForLinks}/how-it-works`}
-                      className={`${styles.miniBadge} ${styles.largeBadge} ${styles.primaryBadge}`}
-                      title='Learn about $G4M airdrops and scoring'
-                      aria-label='Learn about $G4M airdrops and scoring'
-                    >
-                      Badge Score {formattedBadgeScore}
-                    </a>
-                  ) : (
-                    <Link href="/how-it-works" passHref>
-                      <a
-                        className={`${styles.miniBadge} ${styles.largeBadge} ${styles.primaryBadge}`}
-                        title='Learn about $G4M airdrops and scoring'
-                        aria-label='Learn about $G4M airdrops and scoring'
-                      >
-                        Badge Score {formattedBadgeScore}
-                      </a>
-                    </Link>
-                  )}
+                  {/* XCH address + copy icon container */}
                   {(() => {
                     const full = xchAddress
                     const display = full.length > 20 ? `${full.slice(0,8)}...${full.slice(-8)}` : full
                     return (
-                      <code
-                        title={full}
+                      <div
                         style={{
-                          background: 'var(--color-card-bg, #111)',
-                          padding: '4px 8px',
-                          borderRadius: 6,
-                          fontSize: 14,
-                          lineHeight: '18px',
-                          color: '#bbb',
-                          maxWidth: 520,
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          flex: '0 1 auto'
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          background: 'rgba(11, 181, 84, 0.12)',
+                          border: '1px solid rgba(11, 181, 84, 0.35)',
+                          borderRadius: 8,
+                          padding: '4px 6px',
+                          maxWidth: 560,
+                          cursor: 'pointer'
                         }}
-                        aria-label='XCH address'
+                        title={full}
+                        role='button'
+                        tabIndex={0}
+                        aria-label='XCH address – click to copy'
+                        onClick={handleCopy}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCopy() } }}
                       >
-                        {display}
-                      </code>
+                        <code
+                          aria-label='XCH address'
+                          style={{
+                            background: 'transparent',
+                            padding: 0,
+                            borderRadius: 0,
+                            fontSize: 14,
+                            lineHeight: '18px',
+                            color: 'var(--color-text, #ddd)',
+                            maxWidth: 520,
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            flex: '0 1 auto'
+                          }}
+                        >
+                          {display}
+                        </code>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleCopy() }}
+                          aria-label='Copy XCH address'
+                          title='Copy'
+                          style={{
+                            cursor: 'pointer',
+                            background: copiedXch ? 'var(--color-link, #0b5)' : 'transparent',
+                            color: copiedXch ? '#fff' : 'var(--color-text, #eee)',
+                            border: '1px solid rgba(11, 181, 84, 0.35)',
+                            padding: 6,
+                            width: 30,
+                            height: 30,
+                            fontSize: 12,
+                            borderRadius: 6,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'background .15s, color .15s, border-color .15s',
+                            flex: '0 0 auto'
+                          }}
+                        >
+                          <Icon name={copiedXch ? 'check' : 'copy'} size='small' />
+                        </button>
+                      </div>
                     )
                   })()}
-                  <button
-                    onClick={handleCopy}
-                    aria-label='Copy XCH address'
-                    style={{
-                      cursor: 'pointer',
-                      background: copied ? 'var(--color-link, #0b5)' : 'var(--color-card-bg, #1b1b1b)',
-                      color: copied ? '#fff' : 'var(--color-text, #eee)',
-                      border: '1px solid var(--color-border, #333)',
-                      padding: '6px 10px',
-                      fontSize: 12,
-                      borderRadius: 6,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 4,
-                      fontWeight: 500,
-                      transition: 'background .15s, color .15s, border-color .15s',
-                      flex: '0 0 auto'
-                    }}
-                  >
-                    {copied ? 'Copied!' : 'Copy'}
-                  </button>
+
+                  {didAddress && (() => {
+                    const full = didAddress
+                    const prefix = 'did:chia:'
+                    const base = full.startsWith(prefix) ? full.slice(prefix.length) : full
+                    const display = base.length > 8 ? `${prefix}${base.slice(0,4)}...${base.slice(-4)}` : `${prefix}${base}`
+                    return (
+                      <div
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          background: 'rgba(59, 130, 246, 0.12)',
+                          border: '1px solid rgba(59, 130, 246, 0.35)',
+                          borderRadius: 8,
+                          padding: '4px 6px',
+                          maxWidth: 560,
+                          cursor: 'pointer'
+                        }}
+                        title={full}
+                        role='button'
+                        tabIndex={0}
+                        aria-label='DID address – click to copy'
+                        onClick={handleCopyDid}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCopyDid() } }}
+                      >
+                        <code
+                          aria-label='DID address'
+                          style={{
+                            background: 'transparent',
+                            padding: 0,
+                            borderRadius: 0,
+                            fontSize: 14,
+                            lineHeight: '18px',
+                            color: 'var(--color-text, #ddd)',
+                            maxWidth: 520,
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            flex: '0 1 auto'
+                          }}
+                        >
+                          {display}
+                        </code>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleCopyDid() }}
+                          aria-label='Copy DID address'
+                          title='Copy'
+                          style={{
+                            cursor: 'pointer',
+                            background: copiedDid ? 'var(--color-link, #0b5)' : 'transparent',
+                            color: copiedDid ? '#fff' : 'var(--color-text, #eee)',
+                            border: '1px solid rgba(59, 130, 246, 0.35)',
+                            padding: 6,
+                            width: 30,
+                            height: 30,
+                            fontSize: 12,
+                            borderRadius: 6,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'background .15s, color .15s, border-color .15s',
+                            flex: '0 0 auto'
+                          }}
+                        >
+                          <Icon name={copiedDid ? 'check' : 'copy'} size='small' />
+                        </button>
+                      </div>
+                    )
+                  })()}
                 </div>
                 {lastOfferId && user?.lastOfferStatus === 0 && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 10,
+                      flexWrap: 'wrap',
+                      padding: '4px 6px',
+                      borderRadius: 8,
+                      background: 'var(--color-card-bg, #0f0f0f)',
+                      border: '1px solid var(--color-border, #333)'
+                    }}
+                    aria-label='Get Latest Offer'
+                  >
+                    <span className={`${styles.miniBadge} ${styles.primaryBadge}`} style={{ userSelect: 'none' }}>Get Latest Offer</span>
                     <Button
                       as='a'
                       href={`https://dexie.space/offers/${lastOfferId}`}
@@ -791,13 +897,13 @@ Claim your free #1 go4me PFP on <span aria-hidden="true" style={{ display: 'inli
                       aria-label='View offer on Dexie'
                       title='Dexie'
                     >
-                      Get Latest Offer from Dexie
                       <Image
                         src="https://raw.githubusercontent.com/dexie-space/dexie-kit/main/svg/duck.svg"
                         alt="Dexie"
                         width={18}
                         height={18}
                       />
+                      Dexie
                       <Icon name='external' size='small' />
                     </Button>
                     <Button
@@ -812,13 +918,13 @@ Claim your free #1 go4me PFP on <span aria-hidden="true" style={{ display: 'inli
                       aria-label='View offer on Mintgarden'
                       title='Mintgarden'
                     >
-                      Get Latest Offer from Mintgarden
                       <Image
                         src="https://mintgarden.io/mint-logo-round.svg"
                         alt="MintGarden"
                         width={18}
                         height={18}
                       />
+                      Mintgarden
                       <Icon name='external' size='small' />
                     </Button>
                   </div>
