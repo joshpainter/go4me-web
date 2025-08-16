@@ -117,12 +117,12 @@ function PfpFlipCard({ user, rootHostForLinks }) {
             {profileHref ? (
               <a href={profileHref} aria-label={`Open ${user.username}.go4.me`}>
                 <div style={{ position: 'absolute', inset: 0 }}>
-                  <Image src={user.avatarUrl} alt={commonAlt} layout='fill' objectFit='cover' />
+                  <Image src={user.avatarUrl} alt={commonAlt} fill style={{ objectFit: 'cover' }} />
                 </div>
               </a>
             ) : (
               <div style={{ position: 'absolute', inset: 0 }}>
-                <Image src={user.avatarUrl} alt={commonAlt} layout='fill' objectFit='cover' />
+                <Image src={user.avatarUrl} alt={commonAlt} fill style={{ objectFit: 'cover' }} />
               </div>
             )}
           </div>
@@ -132,12 +132,12 @@ function PfpFlipCard({ user, rootHostForLinks }) {
             {profileHref ? (
               <a href={profileHref} aria-label={`Open ${user.username}.go4.me`} style={{ position: 'absolute', inset: 0 }}>
                 <div style={{ position: 'absolute', top: '50%', left: '50%', width: '80%', height: '80%', transform: 'translate(-50%, -50%)', borderRadius: '50%', overflow: 'hidden', boxShadow: '0 8px 20px rgba(0,0,0,0.25)' }}>
-                  <Image src={user.xPfpUrl || user.avatarUrl} alt={commonAlt} layout='fill' objectFit='cover' />
+                  <Image src={user.xPfpUrl || user.avatarUrl} alt={commonAlt} fill style={{ objectFit: 'cover' }} />
                 </div>
               </a>
             ) : (
               <div style={{ position: 'absolute', top: '50%', left: '50%', width: '80%', height: '80%', transform: 'translate(-50%, -50%)', borderRadius: '50%', overflow: 'hidden', boxShadow: '0 8px 20px rgba(0,0,0,0.25)' }}>
-                <Image src={user.xPfpUrl || user.avatarUrl} alt={commonAlt} layout='fill' objectFit='cover' />
+                <Image src={user.xPfpUrl || user.avatarUrl} alt={commonAlt} fill style={{ objectFit: 'cover' }} />
               </div>
             )}
           </div>
@@ -560,7 +560,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
     <div className={styles.container}>
       <Head>
         <title>go4.me</title>
-  <link rel="icon" href="/collection-icon.png" />
+        <link rel="icon" href="/collection-icon.png" />
       </Head>
       <Script id="x-widgets" strategy="afterInteractive" src="https://platform.twitter.com/widgets.js" />
 
@@ -624,14 +624,13 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
           >
             Claim your free #1 go4me PFP on <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 20, height: 20, fontSize: 18, fontWeight: 800}}>𝕏</span>
           </a>
-          <Link href="/how-it-works" passHref>
-            <a
-              className={`${styles.ctaButton} ${styles.ctaButtonLight}`}
-              aria-label='How does it work?'
-              title='How does it work?'
-            >
-              How does it work?
-            </a>
+          <Link
+            href="/how-it-works"
+            className={`${styles.ctaButton} ${styles.ctaButtonLight}`}
+            aria-label='How does it work?'
+            title='How does it work?'
+          >
+            How does it work?
           </Link>
         </div>
       </Container>
