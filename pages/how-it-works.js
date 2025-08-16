@@ -101,6 +101,12 @@ export default function HowItWorks({ rootHostForLinks }) {
               To get started, share your XCH address and tag @go4mebot on X. We’ll generate your custom go4.me PFP and publish it so others can collect it.
               You’ll earn royalties whenever your editions are traded.
             </p>
+            <p>
+              You can also add your DID to your go4.me page by sharing it on X and tagging @go4mebot the same way you do for your XCH address.
+            </p>
+            <p>
+              Any go4.me NFTs held at either your XCH address or your DID will automatically show up on your go4.me page.
+            </p>
           </section>
 
           <section style={{ marginTop: 24 }}>
