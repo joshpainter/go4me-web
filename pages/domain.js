@@ -56,20 +56,29 @@ function DomainPfpFlip({ avatarUrl, xPfpUrl, username, linkHref, rankCopiesSold 
           {/* Front */}
           <div style={faceStyle}>
             {linkHref ? (
-              <a href={linkHref} aria-label={username ? `Open ${username}.go4.me` : 'Open profile'} style={{ position: 'absolute', inset: 0 }}>
-                <Image src={avatarUrl || xPfpUrl} alt={commonAlt} layout='fill' objectFit='cover' />
+              <a href={linkHref} target='_blank' rel='noreferrer noopener' aria-label={username ? `Open full-size avatar for ${username}` : 'Open full-size avatar'} style={{ position: 'absolute', inset: 0 }}>
+                <Image src={avatarUrl} alt={commonAlt} fill style={{ objectFit: 'cover' }} />
               </a>
             ) : (
               <div style={{ position: 'absolute', inset: 0 }}>
-                <Image src={avatarUrl || xPfpUrl} alt={commonAlt} layout='fill' objectFit='cover' />
+                <Image src={avatarUrl} alt={commonAlt} fill style={{ objectFit: 'cover' }} />
               </div>
             )}
           </div>
-          {/* Back (circle mask) */}
-          <div style={backStyle}>
-            <div style={{ position: 'absolute', top: '50%', left: '50%', width: '88%', height: '88%', transform: 'translate(-50%, -50%)', borderRadius: '50%', overflow: 'hidden' }}>
-              <Image src={xPfpUrl || avatarUrl} alt={commonAlt} layout='fill' objectFit='cover' />
-            </div>
+
+          {/* Back: Original PFP in a circle mask */}
+          <div style={backStyle} className={styles.backfaceHidden}>
+            {linkHref ? (
+              <a href={linkHref} target='_blank' rel='noreferrer noopener' aria-label={username ? `Open full-size avatar for ${username}` : 'Open full-size avatar'} style={{ position: 'absolute', inset: 0 }}>
+                <div style={{ position: 'absolute', top: '50%', left: '50%', width: '88%', height: '88%', transform: 'translate(-50%, -50%)', borderRadius: '50%', overflow: 'hidden' }}>
+                  <Image src={xPfpUrl || avatarUrl} alt={commonAlt} fill style={{ objectFit: 'cover' }} />
+                </div>
+              </a>
+            ) : (
+              <div style={{ position: 'absolute', top: '50%', left: '50%', width: '88%', height: '88%', transform: 'translate(-50%, -50%)', borderRadius: '50%', overflow: 'hidden' }}>
+                <Image src={xPfpUrl || avatarUrl} alt={commonAlt} fill style={{ objectFit: 'cover' }} />
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -137,12 +146,12 @@ function PfpFlipThumb({
             {profileHref ? (
               <a href={profileHref} aria-label={username ? `Open ${username}.go4.me` : 'Open profile'}>
                 <div style={{ position: 'absolute', inset: 0 }}>
-                  <Image src={frontUrl} alt={commonAlt} layout='fill' objectFit='cover' />
+                  <Image src={frontUrl} alt={commonAlt} fill style={{ objectFit: 'cover' }} />
                 </div>
               </a>
             ) : (
               <div style={{ position: 'absolute', inset: 0 }}>
-                <Image src={frontUrl} alt={commonAlt} layout='fill' objectFit='cover' />
+                <Image src={frontUrl} alt={commonAlt} fill style={{ objectFit: 'cover' }} />
               </div>
             )}
           </div>
@@ -151,12 +160,12 @@ function PfpFlipThumb({
             {profileHref ? (
               <a href={profileHref} aria-label={username ? `Open ${username}.go4.me` : 'Open profile'} style={{ position: 'absolute', inset: 0 }}>
                 <div style={{ position: 'absolute', top: '50%', left: '50%', width: '80%', height: '80%', transform: 'translate(-50%, -50%)', borderRadius: '50%', overflow: 'hidden', boxShadow: '0 8px 20px rgba(0,0,0,0.25)' }}>
-                  <Image src={backUrl} alt={commonAlt} layout='fill' objectFit='cover' />
+                  <Image src={backUrl} alt={commonAlt} fill style={{ objectFit: 'cover' }} />
                 </div>
               </a>
             ) : (
               <div style={{ position: 'absolute', top: '50%', left: '50%', width: '80%', height: '80%', transform: 'translate(-50%, -50%)', borderRadius: '50%', overflow: 'hidden', boxShadow: '0 8px 20px rgba(0,0,0,0.25)' }}>
-                <Image src={backUrl} alt={commonAlt} layout='fill' objectFit='cover' />
+                <Image src={backUrl} alt={commonAlt} fill style={{ objectFit: 'cover' }} />
               </div>
             )}
           </div>
@@ -606,7 +615,7 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
   return (
     <div className={styles.container}>
       <Head>
-        <title>{username}.go4.me</title>
+        <title>{`${username}.go4.me`}</title>
         <link rel="icon" href="/collection-icon.png" />
         {/* Open Graph / Twitter Card Meta */}
         {pageUrl && <link rel="canonical" href={pageUrl} />}
@@ -631,11 +640,9 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
             ← Back to Leaderboard
           </a>
         ) : (
-          <Link href="/" passHref>
-            <a aria-label="Back to leaderboard home" className={styles.topNavLink}>
-              <Image src="/collection-icon.png" alt="go4.me" width={40} height={40} />
-              ← Back to Leaderboard
-            </a>
+          <Link href="/" aria-label="Back to leaderboard home" className={styles.topNavLink}>
+            <Image src="/collection-icon.png" alt="go4.me" width={40} height={40} />
+            ← Back to Leaderboard
           </Link>
         )}
         {/* Center: search */}
@@ -731,7 +738,25 @@ Claim your free #1 go4me PFP on <span aria-hidden="true" style={{ display: 'inli
               <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
                 {/* Addresses */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                  {/* XCH address + copy icon container */}
+                  {rootHostForLinks ? (
+                    <a
+                      href={`//${rootHostForLinks}/how-it-works`}
+                      className={`${styles.miniBadge} ${styles.largeBadge} ${styles.primaryBadge}`}
+                      title='Learn about $G4M airdrops and scoring'
+                      aria-label='Learn about $G4M airdrops and scoring'
+                    >
+                      Badge Score {formattedBadgeScore}
+                    </a>
+                  ) : (
+                    <Link
+                      href="/how-it-works"
+                      className={`${styles.miniBadge} ${styles.largeBadge} ${styles.primaryBadge}`}
+                      title='Learn about $G4M airdrops and scoring'
+                      aria-label='Learn about $G4M airdrops and scoring'
+                    >
+                      Badge Score {formattedBadgeScore}
+                    </Link>
+                  )}
                   {(() => {
                     const full = xchAddress
                     const display = full.length > 20 ? `${full.slice(0,8)}...${full.slice(-8)}` : full
