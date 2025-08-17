@@ -4,7 +4,7 @@ import Link from 'next/link'
 import styles from '../styles/Home.module.css'
 import { getSupabaseClient } from '../lib/supabaseClient'
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { Icon, Menu, Input } from 'semantic-ui-react'
+import { Icon, Menu, Input, Button } from 'semantic-ui-react'
 import { useTheme } from './_app'
 // Flip component for profile avatar (front: go4me PFP, back: X image)
 function DomainPfpFlip({ avatarUrl, xPfpUrl, username, linkHref, rankCopiesSold }) {
