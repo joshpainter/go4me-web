@@ -5,6 +5,7 @@ import { WalletConnectProvider } from '../lib/wallet/WalletConnectContext'
 import { JsonRpcProvider } from '../lib/wallet/JsonRpcContext'
 import { GobyProvider } from '../lib/wallet/GobyContext'
 import { ToastProvider } from '../components/ui/Toast'
+import GlobalOfferMonitor from '../components/GlobalOfferMonitor'
 
 const ThemeContext = createContext({ theme: 'light', toggleTheme: () => {} })
 export const useTheme = () => useContext(ThemeContext)
@@ -146,6 +147,7 @@ function MyApp({ Component, pageProps }) {
         <WalletConnectProvider>
           <JsonRpcProvider>
             <ThemeContext.Provider value={{ theme, toggleTheme }}>
+              <GlobalOfferMonitor />
               <Component {...pageProps} />
             </ThemeContext.Provider>
           </JsonRpcProvider>

@@ -10,6 +10,8 @@ import { useRouter } from 'next/router'
 import { getSupabaseClient } from '../lib/supabaseClient'
 import { TakeOfferButton } from '../components/wallet/TakeOfferButton'
 import GlobalWalletBar from '../components/wallet/GlobalWalletBar'
+import WatchlistButton from '../components/WatchlistButton'
+import OfferMonitorStatus from '../components/OfferMonitorStatus'
 
 const MOJO_PER_XCH = 1e12
 // Special-case Marmot Recovery Fund XCH address
@@ -327,6 +329,8 @@ export async function getServerSideProps(context) {
       user.displayTotalRoyaltiesXCH = formatXCH(user.totalRoyaltiesXCH)
       user.displayAverageSaleXCH = formatXCH(user.averageSaleXCH)
       user.displayAvgTime = formatDuration(user.avgTimeToSellMs)
+
+
       return user
     })
   } catch (e) {
@@ -872,7 +876,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                 <PfpFlipCard user={u} rootHostForLinks={rootHostForLinks} idx={idx} />
                 <div className={styles.cardBody}>
       {u.username ? (
-                    <div className={styles.username}>
+                    <div className={styles.username} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <a
         href={`//${u.username}.${(rootHostForLinks || 'go4.me')}/`}
         style={{ color: 'inherit', textDecoration: 'none' }}
@@ -880,9 +884,13 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                       >
                         @{u.username}
                       </a>
+                      <WatchlistButton user={u} compact={true} />
                     </div>
                   ) : (
-                    <div className={styles.username}>@{u.username}</div>
+                    <div className={styles.username} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      @{u.username}
+                      <WatchlistButton user={u} compact={true} />
+                    </div>
                   )}
                   {u.fullName && <div className={styles.fullName}>{u.fullName}</div>}
                   {(view === 'totalSold' || view === 'rarest' || view === 'marmotRecovery') && (
@@ -1111,6 +1119,8 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
         {intersectionSupported && hasMore && (
           <div style={{ textAlign: 'center', fontSize: 12, color: '#888', marginTop: 8 }}>Scrolling loads more…</div>
         )}
+
+
         <div style={{ textAlign: 'center', margin: '2.5rem 0 1.5rem' }}>
           <button
             onClick={() => {
@@ -1172,6 +1182,8 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
           </div>
         </div>
       </div>
+      {/* Offer Monitor Status Indicator */}
+      <OfferMonitorStatus />
     </div>
   )
 }

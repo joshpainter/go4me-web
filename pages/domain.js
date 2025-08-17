@@ -9,6 +9,8 @@ import { getSupabaseClient } from '../lib/supabaseClient'
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Icon, Menu, Input, Button } from 'semantic-ui-react'
 import { useTheme } from './_app'
+import WatchlistButton from '../components/WatchlistButton'
+
 // Flip component for profile avatar (front: go4me PFP, back: X image)
 function DomainPfpFlip({ avatarUrl, xPfpUrl, username, linkHref, rankCopiesSold }) {
   const [isFlipped, setIsFlipped] = useState(false)
@@ -218,6 +220,7 @@ export async function getServerSideProps(ctx) {
     if (data && data.length > 0) {
         const row = data[0]
         user = {
+          id: row.author_id, // Use same ID logic as home page for consistency
           username: row.username,
           fullName: row.name || '',
           description: row.description || '',
@@ -232,6 +235,8 @@ export async function getServerSideProps(ctx) {
       // Queue minutes for ETA under the profile Coming Soon badge
       rankQueuePosition: row.rank_queue_position ?? null,
         }
+
+
       }
 
 
@@ -812,8 +817,11 @@ Claim on <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: '
             </div>
           </div>
           <div className={styles.profileRight}>
-            <h1 className={styles.profileTitle}>{fullName}</h1>
-            <div className={styles.profileUsername}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <h1 style={{ margin: 0, fontSize: 48, lineHeight: 1.05 }}>{fullName}</h1>
+              <WatchlistButton user={user} size="medium" />
+            </div>
+            <div style={{ fontWeight: 400, fontSize: 24, marginTop: 6 }}>
               <a
                 href={`https://x.com/${username}`}
                 target="_blank"
