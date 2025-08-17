@@ -1,6 +1,6 @@
 import Head from 'next/head'
 import Image from 'next/image'
-import { Button, Icon } from 'semantic-ui-react'
+import { Icon } from 'semantic-ui-react'
 import { useState } from 'react'
 import styles from '../styles/Home.module.css'
 import { useTheme } from './_app'
@@ -56,24 +56,34 @@ export default function HowItWorks({ rootHostForLinks }) {
       <div className={styles.stickyTopbar}>
         {/* Left: back to leaderboard */}
         <a href={`//${rootHostForLinks}/`} aria-label="Back to leaderboard home" className={styles.topNavLink}>
-          ← Back to Leaderboard
+          <Image src="/collection-icon.png" alt="go4.me" width={40} height={40} />
+          ← Back
         </a>
         <div style={{ flex: 1 }} />
         {/* Right: theme toggle */}
         <div className={styles.topNavActions}>
-          <Button
+          <button
             type='button'
             onClick={toggleTheme}
-            basic
-            color='grey'
-            size='small'
             aria-label='Toggle dark mode'
             title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-            style={{ height: 34 }}
-            icon
+            className={styles.desktopThemeButton}
+            style={{
+              height: 34,
+              background: 'transparent',
+              border: '1px solid var(--color-border)',
+              borderRadius: '4px',
+              color: 'var(--color-text)',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '6px 8px',
+              transition: 'all 0.2s ease'
+            }}
           >
             <Icon name={theme === 'dark' ? 'sun' : 'moon'} />
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -200,15 +210,23 @@ export default function HowItWorks({ rootHostForLinks }) {
               </button>
             </div>
             <div style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <Button
-                as='a'
+              <a
                 href='https://dexie.space/offers/any/G4M'
                 target='_blank'
                 rel='noreferrer'
-                size='tiny'
-                basic
-                color='blue'
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 10px' }}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '6px 10px',
+                  background: 'transparent',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: '4px',
+                  color: 'var(--color-text)',
+                  textDecoration: 'none',
+                  fontSize: '14px',
+                  transition: 'all 0.2s ease'
+                }}
                 aria-label='View $G4M offers on Dexie'
                 title='Dexie'
               >
@@ -220,7 +238,7 @@ export default function HowItWorks({ rootHostForLinks }) {
                   height={18}
                 />
                 <Icon name='external' size='small' />
-              </Button>
+              </a>
             </div>
           </section>
 
@@ -230,15 +248,23 @@ export default function HowItWorks({ rootHostForLinks }) {
               You can view and exchange offers on third‑party marketplaces like Dexie and Mintgarden. Look for the badges and links under each card on the leaderboard.
             </p>
             <div style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <Button
-                as='a'
+              <a
                 href='https://dexie.space/offers/col15qqmhl9gmra3h07av2mcpqpqqza92n33xvcu35gahgzzhy96j2ls6faz5t/any'
                 target='_blank'
                 rel='noreferrer'
-                size='tiny'
-                basic
-                color='blue'
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 10px' }}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '6px 10px',
+                  background: 'transparent',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: '4px',
+                  color: 'var(--color-text)',
+                  textDecoration: 'none',
+                  fontSize: '14px',
+                  transition: 'all 0.2s ease'
+                }}
                 aria-label='View go4.me PFP offers on Dexie'
                 title='Dexie'
               >
@@ -250,7 +276,7 @@ export default function HowItWorks({ rootHostForLinks }) {
                   height={18}
                 />
                 <Icon name='external' size='small' />
-              </Button>
+              </a>
             </div>
           </section>
 

@@ -1,37 +1,179 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# ================================
+# Environment Configuration Files
+# ================================
 .env
-
-# dependencies
-/node_modules
-/.pnp
-.pnp.js
-
-# testing
-/coverage
-
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
-.DS_Store
-*.pem
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# local env files
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+.env.*.local
+*.env
 
-# vercel
+# ================================
+# Node.js Dependencies
+# ================================
+/node_modules
+node_modules/
+/.pnp
+.pnp.js
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+
+# ================================
+# Next.js Build Outputs
+# ================================
+/.next/
+/out/
+.next/
+out/
+
+# ================================
+# Production Build Files
+# ================================
+/build
+build/
+/dist
+dist/
+
+# ================================
+# Testing Artifacts
+# ================================
+/coverage
+coverage/
+.nyc_output
+/tests/test-results/
+/tests/reports/
+/tests/screenshots/
+/tests/node_modules/
+tests/test-results/
+tests/reports/
+tests/screenshots/
+tests/node_modules/
+*.test-screenshot.png
+test-screenshot.png
+
+# ================================
+# Log Files
+# ================================
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+lerna-debug.log*
+
+# ================================
+# IDE and Editor Files
+# ================================
+# Visual Studio Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# JetBrains IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Atom
+.atom/
+
+# ================================
+# Operating System Files
+# ================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ================================
+# Temporary Files and Caches
+# ================================
+*.tmp
+*.temp
+.cache/
+.parcel-cache/
+.sass-cache/
+.eslintcache
+.stylelintcache
+
+# ================================
+# Package Manager Files
+# ================================
+package-lock.json.bak
+yarn.lock.bak
+.pnpm-store/
+
+# ================================
+# Deployment and Hosting
+# ================================
 .vercel
+.netlify/
+
+# ================================
+# Miscellaneous
+# ================================
+*.pem
+*.key
+*.cert
+*.crt
+.DS_Store?

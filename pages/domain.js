@@ -4,7 +4,7 @@ import Link from 'next/link'
 import styles from '../styles/Home.module.css'
 import { getSupabaseClient } from '../lib/supabaseClient'
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { Button, Icon, Menu, Input } from 'semantic-ui-react'
+import { Icon, Menu, Input } from 'semantic-ui-react'
 import { useTheme } from './_app'
 // Flip component for profile avatar (front: go4me PFP, back: X image)
 function DomainPfpFlip({ avatarUrl, xPfpUrl, username, linkHref, rankCopiesSold }) {
@@ -71,12 +71,12 @@ function DomainPfpFlip({ avatarUrl, xPfpUrl, username, linkHref, rankCopiesSold 
             {linkHref ? (
               <a href={linkHref} target='_blank' rel='noreferrer noopener' aria-label={username ? `Open full-size avatar for ${username}` : 'Open full-size avatar'} style={{ position: 'absolute', inset: 0 }}>
                 <div style={{ position: 'absolute', top: '50%', left: '50%', width: '88%', height: '88%', transform: 'translate(-50%, -50%)', borderRadius: '50%', overflow: 'hidden' }}>
-                  <Image src={xPfpUrl || avatarUrl} alt={commonAlt} fill sizes="198px" style={{ objectFit: 'cover' }} />
+                  <Image src={xPfpUrl || avatarUrl} alt={commonAlt} fill sizes="225px" style={{ objectFit: 'cover' }} />
                 </div>
               </a>
             ) : (
               <div style={{ position: 'absolute', top: '50%', left: '50%', width: '88%', height: '88%', transform: 'translate(-50%, -50%)', borderRadius: '50%', overflow: 'hidden' }}>
-                <Image src={xPfpUrl || avatarUrl} alt={commonAlt} fill sizes="198px" style={{ objectFit: 'cover' }} />
+                <Image src={xPfpUrl || avatarUrl} alt={commonAlt} fill sizes="225px" style={{ objectFit: 'cover' }} />
               </div>
             )}
           </div>
@@ -146,12 +146,12 @@ function PfpFlipThumb({
             {profileHref ? (
               <a href={profileHref} aria-label={username ? `Open ${username}.go4.me` : 'Open profile'}>
                 <div style={{ position: 'absolute', inset: 0 }}>
-                  <Image src={frontUrl} alt={commonAlt} fill sizes="(max-width: 640px) 45vw, (max-width: 1100px) 25vw, 20vw" style={{ objectFit: 'cover' }} />
+                  <Image src={frontUrl} alt={commonAlt} fill sizes="180px" style={{ objectFit: 'cover' }} />
                 </div>
               </a>
             ) : (
               <div style={{ position: 'absolute', inset: 0 }}>
-                <Image src={frontUrl} alt={commonAlt} fill sizes="(max-width: 640px) 45vw, (max-width: 1100px) 25vw, 20vw" style={{ objectFit: 'cover' }} />
+                <Image src={frontUrl} alt={commonAlt} fill sizes="180px" style={{ objectFit: 'cover' }} />
               </div>
             )}
           </div>
@@ -160,12 +160,12 @@ function PfpFlipThumb({
             {profileHref ? (
               <a href={profileHref} aria-label={username ? `Open ${username}.go4.me` : 'Open profile'} style={{ position: 'absolute', inset: 0 }}>
                 <div style={{ position: 'absolute', top: '50%', left: '50%', width: '80%', height: '80%', transform: 'translate(-50%, -50%)', borderRadius: '50%', overflow: 'hidden', boxShadow: '0 8px 20px rgba(0,0,0,0.25)' }}>
-                  <Image src={backUrl} alt={commonAlt} fill sizes="(max-width: 640px) 45vw, (max-width: 1100px) 25vw, 20vw" style={{ objectFit: 'cover' }} />
+                  <Image src={backUrl} alt={commonAlt} fill sizes="180px" style={{ objectFit: 'cover' }} />
                 </div>
               </a>
             ) : (
               <div style={{ position: 'absolute', top: '50%', left: '50%', width: '80%', height: '80%', transform: 'translate(-50%, -50%)', borderRadius: '50%', overflow: 'hidden', boxShadow: '0 8px 20px rgba(0,0,0,0.25)' }}>
-                <Image src={backUrl} alt={commonAlt} fill sizes="(max-width: 640px) 45vw, (max-width: 1100px) 25vw, 20vw" style={{ objectFit: 'cover' }} />
+                <Image src={backUrl} alt={commonAlt} fill sizes="180px" style={{ objectFit: 'cover' }} />
               </div>
             )}
           </div>
@@ -176,7 +176,11 @@ function PfpFlipThumb({
 }
 
 export async function getServerSideProps(ctx) {
-  const { req, query } = ctx
+  const { req, res, query } = ctx
+
+  // Set caching headers for better performance
+  res.setHeader('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=300')
+
   let username = (query.pfp || query.username || '').toString().trim()
   const searchQ = (query.q || '').toString().trim()
 
@@ -697,12 +701,12 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
         {rootHostForLinks ? (
           <a href={`//${rootHostForLinks}/`} aria-label="Back to leaderboard home" className={styles.topNavLink}>
             <Image src="/collection-icon.png" alt="go4.me" width={40} height={40} />
-            ← Back to Leaderboard
+            ← Back
           </a>
         ) : (
           <Link href="/" aria-label="Back to leaderboard home" className={styles.topNavLink}>
             <Image src="/collection-icon.png" alt="go4.me" width={40} height={40} />
-            ← Back to Leaderboard
+            ← Back
           </Link>
         )}
         {/* Center: search */}
@@ -712,43 +716,63 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
             size='large'
             placeholder='Search this page…'
             value={rawSearch}
-            onChange={(e, { value }) => setRawSearch(value)}
+            onChange={(_, { value }) => setRawSearch(value)}
             style={{ width: '100%', maxWidth: 520 }}
           />
         </div>
         <div className={styles.topNavActions}>
-          <Button
-            as='a'
+          {/* Hide claim button on mobile - will show in mobile banner */}
+          <a
             href={`https://x.com/intent/tweet?text=Hi @go4mebot! My XCH address is: `}
             target='_blank'
             rel='noreferrer'
-            size='small'
-            basic
-            color='grey'
             aria-label='Claim your go4me PFP on X'
             title='Claim your go4me PFP on X'
-            style={{ height: 34 }}
+            className={styles.desktopClaimButton}
+            style={{
+              height: 34,
+              background: 'transparent',
+              border: '1px solid var(--color-border)',
+              borderRadius: '4px',
+              color: 'var(--color-text)',
+              textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '6px 8px',
+              fontSize: '13px',
+              transition: 'all 0.2s ease'
+            }}
           >
 Claim your free #1 go4me PFP on <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 20, fontSize: 18, fontWeight: 800}}>𝕏</span>
-          </Button>
-          {false && username && username.toLowerCase() === 'hoffmang' && (<span />)}
-          <Button
+          </a>
+
+          <button
             type='button'
             onClick={toggleTheme}
-            basic
-            color='grey'
-            size='small'
             aria-label='Toggle dark mode'
             title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-            style={{ height: 34 }}
-            icon
+            className={styles.desktopThemeButton}
+            style={{
+              height: 34,
+              background: 'transparent',
+              border: '1px solid var(--color-border)',
+              borderRadius: '4px',
+              color: 'var(--color-text)',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '6px 8px',
+              transition: 'all 0.2s ease'
+            }}
           >
             <Icon name={theme === 'dark' ? 'sun' : 'moon'} />
-          </Button>
+          </button>
         </div>
       </div>
   <main className={styles.main} style={{ justifyContent: 'flex-start', paddingTop: 84, paddingBottom: 24 }}>
-  <div className={styles.profileHeader} style={{ marginTop: (username && username.toLowerCase() === 'hoffmang') ? '0' : '1rem', width: '100%', maxWidth: 1100, marginLeft: 'auto', marginRight: 'auto', alignSelf: 'stretch' }}>
+  <div className={styles.profileHeader} style={{ marginTop: '1rem', width: '100%', maxWidth: 1100, marginLeft: 'auto', marginRight: 'auto', alignSelf: 'stretch' }}>
       <div className={styles.profileLeft}>
             <div className={styles.avatarWrap}>
   <DomainPfpFlip avatarUrl={avatarUrl} xPfpUrl={xPfpUrl} username={username} linkHref={avatarUrl || undefined} rankCopiesSold={user?.rankCopiesSold} />
@@ -791,32 +815,15 @@ Claim your free #1 go4me PFP on <span aria-hidden="true" style={{ display: 'inli
               </a>
             </div>
             {description && (
-              <p style={{ margin: '18px 0 16px', fontSize: 18, lineHeight: 1.4, whiteSpace: 'pre-wrap' }}>{linkify(description)}</p>
+              <p className={styles.profileDescription} style={{ margin: '18px 0 16px', lineHeight: 1.4, whiteSpace: 'pre-wrap' }}>{linkify(description)}</p>
             )}
 
-            {xchAddress && (
-              <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
-                {/* Addresses */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                  {rootHostForLinks ? (
-                    <a
-                      href={`//${rootHostForLinks}/how-it-works`}
-                      className={`${styles.miniBadge} ${styles.largeBadge} ${styles.primaryBadge}`}
-                      title='Learn about $G4M airdrops and scoring'
-                      aria-label='Learn about $G4M airdrops and scoring'
-                    >
-                      Badge Score {formattedBadgeScore}
-                    </a>
-                  ) : (
-                    <Link
-                      href="/how-it-works"
-                      className={`${styles.miniBadge} ${styles.largeBadge} ${styles.primaryBadge}`}
-                      title='Learn about $G4M airdrops and scoring'
-                      aria-label='Learn about $G4M airdrops and scoring'
-                    >
-                      Badge Score {formattedBadgeScore}
-                    </Link>
-                  )}
+            {/* Mobile Action Buttons - will be moved to bottom bar on mobile */}
+            <div className={styles.mobileActionButtons}>
+              {xchAddress && (
+                <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
+                  {/* Addresses - Badge Score removed to avoid duplication */}
+                  <div className={styles.addressContainer} style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                   {(() => {
                     const full = xchAddress
                     const display = full.length > 20 ? `${full.slice(0,8)}...${full.slice(-8)}` : full
@@ -956,29 +963,17 @@ Claim your free #1 go4me PFP on <span aria-hidden="true" style={{ display: 'inli
                   })()}
                 </div>
                 {lastOfferId && user?.lastOfferStatus === 0 && (
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 10,
-                      flexWrap: 'wrap',
-                      padding: '4px 6px',
-                      borderRadius: 8,
-                      background: 'var(--color-card-bg, #0f0f0f)',
-                      border: '1px solid var(--color-border, #333)'
-                    }}
-                    aria-label='Get Latest Offer'
-                  >
-                    <span className={`${styles.miniBadge} ${styles.primaryBadge}`} style={{ userSelect: 'none' }}>Get Latest Offer</span>
-                    <Button
-                      as='a'
+                  <div className={styles.desktopOfferSection}>
+                    <div className={styles.offerLabel}>
+                      <Icon name='handshake' size='small' />
+                      <span>Latest Offer</span>
+                    </div>
+                    <div className={styles.offerButtons}>
+                    <a
                       href={`https://dexie.space/offers/${lastOfferId}`}
                       target='_blank'
                       rel='noreferrer'
-                      size='tiny'
-                      basic
-                      color='blue'
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 10px' }}
+                      className={styles.offerButton}
                       aria-label='View offer on Dexie'
                       title='Dexie'
                     >
@@ -990,16 +985,12 @@ Claim your free #1 go4me PFP on <span aria-hidden="true" style={{ display: 'inli
                       />
                       Dexie
                       <Icon name='external' size='small' />
-                    </Button>
-                    <Button
-                      as='a'
+                    </a>
+                    <a
                       href={`https://mintgarden.io/offers/${lastOfferId}`}
                       target='_blank'
                       rel='noreferrer'
-                      size='tiny'
-                      basic
-                      color='green'
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 10px' }}
+                      className={`${styles.offerButton} ${styles.offerButtonGreen}`}
                       aria-label='View offer on Mintgarden'
                       title='Mintgarden'
                     >
@@ -1011,7 +1002,8 @@ Claim your free #1 go4me PFP on <span aria-hidden="true" style={{ display: 'inli
                       />
                       Mintgarden
                       <Icon name='external' size='small' />
-                    </Button>
+                    </a>
+                    </div>
                   </div>
                 )}
                 {(!lastOfferId || user?.lastOfferStatus !== 0) && (
@@ -1026,10 +1018,32 @@ Claim your free #1 go4me PFP on <span aria-hidden="true" style={{ display: 'inli
                 )}
               </div>
             )}
+            </div>
+            {/* End of mobile action buttons container */}
 
           </div>
         </div>
-        
+
+        {/* Mobile Claim Banner - only visible on mobile */}
+        <div className={styles.mobileClaimBanner}>
+          <div className={styles.claimBannerContent}>
+            <div className={styles.claimBannerText}>
+              <strong>Don&apos;t have a go4me PFP yet?</strong>
+              <span>Claim your free #1 PFP and earn royalties!</span>
+            </div>
+            <a
+              href={`https://x.com/intent/tweet?text=Hi @go4mebot! My XCH address is: `}
+              target='_blank'
+              rel='noreferrer'
+              className={styles.mobileClaimButton}
+              aria-label='Claim your go4me PFP on X'
+              title='Claim your go4me PFP on X'
+            >
+              Claim on <span aria-hidden="true" style={{ fontWeight: 800}}>𝕏</span>
+            </a>
+          </div>
+        </div>
+
     {/* Collection Tabs */}
   <div style={{ marginTop: 30, width: '100%', maxWidth: 1100, marginLeft: 'auto', marginRight: 'auto', alignSelf: 'stretch' }}>
           <Menu secondary pointing style={{ marginBottom: 10 }}>
@@ -1165,12 +1179,101 @@ Claim your free #1 go4me PFP on <span aria-hidden="true" style={{ display: 'inli
           })()}
           {(collectionTab === 'my' ? ownedMore : othersMore) && !intersectionSupported && (
             <div style={{ textAlign: 'center', marginTop: 16 }}>
-              <Button size='small' onClick={loadMore} loading={isLoadingMore} disabled={isLoadingMore}>Load more</Button>
+              <button
+                onClick={loadMore}
+                disabled={isLoadingMore}
+                style={{
+                  background: isLoadingMore ? 'var(--color-border)' : 'var(--color-link)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  padding: '8px 16px',
+                  fontSize: '14px',
+                  cursor: isLoadingMore ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.2s ease',
+                  opacity: isLoadingMore ? 0.6 : 1
+                }}
+              >
+                {isLoadingMore ? 'Loading...' : 'Load more'}
+              </button>
             </div>
           )}
           {isLoadingMore && (
             <div style={{ textAlign: 'center', marginTop: 12, fontSize: 12, opacity: 0.6 }}>Loading…</div>
           )}
+        </div>
+
+        {/* Mobile Bottom Action Bar - only visible on mobile */}
+        <div className={styles.mobileBottomBar}>
+          <div className={styles.bottomBarContent}>
+            {/* Compact horizontal layout */}
+            <div className={styles.bottomBarRow}>
+              {/* XCH Address - compact - only show if available */}
+              {xchAddress && (
+                <div className={styles.bottomBarAddressCompact}>
+                  <span className={styles.bottomBarLabelSmall}>XCH</span>
+                  <div
+                    className={styles.bottomBarAddressShort}
+                    onClick={handleCopy}
+                    role='button'
+                    tabIndex={0}
+                    aria-label='XCH address – click to copy'
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCopy() } }}
+                  >
+                    <code>{xchAddress.slice(0,3)}..{xchAddress.slice(-2)}</code>
+                    <Icon name={copiedXch ? 'check' : 'copy'} size='small' />
+                  </div>
+                </div>
+              )}
+
+              {/* DID Address - compact - only show if available */}
+              {didAddress && (
+                <div className={styles.bottomBarAddressCompact}>
+                  <span className={styles.bottomBarLabelSmall}>DID</span>
+                  <div
+                    className={styles.bottomBarAddressShort}
+                    onClick={handleCopyDid}
+                    role='button'
+                    tabIndex={0}
+                    aria-label='DID address – click to copy'
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCopyDid() } }}
+                  >
+                    <code>{didAddress.startsWith('did:chia:') ? `${didAddress.slice(9, 11)}..${didAddress.slice(-2)}` : `${didAddress.slice(0,3)}..${didAddress.slice(-2)}`}</code>
+                    <Icon name={copiedDid ? 'check' : 'copy'} size='small' />
+                  </div>
+                </div>
+              )}
+
+              {/* Get Latest Offer - compact buttons - only show if available */}
+              {lastOfferId && user?.lastOfferStatus === 0 && (
+                <div className={styles.bottomBarOffersCompact}>
+                  <span className={styles.bottomBarLabelSmall}>Offers</span>
+                  <div className={styles.bottomBarButtonsCompact}>
+                    <a
+                      href={`https://dexie.space/offers/${lastOfferId}`}
+                      target='_blank'
+                      rel='noreferrer'
+                      className={`${styles.bottomBarButtonSmall} ${styles.bottomBarButtonBlue}`}
+                      aria-label='View offer on Dexie'
+                    >
+                      Dexie
+                    </a>
+                    <a
+                      href={`https://mintgarden.io/offers/${lastOfferId}`}
+                      target='_blank'
+                      rel='noreferrer'
+                      className={`${styles.bottomBarButtonSmall} ${styles.bottomBarButtonGreen}`}
+                      aria-label='View offer on MintGarden'
+                    >
+                      MintGarden
+                    </a>
+                  </div>
+                </div>
+              )}
+
+
+            </div>
+          </div>
         </div>
   </main>
   {/* Footer removed; link moved to top bar */}

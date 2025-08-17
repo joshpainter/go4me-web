@@ -2,6 +2,64 @@
 
 const nextConfig = {
   reactStrictMode: true,
+  // Production optimizations
+  compress: true,
+  productionBrowserSourceMaps: false,
+  poweredByHeader: false,
+  generateEtags: false,
+
+  // Modern browser targeting - reduces bundle size by avoiding unnecessary transpilation
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
+
+  // Optimize JavaScript loading
+  experimental: {
+    // optimizeCss: true, // Requires critters package - disabled for now
+  },
+
+  // Development optimizations
+  ...(process.env.NODE_ENV === 'development' && {
+    onDemandEntries: {
+      maxInactiveAge: 25 * 1000,
+      pagesBufferLength: 2,
+    },
+  }),
+
+  // Webpack optimizations
+  webpack: (config, { dev, isServer }) => {
+    // Development optimizations
+    if (dev) {
+      config.optimization.removeAvailableModules = false
+      config.optimization.removeEmptyChunks = false
+      config.optimization.splitChunks = false
+    }
+
+    if (!dev && !isServer) {
+      // Target modern browsers to reduce transpilation
+      config.target = ['web', 'es2020']
+
+      // Optimize for modern browsers
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        // Use modern versions of polyfills
+        'core-js/stable': 'core-js/es',
+      }
+
+      // Production bundle splitting
+      config.optimization.splitChunks = {
+        chunks: 'all',
+        cacheGroups: {
+          vendor: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'vendors',
+            chunks: 'all',
+          },
+        },
+      }
+    }
+    return config
+  },
   // Allow cross-origin requests from subdomains during development
   allowedDevOrigins: [
     'localhost',
@@ -23,6 +81,20 @@ const nextConfig = {
         source: '/collection-banner.png',
         headers: [
           { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }
+        ]
+      },
+      {
+        source: '/fonts/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }
+        ]
+      },
+      {
+        source: '/(.*)',
+        headers: [
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-XSS-Protection', value: '1; mode=block' }
         ]
       }
     ]

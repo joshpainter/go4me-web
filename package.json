@@ -4,7 +4,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:setup": "cd tests && npm install",
+    "test:mobile": "cd tests && npm run test:mobile",
+    "test:visual": "cd tests && npm run test:visual",
+    "test:all": "cd tests && npm run test:all",
+    "test": "npm run test:all"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",
@@ -18,5 +23,15 @@
   "devDependencies": {
     "eslint": "^9.33.0",
     "eslint-config-next": "^15.4.6"
-  }
+  },
+  "browserslist": [
+    "Chrome >= 91",
+    "Firefox >= 90",
+    "Safari >= 14",
+    "Edge >= 91",
+    "iOS >= 14",
+    "Android >= 91",
+    "not IE 11",
+    "not dead"
+  ]
 }

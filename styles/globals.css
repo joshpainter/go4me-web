@@ -1,11 +1,15 @@
 @font-face {
   font-family: "Apostrof-Regular";
   src: local("Apostrof-Regular"), url("/fonts/Apostrof-Regular.otf") format("opentype");
+  font-display: swap;
 }
 
 @font-face {
   font-family: "Inter-Variable";
   src: local("Inter-Variable"), url("/fonts/Inter-VariableFont_slnt,wght.ttf") format("truetype");
+  font-display: swap;
+  font-weight: 100 900;
+  font-style: normal;
 }
 
 html,
@@ -103,4 +107,66 @@ a {
   color: var(--color-text) !important;
   border-color: var(--color-link) !important;
   box-shadow: none !important;
+}
+
+/* CRITICAL MOBILE FIXES */
+/* Fix menu overflow with horizontal scroll */
+@media (max-width: 768px) {
+  .ui.secondary.pointing.menu {
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    white-space: nowrap !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+  }
+
+  .ui.secondary.pointing.menu::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+  }
+
+  .ui.secondary.pointing.menu .item {
+    flex-shrink: 0 !important;
+    font-size: 0.85rem !important;
+    padding: 0.5rem 0.8rem !important;
+    min-width: max-content !important;
+  }
+}
+
+/* Fix search input and prevent zoom on iOS */
+@media (max-width: 640px) {
+  .ui.large.input {
+    font-size: 1rem !important;
+  }
+
+  .ui.large.input input {
+    font-size: 16px !important; /* Prevent zoom on iOS */
+    padding: 12px 14px !important;
+  }
+
+  /* Improve touch targets */
+  .ui.menu .item {
+    min-height: 44px !important;
+    min-width: 44px !important;
+  }
+
+  .ui.button {
+    min-height: 44px !important;
+    min-width: 44px !important;
+  }
+}
+
+/* Ensure no horizontal overflow */
+@media (max-width: 640px) {
+  body,
+  html {
+    overflow-x: hidden !important;
+  }
+
+  .ui.container {
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
 }

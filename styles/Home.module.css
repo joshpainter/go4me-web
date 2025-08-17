@@ -167,7 +167,7 @@
 /* Leaderboard card grid */
 .lbGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 16px;
 }
 
@@ -238,6 +238,42 @@
   color: var(--color-text);
   border: 1px solid var(--color-border);
   text-decoration: none;
+}
+
+/* Desktop: optimize badge layout */
+@media (min-width: 641px) {
+  .badgeRow {
+    gap: 6px;
+  }
+
+  .miniBadge {
+    font-size: 11px;
+    padding: 5px 7px;
+    gap: 4px;
+  }
+
+  .miniBadge img {
+    width: 16px !important;
+    height: 16px !important;
+  }
+}
+
+/* Mobile optimizations for badges */
+@media (max-width: 640px) {
+  .badgeRow {
+    gap: 4px;
+  }
+
+  .miniBadge {
+    font-size: 10px;
+    padding: 4px 6px;
+    gap: 3px;
+  }
+
+  .miniBadge img {
+    width: 14px !important;
+    height: 14px !important;
+  }
 }
 
 /* Larger variant for prominent badges (e.g., main profile Badge Score) */
@@ -438,10 +474,85 @@
     inset 0 -1px 0 rgba(0,0,0,0.26);
 }
 
+/* CRITICAL MOBILE FIXES */
+@media (max-width: 480px) {
+  .container {
+    padding: 0 1rem !important; /* Reduce from 2rem to 1rem */
+  }
+}
+
 @media (max-width: 640px) {
   .lbGrid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
   .lbCard { padding: 6px 6px 8px; }
-  .username { font-size: 13px; }
+  .username { font-size: 14px; } /* Increased from 13px for better readability */
+
+  /* Optimize sticky top bar for mobile - more compact */
+  .stickyTopbar {
+    padding: 6px 12px !important;
+    min-height: 50px !important; /* Reduce from default height */
+    align-items: center !important;
+    gap: 8px !important;
+  }
+
+  /* Keep horizontal layout but make logo smaller */
+  .stickyTopbar > div:first-child img {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  /* Make search input more compact */
+  .stickyTopbar .ui.large.input {
+    height: 36px !important;
+  }
+
+  .stickyTopbar .ui.large.input input {
+    padding: 8px 12px !important;
+    font-size: 14px !important;
+  }
+
+  /* Make theme button smaller */
+  .topNavActions .ui.button {
+    padding: 6px 8px !important;
+    min-height: 32px !important;
+    font-size: 12px !important;
+  }
+
+  /* Optimize main content spacing for mobile */
+  .main {
+    padding: 1rem 0 !important; /* Further reduce for mobile */
+  }
+
+  /* Reduce hero section spacing significantly */
+  .container .ui.container[style*="paddingTop: 84"] {
+    padding-top: 20px !important; /* Much less top padding */
+    padding-bottom: 4px !important; /* Much less bottom padding */
+  }
+
+  /* Make logo smaller on mobile and reduce margins */
+  .container .ui.container img[alt="go4.me collection icon"] {
+    width: 80px !important;
+    height: 80px !important;
+  }
+
+  /* Reduce logo container margin and padding */
+  .container .ui.container div[style*="marginBottom: 12"] {
+    margin-bottom: 2px !important;
+    margin-top: 0px !important;
+    padding: 0px !important;
+  }
+
+  /* Reduce text spacing */
+  .container .ui.container div[style*="marginTop: 14"] {
+    margin-top: 8px !important;
+    font-size: 14px !important;
+    line-height: 1.4 !important;
+  }
+
+  /* Make CTA buttons more compact */
+  .container .ui.container div[style*="marginTop: 22"] {
+    margin-top: 16px !important;
+    gap: 8px !important;
+  }
 }
 
 @keyframes skeleton-loading {
@@ -454,6 +565,55 @@
     width: 100%;
     flex-direction: column;
   }
+
+  /* Optimize profile cards for mobile */
+  .profileCard {
+    margin: 0.25rem !important;
+    padding: 0.75rem !important;
+    min-height: auto !important;
+  }
+
+  .profileCard .ui.image {
+    width: 70px !important;
+    height: 70px !important;
+  }
+
+  /* Make profile card text more compact */
+  .profileCard .header {
+    font-size: 14px !important;
+    margin-bottom: 4px !important;
+  }
+
+  .profileCard .meta {
+    font-size: 12px !important;
+    margin-bottom: 6px !important;
+  }
+
+  .profileCard .description {
+    font-size: 11px !important;
+    line-height: 1.3 !important;
+  }
+
+  /* Optimize leaderboard stats */
+  .leaderboardStats {
+    padding: 8px 12px !important;
+    font-size: 12px !important;
+    gap: 12px !important;
+  }
+
+  .leaderboardStats > div {
+    text-align: center;
+  }
+
+  .leaderboardStats .value {
+    font-size: 16px !important;
+    font-weight: bold;
+  }
+
+  .leaderboardStats .label {
+    font-size: 10px !important;
+    opacity: 0.8;
+  }
 }
 
 /* intentionally left empty: removed .leftWrap utility to allow centered containers */
@@ -465,13 +625,183 @@
 .avatarBox { position: absolute; inset: 0; display: block; }
 .profileRight { flex: 1 1; min-width: 320px; text-align: left; display: flex; flex-direction: column; justify-content: flex-start; }
 
+/* Desktop: Show mobile action buttons inline, hide bottom bar and mobile banner */
+.mobileActionButtons { display: block; }
+.mobileBottomBar { display: none; }
+.mobileClaimBanner { display: none; }
+.desktopClaimButton { display: inline-flex !important; }
+.desktopThemeButton { display: inline-flex !important; }
+.desktopCtaButtons { display: flex !important; }
+/* Desktop: Show horizontal tab menu, hide mobile dropdown */
+.desktopTabMenu {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+}
+
+.desktopTabMenu.ui.menu {
+  display: flex !important;
+  flex-direction: row !important;
+}
+
+.desktopTabMenu .item {
+  display: inline-block !important;
+  flex: 0 0 auto !important;
+}
+
+.mobileTabSelector { display: none !important; }
+
+/* Desktop offer section styling */
+.desktopOfferSection {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+  padding: 0;
+  background: transparent;
+  border: none;
+}
+
+.offerLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-subtle);
+}
+
+.offerButtons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Desktop offer button styling - cleaner design */
+.offerButton {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 8px 12px !important;
+  background: var(--color-card-bg) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 6px !important;
+  color: var(--color-text) !important;
+  text-decoration: none !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+}
+
+.offerButton:hover {
+  background: var(--color-hover-bg) !important;
+  border-color: var(--color-link) !important;
+  color: var(--color-text) !important;
+  text-decoration: none !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
+}
+
+.offerButtonGreen:hover {
+  border-color: #10b981 !important;
+}
+
 @media (max-width: 900px) {
-  .profileHeader { flex-direction: column; gap: 12px; align-items: flex-start; }
-  .profileLeft { width: auto; }
-  .avatarWrap { width: 225px; height: 225px; }
-  .profileRight { min-width: 0; width: 100%; }
-  .profileRight h1 { margin-top: 4px; margin-bottom: 4px; }
+  .profileHeader { flex-direction: column; gap: 12px; align-items: center; }
+  .profileLeft { width: auto; align-items: center; }
+  .avatarWrap { width: 180px; height: 180px; } /* Reduce from 225px */
+  .profileRight { min-width: 0; width: 100%; text-align: center; }
+  .profileRight h1 { margin-top: 4px; margin-bottom: 4px; font-size: 1.8rem; }
   .profileRight p { margin-top: 6px; margin-bottom: 4px; }
+}
+
+/* Profile description responsive font sizing */
+.profileDescription {
+  font-size: 18px;
+}
+
+@media (max-width: 768px) {
+  .profileDescription {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .profileDescription {
+    font-size: 14px;
+  }
+}
+
+/* Additional mobile optimizations for profile pages */
+@media (max-width: 640px) {
+  .profileHeader {
+    gap: 12px;
+    margin-top: 60px !important; /* Add top margin to avoid sticky header overlap */
+    padding-top: 8px !important;
+    align-items: center !important;
+  }
+
+  .profileLeft {
+    align-items: center !important;
+  }
+
+  .avatarWrap {
+    width: 120px;
+    height: 120px; /* Slightly larger for better visibility */
+  }
+
+  .profileRight {
+    text-align: center !important;
+    max-width: 100% !important;
+  }
+
+  /* Optimize profile info section - much smaller text */
+  .profileRight h1 {
+    font-size: 1.1rem !important; /* Much smaller: 48px → ~18px */
+    line-height: 1.3 !important;
+    margin-bottom: 2px !important;
+    margin-top: 0 !important;
+    font-weight: 600 !important;
+  }
+
+  /* Make @username text much smaller on mobile */
+  .profileRight div[style*="fontSize: 24px"] {
+    font-size: 14px !important; /* Much smaller: 24px → 14px */
+    margin-top: 1px !important;
+    margin-bottom: 4px !important;
+  }
+
+  .profileRight .description {
+    font-size: 11px !important; /* Much smaller: 18px → 11px */
+    line-height: 1.3 !important;
+    margin-bottom: 8px !important;
+    padding: 0 8px !important; /* Add side padding for readability */
+    max-width: 300px !important; /* Limit width */
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  /* Make badge score more prominent but compact */
+  .primaryBadge.largeBadge {
+    font-size: 12px !important;
+    padding: 6px 10px !important;
+    margin-bottom: 8px !important;
+  }
+
+  /* Optimize action buttons */
+  .profileRight .ui.button {
+    padding: 6px 12px !important;
+    font-size: 12px !important;
+    margin: 2px !important;
+  }
+
+  /* Compact the "Back to Leaderboard" link */
+  .profileRight a[href*="leaderboard"] {
+    font-size: 13px !important;
+    padding: 4px 0 !important;
+    margin-bottom: 6px !important;
+  }
 }
 
 /* Helpers to fix 3D flip artifacts on some browsers (e.g., Safari) */
@@ -488,4 +818,553 @@
 .preserve3d {
   transform-style: preserve-3d;
   -webkit-transform-style: preserve-3d;
+}
+
+/* ADDITIONAL MOBILE FIXES */
+/* Ultra-small mobile optimizations */
+@media (max-width: 375px) {
+  .lbGrid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .lbCard {
+    padding: 4px 4px 6px !important;
+    min-height: 260px !important;
+  }
+
+  /* Ultra-compact profile for very small screens */
+  .profileHeader {
+    margin-top: 55px !important; /* Even less space for tiny screens */
+    gap: 8px !important;
+  }
+
+  .avatarWrap {
+    width: 100px !important;
+    height: 100px !important;
+  }
+
+  .profileRight h1 {
+    font-size: 1rem !important; /* Even smaller */
+  }
+
+  .profileRight div[style*="fontSize: 24px"] {
+    font-size: 12px !important; /* Even smaller @username */
+  }
+
+  .profileRight .description,
+  .profileRight p[style*="font-size: 18px"] {
+    font-size: 10px !important; /* Even smaller description */
+    max-width: 280px !important;
+    padding: 0 4px !important;
+  }
+
+  /* Make mobile claim banner more compact on very small screens */
+  .mobileClaimBanner {
+    margin: 4px auto !important;
+    padding: 6px 8px !important;
+  }
+
+  .claimBannerContent {
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    gap: 4px !important;
+  }
+
+  .claimBannerText strong {
+    font-size: 11px !important;
+  }
+
+  .claimBannerText span {
+    font-size: 9px !important;
+  }
+
+  .mobileClaimButton {
+    font-size: 9px !important;
+    padding: 3px 6px !important;
+    min-height: 22px !important;
+  }
+
+  /* Make home page claim text even smaller on very small screens */
+  .claimText {
+    font-size: 8px !important;
+    max-width: 240px !important;
+    padding: 0 16px !important;
+    margin-top: 1px !important;
+    margin-bottom: 6px !important;
+  }
+
+  /* Reduce logo even more on very small screens */
+  .container .ui.container img[alt="go4.me collection icon"] {
+    width: 80px !important;
+    height: 80px !important;
+  }
+
+  /* Reduce hero section padding even more */
+  .container .ui.container[style*="paddingTop: 84"] {
+    padding-top: 30px !important;
+    padding-bottom: 4px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .ctaButton {
+    padding: 12px 18px !important;
+    font-size: 0.9rem !important;
+    margin: 4px !important;
+  }
+
+  .fullName {
+    font-size: 13px !important; /* Increase from 12px */
+  }
+
+  .statsRow,
+  .statsRowSmall {
+    font-size: 12px !important; /* Increase from 11px */
+  }
+
+  /* Domain page collection grid mobile optimization */
+  .lbGrid[style*="alignItems: stretch"] {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .lbCard[style*="minHeight: 230"] {
+    min-height: 200px !important;
+    padding: 6px !important;
+  }
+
+  /* Mobile-specific tab menu optimization */
+  .ui.secondary.pointing.menu .item {
+    font-size: 0.8rem !important;
+    padding: 0.4rem 0.6rem !important;
+  }
+
+  /* Search input in domain page */
+  .ui.large.input[placeholder*="Search"] {
+    height: 36px !important;
+  }
+
+  .ui.large.input[placeholder*="Search"] input {
+    font-size: 14px !important;
+    padding: 8px 10px !important;
+  }
+}
+
+/* Improve touch targets */
+@media (max-width: 640px) {
+  .lbCard {
+    min-height: 44px !important; /* Ensure cards are tappable */
+  }
+
+  /* Optimize notification banners for mobile */
+  .ui.message {
+    padding: 8px 12px !important;
+    font-size: 13px !important;
+    margin: 8px 0 !important;
+  }
+
+  .ui.message .close.icon {
+    font-size: 16px !important;
+    top: 6px !important;
+    right: 6px !important;
+  }
+
+  /* Make dismiss buttons more accessible */
+  .ui.message button {
+    min-height: 32px !important;
+    min-width: 32px !important;
+    padding: 4px !important;
+  }
+
+  /* Optimize spacing between elements */
+  .ui.container > * + * {
+    margin-top: 12px !important;
+  }
+
+  /* Reduce excessive whitespace in content areas */
+  .ui.container .ui.segment {
+    padding: 12px !important;
+    margin: 8px 0 !important;
+  }
+
+  /* Domain page specific mobile fixes - override inline styles */
+  .profileRight h1[style*="font-size: 48px"] {
+    font-size: 1.1rem !important; /* Much smaller */
+    text-align: center !important;
+    font-weight: 600 !important;
+  }
+
+  .profileRight div[style*="font-size: 24px"] {
+    font-size: 14px !important; /* Much smaller */
+    text-align: center !important;
+  }
+
+  .profileRight p[style*="font-size: 18px"] {
+    font-size: 11px !important; /* Much smaller */
+    margin: 6px auto 8px !important;
+    text-align: center !important;
+    max-width: 300px !important;
+    padding: 0 8px !important;
+    line-height: 1.3 !important;
+  }
+
+  /* Fix address and button containers */
+  .profileRight div[style*="gap: 12px"] {
+    gap: 6px !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  /* Make copy buttons more mobile-friendly */
+  .profileRight button[style*="padding"] {
+    padding: 6px 10px !important;
+    font-size: 11px !important;
+    min-height: 32px !important;
+  }
+
+  /* Hide mobile action buttons in main content on mobile - they'll show in bottom bar */
+  .mobileActionButtons {
+    display: none !important;
+  }
+
+  /* Mobile Bottom Action Bar - Force display on mobile */
+  .mobileBottomBar {
+    display: block !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    background: var(--color-card-bg) !important;
+    border-top: 1px solid var(--color-border) !important;
+    padding: 8px 12px !important;
+    z-index: 1000 !important;
+    backdrop-filter: blur(10px) !important;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.2) !important;
+    min-height: 44px !important;
+  }
+
+  .bottomBarContent {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+    max-width: 100% !important;
+  }
+
+  /* Compact horizontal row layout */
+  .bottomBarRow {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    justify-content: flex-end !important; /* Right-align when fewer items */
+  }
+
+  .bottomBarAddressCompact {
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    flex: 0 0 auto !important;
+    max-width: 120px !important;
+    margin-right: auto !important; /* Push to left */
+  }
+
+  .bottomBarOffersCompact {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    flex: 0 0 auto !important;
+  }
+
+  .bottomBarLabelSmall {
+    font-size: 8px !important;
+    font-weight: 600 !important;
+    color: var(--color-text-subtle) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    white-space: nowrap !important;
+    min-width: 20px !important;
+  }
+
+  .bottomBarAddressShort {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    background: rgba(11, 181, 84, 0.12) !important;
+    border: 1px solid rgba(11, 181, 84, 0.35) !important;
+    border-radius: 4px !important;
+    padding: 3px 5px !important;
+    cursor: pointer !important;
+    font-size: 9px !important;
+    max-width: 90px !important;
+    min-width: 80px !important;
+  }
+
+  .bottomBarAddressShort code {
+    font-size: 9px !important;
+    margin-right: 3px !important;
+  }
+
+  /* Mobile theme toggle in bottom bar */
+  .bottomBarThemeToggle {
+    display: flex !important;
+    align-items: center !important;
+    flex-shrink: 0 !important;
+  }
+
+  .mobileThemeButton {
+    background: transparent !important;
+    border: 1px solid var(--color-border) !important;
+    border-radius: 4px !important;
+    color: var(--color-text) !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 4px !important;
+    width: 28px !important;
+    height: 28px !important;
+    transition: all 0.2s ease !important;
+    font-size: 12px !important;
+  }
+
+  .mobileThemeButton:hover {
+    background: var(--color-border) !important;
+    transform: translateY(-1px) !important;
+  }
+
+  /* Home page mobile bottom bar buttons */
+  .mobileBottomClaimButton {
+    background: #3b82f6 !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 4px !important;
+    padding: 4px 12px !important;
+    font-size: 11px !important;
+    font-weight: 500 !important;
+    text-decoration: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 28px !important;
+    transition: all 0.2s ease !important;
+    cursor: pointer !important;
+    flex: 1 !important;
+  }
+
+  .mobileBottomClaimButton:hover {
+    background: #2563eb !important;
+    color: white !important;
+    text-decoration: none !important;
+    transform: translateY(-1px) !important;
+  }
+
+  .mobileBottomHowButton {
+    background: transparent !important;
+    color: var(--color-text) !important;
+    border: 1px solid var(--color-border) !important;
+    border-radius: 4px !important;
+    padding: 4px 12px !important;
+    font-size: 11px !important;
+    font-weight: 500 !important;
+    text-decoration: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 28px !important;
+    transition: all 0.2s ease !important;
+    cursor: pointer !important;
+    flex: 1 !important;
+  }
+
+  .mobileBottomHowButton:hover {
+    background: var(--color-border) !important;
+    color: var(--color-text) !important;
+    text-decoration: none !important;
+    transform: translateY(-1px) !important;
+  }
+
+  /* Mobile tab dropdown styling with clear dropdown indicator */
+  .mobileTabDropdown {
+    width: 100% !important;
+    padding: 10px 16px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    border: 2px solid var(--color-border) !important;
+    border-radius: 8px !important;
+    background: var(--color-card-bg) !important;
+    color: var(--color-text) !important;
+    appearance: none !important;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 12px center !important;
+    background-size: 18px !important;
+    padding-right: 40px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+  }
+
+  .mobileTabDropdown:hover {
+    border-color: var(--color-link) !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+    transform: translateY(-1px) !important;
+  }
+
+  .mobileTabDropdown:focus {
+    outline: none !important;
+    border-color: var(--color-link) !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+  }
+
+  .bottomBarButtonsCompact {
+    display: flex !important;
+    gap: 6px !important;
+  }
+
+  .bottomBarButtonSmall {
+    font-size: 10px !important;
+    padding: 4px 8px !important;
+    min-height: 26px !important;
+    min-width: 44px !important;
+    text-decoration: none !important;
+    border-radius: 4px !important;
+    border: 1px solid transparent !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-weight: 500 !important;
+    transition: all 0.2s ease !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+  }
+
+  .bottomBarButtonBlue {
+    background: rgba(59, 130, 246, 0.15) !important;
+    border-color: rgba(59, 130, 246, 0.4) !important;
+    color: #3b82f6 !important;
+  }
+
+  .bottomBarButtonBlue:hover {
+    background: rgba(59, 130, 246, 0.25) !important;
+    border-color: rgba(59, 130, 246, 0.6) !important;
+    transform: translateY(-1px) !important;
+  }
+
+  .bottomBarButtonGreen {
+    background: rgba(16, 185, 129, 0.15) !important;
+    border-color: rgba(16, 185, 129, 0.4) !important;
+    color: #10b981 !important;
+  }
+
+  .bottomBarButtonGreen:hover {
+    background: rgba(16, 185, 129, 0.25) !important;
+    border-color: rgba(16, 185, 129, 0.6) !important;
+    transform: translateY(-1px) !important;
+  }
+
+  /* Add bottom padding to main content to account for bottom bar */
+  .main {
+    padding-bottom: 120px !important; /* Space for bottom bar */
+  }
+
+  /* Hide desktop buttons on mobile */
+  .desktopClaimButton {
+    display: none !important;
+  }
+
+
+
+  .desktopCtaButtons {
+    display: none !important;
+  }
+
+  /* Mobile: Hide horizontal tab menu, show dropdown */
+  .desktopTabMenu {
+    display: none !important;
+  }
+
+  .mobileTabSelector {
+    display: block !important;
+    margin-bottom: 16px !important;
+  }
+
+  /* Local class for claim text */
+  .claimText {
+    font-size: 10px !important;
+    line-height: 1.2 !important;
+    margin-top: 2px !important;
+    margin-bottom: 8px !important;
+    padding: 0 20px !important;
+    max-width: 280px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    color: var(--color-text-subtle) !important;
+  }
+
+  /* Mobile Claim Banner - more subtle */
+  .mobileClaimBanner {
+    display: block !important;
+    margin: 8px auto !important;
+    max-width: 1100px !important;
+    background: rgba(59, 130, 246, 0.05) !important;
+    border: 1px solid rgba(59, 130, 246, 0.15) !important;
+    border-radius: 8px !important;
+    padding: 8px 12px !important;
+  }
+
+  .claimBannerContent {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    flex-wrap: wrap !important;
+  }
+
+  .claimBannerText {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1px !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+  }
+
+  .claimBannerText strong {
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: var(--color-text) !important;
+  }
+
+  .claimBannerText span {
+    font-size: 10px !important;
+    color: var(--color-text-subtle) !important;
+    line-height: 1.2 !important;
+  }
+
+  .mobileClaimButton {
+    flex-shrink: 0 !important;
+    font-size: 10px !important;
+    padding: 4px 8px !important;
+    min-height: 26px !important;
+    white-space: nowrap !important;
+    text-decoration: none !important;
+    background: #3b82f6 !important;
+    color: white !important;
+    border-radius: 4px !important;
+    border: none !important;
+    font-weight: 500 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.2s ease !important;
+    cursor: pointer !important;
+  }
+
+  .mobileClaimButton:hover {
+    background: #2563eb !important;
+    color: white !important;
+    text-decoration: none !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 1px 4px rgba(59, 130, 246, 0.2) !important;
+  }
 }

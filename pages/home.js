@@ -3,7 +3,7 @@ import Link from 'next/link'
 import Script from 'next/script'
 import Image from 'next/image'
 import styles from '../styles/Home.module.css'
-import { Header, Segment, Container, Menu, Input, Button, Icon } from 'semantic-ui-react'
+import { Header, Segment, Container, Menu, Input, Icon } from 'semantic-ui-react'
 import { useTheme } from './_app'
 import { useMemo, useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/router'
@@ -56,7 +56,7 @@ const formatEtaMinutes = (mins) => {
 }
 
 // Card image with flip interaction: front = new PFP (avatarUrl), back = original (xPfpUrl) in a circle mask
-function PfpFlipCard({ user, rootHostForLinks }) {
+function PfpFlipCard({ user, rootHostForLinks, idx }) {
   const [isFlipped, setIsFlipped] = useState(false)
   const [isTouch, setIsTouch] = useState(false)
   const profileHref = user.username ? `//${user.username}.${(rootHostForLinks || 'go4.me')}/` : undefined
@@ -117,12 +117,32 @@ function PfpFlipCard({ user, rootHostForLinks }) {
             {profileHref ? (
               <a href={profileHref} aria-label={`Open ${user.username}.go4.me`}>
                 <div style={{ position: 'absolute', inset: 0 }}>
-                  <Image src={user.avatarUrl} alt={commonAlt} fill sizes="(max-width: 640px) 45vw, (max-width: 1100px) 25vw, 20vw" style={{ objectFit: 'cover' }} />
+                  <Image
+                    src={user.avatarUrl}
+                    alt={commonAlt}
+                    fill
+                    sizes="(max-width: 640px) 150px, 200px"
+                    style={{ objectFit: 'cover' }}
+                    priority={idx < 4}
+                    fetchPriority={idx < 4 ? 'high' : 'auto'}
+                    placeholder="blur"
+                    blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+                  />
                 </div>
               </a>
             ) : (
               <div style={{ position: 'absolute', inset: 0 }}>
-                <Image src={user.avatarUrl} alt={commonAlt} fill sizes="(max-width: 640px) 45vw, (max-width: 1100px) 25vw, 20vw" style={{ objectFit: 'cover' }} />
+                <Image
+                  src={user.avatarUrl}
+                  alt={commonAlt}
+                  fill
+                  sizes="(max-width: 640px) 150px, 200px"
+                  style={{ objectFit: 'cover' }}
+                  priority={idx < 4}
+                  fetchPriority={idx < 4 ? 'high' : 'auto'}
+                  placeholder="blur"
+                  blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+                />
               </div>
             )}
           </div>
@@ -132,12 +152,12 @@ function PfpFlipCard({ user, rootHostForLinks }) {
             {profileHref ? (
               <a href={profileHref} aria-label={`Open ${user.username}.go4.me`} style={{ position: 'absolute', inset: 0 }}>
                 <div style={{ position: 'absolute', top: '50%', left: '50%', width: '80%', height: '80%', transform: 'translate(-50%, -50%)', borderRadius: '50%', overflow: 'hidden', boxShadow: '0 8px 20px rgba(0,0,0,0.25)' }}>
-                  <Image src={user.xPfpUrl || user.avatarUrl} alt={commonAlt} fill sizes="(max-width: 640px) 36vw, (max-width: 1100px) 20vw, 16vw" style={{ objectFit: 'cover' }} />
+                  <Image src={user.xPfpUrl || user.avatarUrl} alt={commonAlt} fill sizes="180px" style={{ objectFit: 'cover' }} priority={idx < 4} />
                 </div>
               </a>
             ) : (
               <div style={{ position: 'absolute', top: '50%', left: '50%', width: '80%', height: '80%', transform: 'translate(-50%, -50%)', borderRadius: '50%', overflow: 'hidden', boxShadow: '0 8px 20px rgba(0,0,0,0.25)' }}>
-                <Image src={user.xPfpUrl || user.avatarUrl} alt={commonAlt} fill sizes="(max-width: 640px) 36vw, (max-width: 1100px) 20vw, 16vw" style={{ objectFit: 'cover' }} />
+                <Image src={user.xPfpUrl || user.avatarUrl} alt={commonAlt} fill sizes="180px" style={{ objectFit: 'cover' }} priority={idx < 4} />
               </div>
             )}
           </div>
@@ -148,10 +168,22 @@ function PfpFlipCard({ user, rootHostForLinks }) {
 }
 
 export async function getServerSideProps(context) {
+  const startTime = Date.now()
+
   context.res.setHeader(
     'Cache-Control',
-    'public, s-maxage=10, stale-while-revalidate=59'
+    'public, s-maxage=60, stale-while-revalidate=600'
   );
+
+  // Add performance headers
+  context.res.setHeader('Server-Timing', `ssr;dur=${Date.now() - startTime}`);
+
+  // Add resource hints for LCP optimization
+  context.res.setHeader('Link', [
+    '</fonts/Inter-VariableFont_slnt,wght.ttf>; rel=preload; as=font; type=font/ttf; crossorigin',
+    '<https://wsrdqcvzoshyjvtfsjjp.supabase.co>; rel=preconnect',
+    '<https://can.seedsn.app>; rel=preconnect'
+  ].join(', '));
 
   // Derive root host (without subdomain) + preserve port so we can build username.<server> links dynamically
   const hostHeader = context.req?.headers?.host || ''
@@ -550,19 +582,26 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
 
 
   const { theme, toggleTheme } = useTheme()
-  const shareUrl = useMemo(() => {
-    const host = rootHostForLinks || ''
-    const isLocal = host.includes('localhost') || host.startsWith('127.0.0.1')
-    return `${isLocal ? 'http' : 'https'}://${host}`
-  }, [rootHostForLinks])
+
 
   return (
     <div className={styles.container}>
       <Head>
         <title>go4.me</title>
         <link rel="icon" href="/collection-icon.png" />
+
+        {/* Critical resource hints for LCP optimization */}
+        <link rel="preload" href="/fonts/Inter-VariableFont_slnt,wght.ttf" as="font" type="font/ttf" crossOrigin="" />
+        <link rel="preconnect" href="https://wsrdqcvzoshyjvtfsjjp.supabase.co" />
+        <link rel="preconnect" href="https://can.seedsn.app" />
+
+
       </Head>
-      <Script id="x-widgets" strategy="afterInteractive" src="https://platform.twitter.com/widgets.js" />
+      <Script
+        id="x-widgets"
+        strategy="lazyOnload"
+        src="https://platform.twitter.com/widgets.js"
+      />
 
       {/* Sticky top bar (matches domain page style) */}
       <div className={styles.stickyTopbar}>
@@ -577,25 +616,34 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
             size='large'
             placeholder='Search by username or name…'
             value={rawSearch}
-            onChange={(e, { value }) => setRawSearch(value)}
-            style={{ width: '100%', maxWidth: 520 }}
+            onChange={(_, { value }) => setRawSearch(value)}
+            style={{ width: '100%', maxWidth: '100%' }}
           />
         </div>
         {/* Right: actions (theme toggle) */}
         <div className={styles.topNavActions}>
-          <Button
+          <button
             type='button'
             onClick={toggleTheme}
-            basic
-            color='grey'
-            size='small'
             aria-label='Toggle dark mode'
             title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-            style={{ height: 34 }}
-            icon
+            className={styles.desktopThemeButton}
+            style={{
+              height: 34,
+              background: 'transparent',
+              border: '1px solid var(--color-border)',
+              borderRadius: '4px',
+              color: 'var(--color-text)',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '6px 8px',
+              transition: 'all 0.2s ease'
+            }}
           >
             <Icon name={theme === 'dark' ? 'sun' : 'moon'} />
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -610,10 +658,10 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
             priority
           />
         </div>
-  <div id='how-it-works' style={{ marginTop: 14, color: '#666', fontSize: 16 }}>
+  <div id='how-it-works' className={styles.claimText} style={{ marginTop: 14, color: '#666' }}>
           Claim your free, custom go4.me PFP and earn royalties whenever others purchase it!<br /> Simply share your XCH address and tag <a href='https://x.com/go4mebot' target='_blank' rel='noreferrer'>@go4mebot</a> on X to kick things off!
         </div>
-        <div style={{ marginTop: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, flexWrap: 'wrap' }}>
+        <div className={styles.desktopCtaButtons} style={{ marginTop: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, flexWrap: 'wrap' }}>
           <a
             href={`https://x.com/intent/tweet?text=Hi @go4mebot! My XCH address is: `}
             target='_blank'
@@ -638,7 +686,8 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
   {/* Search input moved to sticky top bar */}
 
       <Container style={{ marginTop: 30 }}>
-        <Menu secondary pointing>
+        {/* Desktop Menu */}
+        <Menu secondary pointing className={styles.desktopTabMenu}>
           <Menu.Item
             name='Total Editions Sold'
             active={view === 'totalSold'}
@@ -672,6 +721,22 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
           />
         </Menu>
 
+        {/* Mobile Dropdown */}
+        <div className={styles.mobileTabSelector}>
+          <select
+            value={view}
+            onChange={(e) => setView(e.target.value)}
+            className={styles.mobileTabDropdown}
+          >
+            <option value="totalSold">Total Editions Sold</option>
+            <option value="totalTraded">Total Traded Value</option>
+            <option value="badgeScore">Badge Score</option>
+            <option value="rarest">Rarest go4s</option>
+            <option value="recentTrades">Recent Trades</option>
+            <option value="queue">Queue</option>
+          </select>
+        </div>
+
         <Segment basic style={{ padding: 0 }}>
           <div className={styles.lbGrid}>
             {renderList.map((u, idx) => (
@@ -684,7 +749,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                     : view === 'rarest' ? (u.rankFewestCopiesSold || idx + 1)
                     : (u.rankCopiesSold || idx + 1)
                 }</div>
-                <PfpFlipCard user={u} rootHostForLinks={rootHostForLinks} />
+                <PfpFlipCard user={u} rootHostForLinks={rootHostForLinks} idx={idx} />
                 <div className={styles.cardBody}>
       {u.username ? (
                     <div className={styles.username}>
@@ -705,53 +770,54 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                       <div className={styles.badgeRow}>
                         <span className={styles.miniBadge} title='Total sold'>Sold {u.totalSold}</span>
                         <span className={styles.miniBadge} title='XCH total sold'>{formatXCH(u.totalTradedXCH)} XCH</span>
+                      </div>
+                      <div className={styles.badgeRow}>
                         <span className={styles.miniBadge} title='Royalties'>Royalties {formatXCH(u.totalRoyaltiesXCH ?? (u.totalTradedXCH * 0.10))} XCH</span>
                       </div>
-                      {u.lastOfferId && u.lastOfferStatus === 0 && (
-                        <div className={styles.badgeRow}>
-                          <a
-                            href={`https://dexie.space/offers/${u.lastOfferId}`}
-                            target='_blank'
-                            rel='noreferrer noopener'
-                            className={styles.miniBadge}
-                            aria-label='View latest offer on Dexie'
-                            title='Dexie'
-                          >
-                            <Image
-                              src="https://raw.githubusercontent.com/dexie-space/dexie-kit/main/svg/duck.svg"
-                              alt="Dexie"
-                              width={16}
-                              height={16}
-                            />
-                            Dexie
-                          </a>
-                          <a
-                            href={`https://mintgarden.io/offers/${u.lastOfferId}`}
-                            target='_blank'
-                            rel='noreferrer noopener'
-                            className={styles.miniBadge}
-                            aria-label='View latest offer on Mintgarden'
-                            title='Mintgarden'
-                          >
-                            <Image
-                              src="https://mintgarden.io/mint-logo-round.svg"
-                              alt="MintGarden"
-                              width={16}
-                              height={16}
-                            />
-                            Mintgarden
-                          </a>
-                        </div>
-                      )}
-                      {(!u.lastOfferId || u.lastOfferStatus !== 0) && (
-                        <div className={styles.badgeRow}>
+                      <div className={styles.badgeRow}>
+                        {u.lastOfferId && u.lastOfferStatus === 0 ? (
+                          <>
+                            <a
+                              href={`https://dexie.space/offers/${u.lastOfferId}`}
+                              target='_blank'
+                              rel='noreferrer noopener'
+                              className={styles.miniBadge}
+                              aria-label='View latest offer on Dexie'
+                              title='Dexie'
+                            >
+                              <Image
+                                src="https://raw.githubusercontent.com/dexie-space/dexie-kit/main/svg/duck.svg"
+                                alt="Dexie"
+                                width={16}
+                                height={16}
+                              />
+                              Dexie
+                            </a>
+                            <a
+                              href={`https://mintgarden.io/offers/${u.lastOfferId}`}
+                              target='_blank'
+                              rel='noreferrer noopener'
+                              className={styles.miniBadge}
+                              aria-label='View latest offer on Mintgarden'
+                              title='Mintgarden'
+                            >
+                              <Image
+                                src="https://mintgarden.io/mint-logo-round.svg"
+                                alt="MintGarden"
+                                width={16}
+                                height={16}
+                              />
+                              Mintgarden
+                            </a>
+                          </>
+                        ) : (
                           <span className={`${styles.miniBadge} ${styles.warningBadge}`}>
                             {Number.isFinite(u?.rankQueuePosition) && (u.rankQueuePosition ?? 0) > 0
                               ? `Next mint in ~${formatEtaMinutes(u.rankQueuePosition)}`
                               : 'Next Copy Coming Soon!'}
                           </span>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </>
                   )}
                   {view === 'totalTraded' && (
@@ -759,53 +825,54 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                       <div className={styles.badgeRow}>
                         <span className={styles.miniBadge} title='XCH total sold'>{formatXCH(u.totalTradedXCH)} XCH</span>
                         <span className={styles.miniBadge} title='Total sold'>Sold {u.totalSold}</span>
+                      </div>
+                      <div className={styles.badgeRow}>
                         <span className={styles.miniBadge} title='Royalties'>Royalties {formatXCH(u.totalRoyaltiesXCH ?? (u.totalTradedXCH * 0.10))} XCH</span>
                       </div>
-                      {u.lastOfferId && u.lastOfferStatus === 0 && (
-                        <div className={styles.badgeRow}>
-                          <a
-                            href={`https://dexie.space/offers/${u.lastOfferId}`}
-                            target='_blank'
-                            rel='noreferrer noopener'
-                            className={styles.miniBadge}
-                            aria-label='View latest offer on Dexie'
-                            title='Dexie'
-                          >
-                            <Image
-                              src="https://raw.githubusercontent.com/dexie-space/dexie-kit/main/svg/duck.svg"
-                              alt="Dexie"
-                              width={16}
-                              height={16}
-                            />
-                            Dexie
-                          </a>
-                          <a
-                            href={`https://mintgarden.io/offers/${u.lastOfferId}`}
-                            target='_blank'
-                            rel='noreferrer noopener'
-                            className={styles.miniBadge}
-                            aria-label='View latest offer on Mintgarden'
-                            title='Mintgarden'
-                          >
-                            <Image
-                              src="https://mintgarden.io/mint-logo-round.svg"
-                              alt="MintGarden"
-                              width={16}
-                              height={16}
-                            />
-                            Mintgarden
-                          </a>
-                        </div>
-                      )}
-                      {(!u.lastOfferId || u.lastOfferStatus !== 0) && (
-                        <div className={styles.badgeRow}>
+                      <div className={styles.badgeRow}>
+                        {u.lastOfferId && u.lastOfferStatus === 0 ? (
+                          <>
+                            <a
+                              href={`https://dexie.space/offers/${u.lastOfferId}`}
+                              target='_blank'
+                              rel='noreferrer noopener'
+                              className={styles.miniBadge}
+                              aria-label='View latest offer on Dexie'
+                              title='Dexie'
+                            >
+                              <Image
+                                src="https://raw.githubusercontent.com/dexie-space/dexie-kit/main/svg/duck.svg"
+                                alt="Dexie"
+                                width={16}
+                                height={16}
+                              />
+                              Dexie
+                            </a>
+                            <a
+                              href={`https://mintgarden.io/offers/${u.lastOfferId}`}
+                              target='_blank'
+                              rel='noreferrer noopener'
+                              className={styles.miniBadge}
+                              aria-label='View latest offer on Mintgarden'
+                              title='Mintgarden'
+                            >
+                              <Image
+                                src="https://mintgarden.io/mint-logo-round.svg"
+                                alt="MintGarden"
+                                width={16}
+                                height={16}
+                              />
+                              Mintgarden
+                            </a>
+                          </>
+                        ) : (
                           <span className={`${styles.miniBadge} ${styles.warningBadge}`}>
                             {Number.isFinite(u?.rankQueuePosition) && (u.rankQueuePosition ?? 0) > 0
                               ? `Next mint in ~${formatEtaMinutes(u.rankQueuePosition)}`
                               : 'Next Copy Coming Soon!'}
                           </span>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </>
                   )}
                   {view === 'badgeScore' && (
@@ -885,7 +952,11 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
               </div>
             ))}
             {renderList.length === 0 && !isLoadingMore && (
-              <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2rem 0', color: '#666' }}>No results.</div>
+              <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2rem 0', color: '#666' }}>
+                {view === 'queue'
+                  ? '🎉 Queue is empty! All NFTs have been generated.'
+                  : 'No results.'}
+              </div>
             )}
             {isLoadingMore && !query && (
               [...Array(6)].map((_, i) => (
@@ -902,18 +973,30 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
         <div ref={sentinelRef} />
         {!intersectionSupported && hasMore && (
           <div style={{ textAlign: 'center', margin: '1rem 0' }}>
-            <Button onClick={loadMore} loading={isLoadingMore} disabled={isLoadingMore} primary>Load more</Button>
+            <button
+              onClick={loadMore}
+              disabled={isLoadingMore}
+              style={{
+                background: isLoadingMore ? 'var(--color-border)' : 'var(--color-link)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                padding: '8px 16px',
+                fontSize: '14px',
+                cursor: isLoadingMore ? 'not-allowed' : 'pointer',
+                transition: 'all 0.2s ease',
+                opacity: isLoadingMore ? 0.6 : 1
+              }}
+            >
+              {isLoadingMore ? 'Loading...' : 'Load more'}
+            </button>
           </div>
         )}
         {intersectionSupported && hasMore && (
           <div style={{ textAlign: 'center', fontSize: 12, color: '#888', marginTop: 8 }}>Scrolling loads more…</div>
         )}
         <div style={{ textAlign: 'center', margin: '2.5rem 0 1.5rem' }}>
-          <Button
-            size='small'
-            basic
-            icon
-            labelPosition='left'
+          <button
             onClick={() => {
               if (typeof window !== 'undefined') {
                 window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -921,13 +1004,58 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
             }}
             aria-label='Back to top'
             title='Back to top'
+            style={{
+              background: 'transparent',
+              border: '1px solid var(--color-border)',
+              borderRadius: '4px',
+              color: 'var(--color-text)',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '6px 12px',
+              fontSize: '14px',
+              gap: '6px',
+              transition: 'all 0.2s ease'
+            }}
           >
             <Icon name='arrow up' />
             Back to Top
-          </Button>
+          </button>
         </div>
         {/* Removed legacy filtered/rawQuery/deferredQuery indicators */}
       </Container>
+
+      {/* Mobile Bottom Action Bar - only visible on mobile */}
+      <div className={styles.mobileBottomBar}>
+        <div className={styles.bottomBarContent}>
+          <div className={styles.bottomBarRow}>
+            {/* Claim button */}
+            <a
+              href={`https://x.com/intent/tweet?text=Hi @go4mebot! My XCH address is: `}
+              target='_blank'
+              rel='noreferrer'
+              className={styles.mobileBottomClaimButton}
+              aria-label='Claim your go4me PFP on X'
+              title='Claim your go4me PFP on X'
+            >
+              Claim your Free PFP
+            </a>
+
+            {/* How it works button */}
+            <Link
+              href="/how-it-works"
+              className={styles.mobileBottomHowButton}
+              aria-label='How does it work?'
+              title='How does it work?'
+            >
+              How it works
+            </Link>
+
+
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
