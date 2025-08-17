@@ -117,12 +117,12 @@ function PfpFlipCard({ user, rootHostForLinks }) {
             {profileHref ? (
               <a href={profileHref} aria-label={`Open ${user.username}.go4.me`}>
                 <div style={{ position: 'absolute', inset: 0 }}>
-                  <Image src={user.avatarUrl} alt={commonAlt} fill style={{ objectFit: 'cover' }} />
+                  <Image src={user.avatarUrl} alt={commonAlt} fill sizes="(max-width: 640px) 45vw, (max-width: 1100px) 25vw, 20vw" style={{ objectFit: 'cover' }} />
                 </div>
               </a>
             ) : (
               <div style={{ position: 'absolute', inset: 0 }}>
-                <Image src={user.avatarUrl} alt={commonAlt} fill style={{ objectFit: 'cover' }} />
+                <Image src={user.avatarUrl} alt={commonAlt} fill sizes="(max-width: 640px) 45vw, (max-width: 1100px) 25vw, 20vw" style={{ objectFit: 'cover' }} />
               </div>
             )}
           </div>
@@ -132,12 +132,12 @@ function PfpFlipCard({ user, rootHostForLinks }) {
             {profileHref ? (
               <a href={profileHref} aria-label={`Open ${user.username}.go4.me`} style={{ position: 'absolute', inset: 0 }}>
                 <div style={{ position: 'absolute', top: '50%', left: '50%', width: '80%', height: '80%', transform: 'translate(-50%, -50%)', borderRadius: '50%', overflow: 'hidden', boxShadow: '0 8px 20px rgba(0,0,0,0.25)' }}>
-                  <Image src={user.xPfpUrl || user.avatarUrl} alt={commonAlt} fill style={{ objectFit: 'cover' }} />
+                  <Image src={user.xPfpUrl || user.avatarUrl} alt={commonAlt} fill sizes="(max-width: 640px) 36vw, (max-width: 1100px) 20vw, 16vw" style={{ objectFit: 'cover' }} />
                 </div>
               </a>
             ) : (
               <div style={{ position: 'absolute', top: '50%', left: '50%', width: '80%', height: '80%', transform: 'translate(-50%, -50%)', borderRadius: '50%', overflow: 'hidden', boxShadow: '0 8px 20px rgba(0,0,0,0.25)' }}>
-                <Image src={user.xPfpUrl || user.avatarUrl} alt={commonAlt} fill style={{ objectFit: 'cover' }} />
+                <Image src={user.xPfpUrl || user.avatarUrl} alt={commonAlt} fill sizes="(max-width: 640px) 36vw, (max-width: 1100px) 20vw, 16vw" style={{ objectFit: 'cover' }} />
               </div>
             )}
           </div>

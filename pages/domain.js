@@ -57,11 +57,11 @@ function DomainPfpFlip({ avatarUrl, xPfpUrl, username, linkHref, rankCopiesSold 
           <div style={faceStyle}>
             {linkHref ? (
               <a href={linkHref} target='_blank' rel='noreferrer noopener' aria-label={username ? `Open full-size avatar for ${username}` : 'Open full-size avatar'} style={{ position: 'absolute', inset: 0 }}>
-                <Image src={avatarUrl} alt={commonAlt} fill style={{ objectFit: 'cover' }} />
+                <Image src={avatarUrl} alt={commonAlt} fill sizes="225px" style={{ objectFit: 'cover' }} />
               </a>
             ) : (
               <div style={{ position: 'absolute', inset: 0 }}>
-                <Image src={avatarUrl} alt={commonAlt} fill style={{ objectFit: 'cover' }} />
+                <Image src={avatarUrl} alt={commonAlt} fill sizes="225px" style={{ objectFit: 'cover' }} />
               </div>
             )}
           </div>
@@ -71,12 +71,12 @@ function DomainPfpFlip({ avatarUrl, xPfpUrl, username, linkHref, rankCopiesSold 
             {linkHref ? (
               <a href={linkHref} target='_blank' rel='noreferrer noopener' aria-label={username ? `Open full-size avatar for ${username}` : 'Open full-size avatar'} style={{ position: 'absolute', inset: 0 }}>
                 <div style={{ position: 'absolute', top: '50%', left: '50%', width: '88%', height: '88%', transform: 'translate(-50%, -50%)', borderRadius: '50%', overflow: 'hidden' }}>
-                  <Image src={xPfpUrl || avatarUrl} alt={commonAlt} fill style={{ objectFit: 'cover' }} />
+                  <Image src={xPfpUrl || avatarUrl} alt={commonAlt} fill sizes="198px" style={{ objectFit: 'cover' }} />
                 </div>
               </a>
             ) : (
               <div style={{ position: 'absolute', top: '50%', left: '50%', width: '88%', height: '88%', transform: 'translate(-50%, -50%)', borderRadius: '50%', overflow: 'hidden' }}>
-                <Image src={xPfpUrl || avatarUrl} alt={commonAlt} fill style={{ objectFit: 'cover' }} />
+                <Image src={xPfpUrl || avatarUrl} alt={commonAlt} fill sizes="198px" style={{ objectFit: 'cover' }} />
               </div>
             )}
           </div>
@@ -146,12 +146,12 @@ function PfpFlipThumb({
             {profileHref ? (
               <a href={profileHref} aria-label={username ? `Open ${username}.go4.me` : 'Open profile'}>
                 <div style={{ position: 'absolute', inset: 0 }}>
-                  <Image src={frontUrl} alt={commonAlt} fill style={{ objectFit: 'cover' }} />
+                  <Image src={frontUrl} alt={commonAlt} fill sizes="(max-width: 640px) 45vw, (max-width: 1100px) 25vw, 20vw" style={{ objectFit: 'cover' }} />
                 </div>
               </a>
             ) : (
               <div style={{ position: 'absolute', inset: 0 }}>
-                <Image src={frontUrl} alt={commonAlt} fill style={{ objectFit: 'cover' }} />
+                <Image src={frontUrl} alt={commonAlt} fill sizes="(max-width: 640px) 45vw, (max-width: 1100px) 25vw, 20vw" style={{ objectFit: 'cover' }} />
               </div>
             )}
           </div>
@@ -160,12 +160,12 @@ function PfpFlipThumb({
             {profileHref ? (
               <a href={profileHref} aria-label={username ? `Open ${username}.go4.me` : 'Open profile'} style={{ position: 'absolute', inset: 0 }}>
                 <div style={{ position: 'absolute', top: '50%', left: '50%', width: '80%', height: '80%', transform: 'translate(-50%, -50%)', borderRadius: '50%', overflow: 'hidden', boxShadow: '0 8px 20px rgba(0,0,0,0.25)' }}>
-                  <Image src={backUrl} alt={commonAlt} fill style={{ objectFit: 'cover' }} />
+                  <Image src={backUrl} alt={commonAlt} fill sizes="(max-width: 640px) 45vw, (max-width: 1100px) 25vw, 20vw" style={{ objectFit: 'cover' }} />
                 </div>
               </a>
             ) : (
               <div style={{ position: 'absolute', top: '50%', left: '50%', width: '80%', height: '80%', transform: 'translate(-50%, -50%)', borderRadius: '50%', overflow: 'hidden', boxShadow: '0 8px 20px rgba(0,0,0,0.25)' }}>
-                <Image src={backUrl} alt={commonAlt} fill style={{ objectFit: 'cover' }} />
+                <Image src={backUrl} alt={commonAlt} fill sizes="(max-width: 640px) 45vw, (max-width: 1100px) 25vw, 20vw" style={{ objectFit: 'cover' }} />
               </div>
             )}
           </div>
