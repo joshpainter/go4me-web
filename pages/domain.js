@@ -355,6 +355,7 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
   const { theme, toggleTheme } = useTheme()
   const [rawSearch, setRawSearch] = useState(initialQuery || '')
   const [query, setQuery] = useState(initialQuery || '')
+  const [isExporting, setIsExporting] = useState(false)
   
 
   useEffect(() => {
@@ -612,6 +613,65 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
     if (lastIndex < text.length) nodes.push(text.slice(lastIndex))
     return nodes
   }, [])
+
+  // Export CSV of Other Owners: username,name,xch_address (respects current search filter)
+  const exportOthersCsv = useCallback(async () => {
+    if (isExporting) return
+    setIsExporting(true)
+    try {
+  const supabase = getSupabaseClient()
+
+    const PAGE = 1000
+      let from = 0
+      const rows = []
+      // Fetch in chunks to cover all filtered results
+      if (supabase) {
+        while (true) {
+          let qb = supabase
+            .from('get_user_page_other_owners')
+            .select('*')
+            .ilike('username', username)
+            .range(from, from + PAGE - 1)
+          if (query) qb = qb.or(`pfp_username.ilike.%${query}%,pfp_name.ilike.%${query}%`)
+
+          const { data, error } = await qb
+          if (error) throw error
+          if (!data || data.length === 0) break
+          rows.push(...data)
+          if (data.length < PAGE) break
+          from += PAGE
+        }
+      }
+
+      const quote = (val) => {
+        const s = (val ?? '').toString()
+        // Always wrap in quotes; escape existing quotes
+        return '"' + s.replace(/"/g, '""') + '"'
+      }
+      const sourceRows = rows.length > 0 ? rows : (othersList || [])
+      const lines = ['username,name,xch_address']
+      for (const r of sourceRows) {
+        // Support both Supabase view rows and client-side mapped items
+        const u = r.owner_username || ''
+        const n = r.owner_name || ''
+        const a = r.owner_xch_address || ''
+        const d = r.owner_did_address || ''
+        lines.push([quote(u), quote(n), quote(a), quote(d)].join(','))
+      }
+      const csv = lines.join('\n')
+      // Use data URI for broad browser compatibility
+      const link = document.createElement('a')
+      link.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv))
+      link.setAttribute('download', `${username}-other-owners-xch.csv`)
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    } catch (e) {
+      console.error('CSV export failed', e)
+    } finally {
+      setIsExporting(false)
+    }
+  }, [isExporting, query, username, othersList])
   return (
     <div className={styles.container}>
       <Head>
@@ -988,13 +1048,31 @@ Claim your free #1 go4me PFP on <span aria-hidden="true" style={{ display: 'inli
               Other Owners ({othersTotalCount || 0})
             </Menu.Item>
           </Menu>
-          <div style={{ margin: '4px 0 18px', fontSize: 13, lineHeight: 1.4, color: 'var(--color-text-subtle)', maxWidth: 760 }}>
+          <div style={{ margin: '4px 0 18px', fontSize: 13, lineHeight: 1.4, color: 'var(--color-text-subtle)', maxWidth: 1100 }}>
             {collectionTab === 'my' ? (
-              <>
-                <span>Send go4me PFPs to the address above and they will show up here.</span>
-              </>
+              <span>Send go4me PFPs to the address above and they will show up here.</span>
             ) : (
-              <span>These collectors own your PFP. Why not return the favor?</span>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                <span style={{ flex: '1 1 auto' }}>These collectors own your PFP. Why not return the favor?</span>
+                <div style={{ flex: '0 0 auto' }}>
+                  <Button
+                    size='small'
+                    basic
+                    color='grey'
+                    onClick={exportOthersCsv}
+                    loading={isExporting}
+                    disabled={isExporting || (othersTotalCount || 0) === 0}
+                    style={{ height: 34 }}
+                    aria-label='Download XCH addresses CSV'
+                    title='Download CSV of XCH addresses'
+                    icon
+                    labelPosition='left'
+                  >
+                    <Icon name='download' />
+                    XCH Addresses
+                  </Button>
+                </div>
+              </div>
             )}
           </div>
           {(() => {
