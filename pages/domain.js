@@ -714,7 +714,7 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
           <Input
             icon='search'
             size='large'
-            placeholder='Search by user or username…'
+            placeholder='Search for go4s…'
             value={rawSearch}
             onChange={(_, { value }) => setRawSearch(value)}
             style={{ width: '100%', maxWidth: 520 }}

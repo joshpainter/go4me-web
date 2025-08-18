@@ -614,7 +614,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
           <Input
             icon='search'
             size='large'
-            placeholder='Search by username or name…'
+            placeholder='Search for go4s…'
             value={rawSearch}
             onChange={(_, { value }) => setRawSearch(value)}
             style={{ width: '100%', maxWidth: 520 }}
