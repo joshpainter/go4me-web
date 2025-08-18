@@ -656,8 +656,8 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
       const lines = ['username,name,xch_address,did_address']
       for (const r of sourceRows) {
         // Support both Supabase view rows and client-side mapped items
-        const u = r.owner_username || ''
-        const n = r.owner_name || ''
+        const u = r.pfp_username || ''
+        const n = r.pfp_name || ''
         const a = r.owner_xch_address || ''
         const d = r.owner_did_address || ''
         lines.push([quote(u), quote(n), quote(a), quote(d)].join(','))
