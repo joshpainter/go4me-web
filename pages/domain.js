@@ -677,7 +677,7 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
     }
   }, [isExporting, query, username, othersList])
   return (
-    <div className={styles.container}>
+    <div className={`${styles.container} ${styles.domainPage}`}>
       <Head>
         <title>{`${username}.go4.me`}</title>
         <link rel="icon" href="/collection-icon.png" />
@@ -714,7 +714,7 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
           <Input
             icon='search'
             size='large'
-            placeholder='Search this page…'
+            placeholder='Search by user or username…'
             value={rawSearch}
             onChange={(_, { value }) => setRawSearch(value)}
             style={{ width: '100%', maxWidth: 520 }}
@@ -744,7 +744,7 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
               transition: 'all 0.2s ease'
             }}
           >
-Claim your free #1 go4me PFP on <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 20, fontSize: 18, fontWeight: 800}}>𝕏</span>
+Claim on <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 20, fontSize: 18, fontWeight: 800}}>𝕏</span>
           </a>
 
           <button
@@ -772,9 +772,11 @@ Claim your free #1 go4me PFP on <span aria-hidden="true" style={{ display: 'inli
         </div>
       </div>
   <main className={styles.main} style={{ justifyContent: 'flex-start', paddingTop: 84, paddingBottom: 24 }}>
+  {/* Mobile claim banner intentionally disabled until header nav claim is removed */}
+
   <div className={styles.profileHeader} style={{ marginTop: '1rem', width: '100%', maxWidth: 1100, marginLeft: 'auto', marginRight: 'auto', alignSelf: 'stretch' }}>
       <div className={styles.profileLeft}>
-            <div className={styles.avatarWrap}>
+            <div className={styles.avatarWrap} style={{ width: 225, height: 225 }}>
   <DomainPfpFlip avatarUrl={avatarUrl} xPfpUrl={xPfpUrl} username={username} linkHref={avatarUrl || undefined} rankCopiesSold={user?.rankCopiesSold} />
             </div>
             {/* Centered Badge Score under avatar */}
@@ -821,7 +823,7 @@ Claim your free #1 go4me PFP on <span aria-hidden="true" style={{ display: 'inli
             {/* Mobile Action Buttons - will be moved to bottom bar on mobile */}
             <div className={styles.mobileActionButtons}>
               {xchAddress && (
-                <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
+                <div className={styles.actionColumn} style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {/* Addresses - Badge Score removed to avoid duplication */}
                   <div className={styles.addressContainer} style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                   {(() => {
@@ -1024,25 +1026,7 @@ Claim your free #1 go4me PFP on <span aria-hidden="true" style={{ display: 'inli
           </div>
         </div>
 
-        {/* Mobile Claim Banner - only visible on mobile */}
-        <div className={styles.mobileClaimBanner}>
-          <div className={styles.claimBannerContent}>
-            <div className={styles.claimBannerText}>
-              <strong>Don&apos;t have a go4me PFP yet?</strong>
-              <span>Claim your free #1 PFP and earn royalties!</span>
-            </div>
-            <a
-              href={`https://x.com/intent/tweet?text=Hi @go4mebot! My XCH address is: `}
-              target='_blank'
-              rel='noreferrer'
-              className={styles.mobileClaimButton}
-              aria-label='Claim your go4me PFP on X'
-              title='Claim your go4me PFP on X'
-            >
-              Claim on <span aria-hidden="true" style={{ fontWeight: 800}}>𝕏</span>
-            </a>
-          </div>
-        </div>
+        
 
     {/* Collection Tabs */}
   <div style={{ marginTop: 30, width: '100%', maxWidth: 1100, marginLeft: 'auto', marginRight: 'auto', alignSelf: 'stretch' }}>

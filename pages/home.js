@@ -617,7 +617,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
             placeholder='Search by username or name…'
             value={rawSearch}
             onChange={(_, { value }) => setRawSearch(value)}
-            style={{ width: '100%', maxWidth: '100%' }}
+            style={{ width: '100%', maxWidth: 520 }}
           />
         </div>
         {/* Right: actions (theme toggle) */}

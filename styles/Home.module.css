@@ -242,26 +242,27 @@
 
 /* Desktop: optimize badge layout */
 @media (min-width: 641px) {
-  .badgeRow {
-    gap: 6px;
-  }
-
-  .miniBadge {
-    font-size: 11px;
-    padding: 5px 7px;
-    gap: 4px;
-  }
-
-  .miniBadge img {
-    width: 16px !important;
-    height: 16px !important;
-  }
+  .badgeRow { gap: 6px; }
+  .miniBadge { font-size: 11px; padding: 5px 7px; gap: 4px; }
+  .miniBadge img { width: 16px !important; height: 16px !important; }
 }
 
 /* Mobile optimizations for badges */
-@media (max-width: 640px) {
+@media (max-width: 900px) {
   .badgeRow {
     gap: 4px;
+  }
+
+  /* Mobile Claim Banner - more subtle and pushed below sticky header */
+  .mobileClaimBanner {
+  .domainPage .avatarWrap { width: 225px !important; height: 225px !important; }
+    display: block !important;
+    margin: 60px auto 8px !important;
+    max-width: 1100px !important;
+    background: rgba(59, 130, 246, 0.05) !important;
+    border: 1px solid rgba(59, 130, 246, 0.15) !important;
+    border-radius: 8px !important;
+    padding: 8px 12px !important;
   }
 
   .miniBadge {
@@ -614,6 +615,12 @@
     font-size: 10px !important;
     opacity: 0.8;
   }
+
+  /* Keep domain page key rows centered at this breakpoint */
+  .domainPage .addressContainer,
+  .domainPage .desktopOfferSection,
+  .domainPage .offerButtons { justify-content: center !important; }
+  .domainPage .profileRight .badgeRow { justify-content: center !important; }
 }
 
 /* intentionally left empty: removed .leftWrap utility to allow centered containers */
@@ -622,8 +629,20 @@
 .profileHeader { display: flex; flex-direction: row; gap: 40px; align-items: flex-start; flex-wrap: wrap; }
 .profileLeft { flex: 0 0 auto; display: flex; flex-direction: column; align-items: stretch; }
 .avatarWrap { position: relative; width: 225px; height: 225px; }
+.domainPage .avatarWrap {
+  width: 225px !important;
+  height: 225px !important;
+  min-width: 225px !important;
+  min-height: 225px !important;
+  max-width: 225px !important;
+  max-height: 225px !important;
+  flex: 0 0 225px !important; /* prevent flex shrink */
+}
 .avatarBox { position: absolute; inset: 0; display: block; }
 .profileRight { flex: 1 1; min-width: 320px; text-align: left; display: flex; flex-direction: column; justify-content: flex-start; }
+
+/* Wrapper for the action stack (addresses + offer/mint + next mint badge) */
+.actionColumn { display: flex; flex-direction: column; align-items: flex-start; }
 
 /* Desktop: Show mobile action buttons inline, hide bottom bar and mobile banner */
 .mobileActionButtons { display: block; }
@@ -707,24 +726,49 @@
   border-color: #10b981 !important;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1100px) {
   .profileHeader { flex-direction: column; gap: 12px; align-items: center; }
   .profileLeft { width: auto; align-items: center; }
   .avatarWrap { width: 180px; height: 180px; } /* Reduce from 225px */
+  /* Domain page: keep avatar full-size at this breakpoint and below */
+  .domainPage .avatarWrap { width: 225px !important; height: 225px !important; }
   .profileRight { min-width: 0; width: 100%; text-align: center; }
   .profileRight h1 { margin-top: 4px; margin-bottom: 4px; font-size: 1.8rem; }
   .profileRight p { margin-top: 6px; margin-bottom: 4px; }
+  /* Center the action column and its rows at tablet widths */
+  .domainPage .actionColumn { align-items: center !important; text-align: center !important; }
+  .domainPage .actionColumn > * { align-self: center !important; }
+  .domainPage .actionColumn .addressContainer,
+  .domainPage .actionColumn .desktopOfferSection,
+  .domainPage .actionColumn .offerButtons,
+  .domainPage .actionColumn .badgeRow { justify-content: center !important; }
+  /* Make rows span the column so centering is obvious */
+  .domainPage .actionColumn .addressContainer,
+  .domainPage .actionColumn .desktopOfferSection,
+  .domainPage .actionColumn .badgeRow { width: 100% !important; }
+  .domainPage .actionColumn .addressContainer,
+  .domainPage .actionColumn .desktopOfferSection,
+  .domainPage .actionColumn .badgeRow { margin-left: auto !important; margin-right: auto !important; }
 }
 
 /* Profile description responsive font sizing */
 .profileDescription {
   font-size: 18px;
+  text-align: left !important;
 }
 
 @media (max-width: 768px) {
   .profileDescription {
     font-size: 16px;
   }
+}
+
+/* Ensure address and offer/mint sections remain centered on medium screens too */
+@media (max-width: 768px) {
+  .domainPage .addressContainer,
+  .domainPage .desktopOfferSection,
+  .domainPage .offerButtons { justify-content: center !important; }
+  .domainPage .profileRight .badgeRow { justify-content: center !important; }
 }
 
 @media (max-width: 480px) {
@@ -746,15 +790,16 @@
     align-items: center !important;
   }
 
-  .avatarWrap {
-    width: 120px;
-    height: 120px; /* Slightly larger for better visibility */
-  }
+  .avatarWrap { width: 100px; height: 100px; }
+  .domainPage .avatarWrap { width: 225px !important; height: 225px !important; }
 
   .profileRight {
     text-align: center !important;
     max-width: 100% !important;
   }
+
+  /* Keep bio description left-aligned even when other elements center */
+  .profileDescription { text-align: left !important; margin-left: 0 !important; margin-right: 0 !important; }
 
   /* Optimize profile info section - much smaller text */
   .profileRight h1 {
@@ -886,6 +931,12 @@
     min-height: 22px !important;
   }
 
+  /* Ensure centering persists on ultra-small devices */
+  .domainPage .addressContainer,
+  .domainPage .desktopOfferSection,
+  .domainPage .offerButtons { justify-content: center !important; }
+  .domainPage .profileRight .badgeRow { justify-content: center !important; }
+
   /* Make home page claim text even smaller on very small screens */
   .claimText {
     font-size: 8px !important;
@@ -906,6 +957,9 @@
     padding-top: 30px !important;
     padding-bottom: 4px !important;
   }
+
+  /* Hide sticky-nav claim button on ultra-small devices */
+  .desktopClaimButton { display: none !important; }
 }
 
 @media (max-width: 480px) {
@@ -950,6 +1004,12 @@
     font-size: 14px !important;
     padding: 8px 10px !important;
   }
+
+  /* Centering for domain page at this size too */
+  .domainPage .addressContainer,
+  .domainPage .desktopOfferSection,
+  .domainPage .offerButtons { justify-content: center !important; }
+  .domainPage .profileRight .badgeRow { justify-content: center !important; }
 }
 
 /* Improve touch targets */
@@ -972,11 +1032,7 @@
   }
 
   /* Make dismiss buttons more accessible */
-  .ui.message button {
-    min-height: 32px !important;
-    min-width: 32px !important;
-    padding: 4px !important;
-  }
+  .ui.message button { min-height: 32px !important; min-width: 32px !important; padding: 4px !important; }
 
   /* Optimize spacing between elements */
   .ui.container > * + * {
@@ -1014,7 +1070,19 @@
   .profileRight div[style*="gap: 12px"] {
     gap: 6px !important;
     flex-direction: column !important;
-    align-items: stretch !important;
+    align-items: center !important; /* center the stacked items */
+  }
+
+  /* Center the inline address chips and offer buttons when stacked */
+  .addressContainer,
+  .desktopOfferSection,
+  .offerButtons {
+    justify-content: center !important;
+  }
+
+  /* Center the "Coming Soon" badge row within the mobile actions */
+  .mobileActionButtons .badgeRow {
+    justify-content: center !important;
   }
 
   /* Make copy buttons more mobile-friendly */
@@ -1024,93 +1092,7 @@
     min-height: 32px !important;
   }
 
-  /* Hide mobile action buttons in main content on mobile - they'll show in bottom bar */
-  .mobileActionButtons {
-    display: none !important;
-  }
 
-  /* Mobile Bottom Action Bar - Force display on mobile */
-  .mobileBottomBar {
-    display: block !important;
-    position: fixed !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    background: var(--color-card-bg) !important;
-    border-top: 1px solid var(--color-border) !important;
-    padding: 8px 12px !important;
-    z-index: 1000 !important;
-    backdrop-filter: blur(10px) !important;
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.2) !important;
-    min-height: 44px !important;
-  }
-
-  .bottomBarContent {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 6px !important;
-    max-width: 100% !important;
-  }
-
-  /* Compact horizontal row layout */
-  .bottomBarRow {
-    display: flex !important;
-    align-items: center !important;
-    gap: 6px !important;
-    justify-content: flex-end !important; /* Right-align when fewer items */
-  }
-
-  .bottomBarAddressCompact {
-    display: flex !important;
-    align-items: center !important;
-    gap: 4px !important;
-    flex: 0 0 auto !important;
-    max-width: 120px !important;
-    margin-right: auto !important; /* Push to left */
-  }
-
-  .bottomBarOffersCompact {
-    display: flex !important;
-    align-items: center !important;
-    gap: 6px !important;
-    flex: 0 0 auto !important;
-  }
-
-  .bottomBarLabelSmall {
-    font-size: 8px !important;
-    font-weight: 600 !important;
-    color: var(--color-text-subtle) !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.5px !important;
-    white-space: nowrap !important;
-    min-width: 20px !important;
-  }
-
-  .bottomBarAddressShort {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    background: rgba(11, 181, 84, 0.12) !important;
-    border: 1px solid rgba(11, 181, 84, 0.35) !important;
-    border-radius: 4px !important;
-    padding: 3px 5px !important;
-    cursor: pointer !important;
-    font-size: 9px !important;
-    max-width: 90px !important;
-    min-width: 80px !important;
-  }
-
-  .bottomBarAddressShort code {
-    font-size: 9px !important;
-    margin-right: 3px !important;
-  }
-
-  /* Mobile theme toggle in bottom bar */
-  .bottomBarThemeToggle {
-    display: flex !important;
-    align-items: center !important;
-    flex-shrink: 0 !important;
-  }
 
   .mobileThemeButton {
     background: transparent !important;
@@ -1130,57 +1112,6 @@
 
   .mobileThemeButton:hover {
     background: var(--color-border) !important;
-    transform: translateY(-1px) !important;
-  }
-
-  /* Home page mobile bottom bar buttons */
-  .mobileBottomClaimButton {
-    background: #3b82f6 !important;
-    color: white !important;
-    border: none !important;
-    border-radius: 4px !important;
-    padding: 4px 12px !important;
-    font-size: 11px !important;
-    font-weight: 500 !important;
-    text-decoration: none !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    min-height: 28px !important;
-    transition: all 0.2s ease !important;
-    cursor: pointer !important;
-    flex: 1 !important;
-  }
-
-  .mobileBottomClaimButton:hover {
-    background: #2563eb !important;
-    color: white !important;
-    text-decoration: none !important;
-    transform: translateY(-1px) !important;
-  }
-
-  .mobileBottomHowButton {
-    background: transparent !important;
-    color: var(--color-text) !important;
-    border: 1px solid var(--color-border) !important;
-    border-radius: 4px !important;
-    padding: 4px 12px !important;
-    font-size: 11px !important;
-    font-weight: 500 !important;
-    text-decoration: none !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    min-height: 28px !important;
-    transition: all 0.2s ease !important;
-    cursor: pointer !important;
-    flex: 1 !important;
-  }
-
-  .mobileBottomHowButton:hover {
-    background: var(--color-border) !important;
-    color: var(--color-text) !important;
-    text-decoration: none !important;
     transform: translateY(-1px) !important;
   }
 
@@ -1217,63 +1148,10 @@
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
   }
 
-  .bottomBarButtonsCompact {
-    display: flex !important;
-    gap: 6px !important;
-  }
-
-  .bottomBarButtonSmall {
-    font-size: 10px !important;
-    padding: 4px 8px !important;
-    min-height: 26px !important;
-    min-width: 44px !important;
-    text-decoration: none !important;
-    border-radius: 4px !important;
-    border: 1px solid transparent !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    font-weight: 500 !important;
-    transition: all 0.2s ease !important;
-    text-align: center !important;
-    white-space: nowrap !important;
-  }
-
-  .bottomBarButtonBlue {
-    background: rgba(59, 130, 246, 0.15) !important;
-    border-color: rgba(59, 130, 246, 0.4) !important;
-    color: #3b82f6 !important;
-  }
-
-  .bottomBarButtonBlue:hover {
-    background: rgba(59, 130, 246, 0.25) !important;
-    border-color: rgba(59, 130, 246, 0.6) !important;
-    transform: translateY(-1px) !important;
-  }
-
-  .bottomBarButtonGreen {
-    background: rgba(16, 185, 129, 0.15) !important;
-    border-color: rgba(16, 185, 129, 0.4) !important;
-    color: #10b981 !important;
-  }
-
-  .bottomBarButtonGreen:hover {
-    background: rgba(16, 185, 129, 0.25) !important;
-    border-color: rgba(16, 185, 129, 0.6) !important;
-    transform: translateY(-1px) !important;
-  }
-
-  /* Add bottom padding to main content to account for bottom bar */
-  .main {
-    padding-bottom: 120px !important; /* Space for bottom bar */
-  }
-
   /* Hide desktop buttons on mobile */
   .desktopClaimButton {
     display: none !important;
   }
-
-
 
   .desktopCtaButtons {
     display: none !important;
@@ -1288,83 +1166,39 @@
     display: block !important;
     margin-bottom: 16px !important;
   }
+  /* Center "Latest Offer" row on mobile */
+  .desktopOfferSection { justify-content: center !important; }
 
-  /* Local class for claim text */
-  .claimText {
-    font-size: 10px !important;
-    line-height: 1.2 !important;
-    margin-top: 2px !important;
-    margin-bottom: 8px !important;
-    padding: 0 20px !important;
-    max-width: 280px !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-    color: var(--color-text-subtle) !important;
-  }
+  /* Also center any badge rows within profile right column */
+  .profileRight .badgeRow { justify-content: center !important; }
+}
 
-  /* Mobile Claim Banner - more subtle */
-  .mobileClaimBanner {
-    display: block !important;
-    margin: 8px auto !important;
-    max-width: 1100px !important;
-    background: rgba(59, 130, 246, 0.05) !important;
-    border: 1px solid rgba(59, 130, 246, 0.15) !important;
-    border-radius: 8px !important;
-    padding: 8px 12px !important;
-  }
+/* Domain page specific mobile overrides: move XCH/DID/Offer links back to top and remove bottom sticky nav */
+@media (max-width: 640px) {
+  .domainPage .mobileActionButtons { display: block !important; }
+  .domainPage .mobileBottomBar { display: none !important; }
+  /* Remove extra padding since bottom bar is hidden */
+  .domainPage .main { padding-bottom: 24px !important; }
+  /* Keep avatar full size on domain page, even on mobile */
+  .domainPage .avatarWrap { width: 225px !important; height: 225px !important; }
+  /* Center the Next mint in badge row fully */
+  .domainPage .mobileActionButtons .badgeRow { justify-content: center !important; width: 100% !important; }
+  .domainPage .mobileActionButtons .badgeRow .miniBadge { margin-left: auto !important; margin-right: auto !important; }
+  /* Center address chips and offer buttons on small screens */
+  .domainPage .addressContainer,
+  .domainPage .desktopOfferSection,
+  .domainPage .offerButtons { justify-content: center !important; }
+}
 
-  .claimBannerContent {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    gap: 8px !important;
-    flex-wrap: wrap !important;
-  }
-
-  .claimBannerText {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 1px !important;
-    flex: 1 !important;
-    min-width: 0 !important;
-  }
-
-  .claimBannerText strong {
-    font-size: 12px !important;
-    font-weight: 600 !important;
-    color: var(--color-text) !important;
-  }
-
-  .claimBannerText span {
-    font-size: 10px !important;
-    color: var(--color-text-subtle) !important;
-    line-height: 1.2 !important;
-  }
-
-  .mobileClaimButton {
-    flex-shrink: 0 !important;
-    font-size: 10px !important;
-    padding: 4px 8px !important;
-    min-height: 26px !important;
-    white-space: nowrap !important;
-    text-decoration: none !important;
-    background: #3b82f6 !important;
-    color: white !important;
-    border-radius: 4px !important;
-    border: none !important;
-    font-weight: 500 !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    transition: all 0.2s ease !important;
-    cursor: pointer !important;
-  }
-
-  .mobileClaimButton:hover {
-    background: #2563eb !important;
-    color: white !important;
-    text-decoration: none !important;
-    transform: translateY(-1px) !important;
-    box-shadow: 0 1px 4px rgba(59, 130, 246, 0.2) !important;
-  }
+/* Also ensure avatar remains full size for tablet widths on domain page */
+@media (max-width: 900px) {
+  .domainPage .avatarWrap { width: 225px !important; height: 225px !important; }
+  /* Center address and offer/mint sections across tablet/smaller widths */
+  .domainPage .addressContainer,
+  .domainPage .desktopOfferSection,
+  .domainPage .offerButtons { justify-content: center !important; }
+  /* Ensure badge rows (e.g., Next mint in) are centered as layout stacks */
+  .domainPage .profileRight .badgeRow { justify-content: center !important; }
+  .domainPage .mobileActionButtons .badgeRow { justify-content: center !important; width: 100% !important; }
+  .domainPage .mobileActionButtons .badgeRow .miniBadge { margin-left: auto !important; margin-right: auto !important; }
 }
