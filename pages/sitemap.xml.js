@@ -1,4 +1,4 @@
-import { getSupabaseClient } from '../lib/supabase'
+import { getSupabaseClient } from '../lib/supabaseClient'
 
 function generateSiteMap(users) {
   const baseUrl = 'https://go4.me'
@@ -83,14 +83,33 @@ export async function getServerSideProps({ res }) {
   const supabase = getSupabaseClient()
   
   try {
-    // Get all users with usernames for profile pages
-    const { data: users, error } = await supabase
-      .from('get_leaderboard')
-      .select('username')
-      .not('username', 'is', null)
-      .limit(1000) // Limit to prevent huge sitemaps
-    
-    if (error) throw error
+    // Page through users to include all profile pages without exceeding limits
+    const PAGE_SIZE = 1000 // Supabase default max is often 1000; keep requests efficient
+    const MAX_USERS = 10000 // Safety cap to avoid huge sitemaps/timeouts
+    let page = 0
+    const users = []
+
+    while (users.length < MAX_USERS) {
+      const from = page * PAGE_SIZE
+      const to = from + PAGE_SIZE - 1
+
+      const { data, error } = await supabase
+        .from('get_leaderboard')
+        .select('username')
+        .not('username', 'is', null)
+        .order('username', { ascending: true }) // ensure deterministic paging
+        .range(from, to)
+
+      if (error) throw error
+
+      if (!data || data.length === 0) break
+
+      users.push(...data)
+
+      // Break when the last page is smaller than PAGE_SIZE (no more data)
+      if (data.length < PAGE_SIZE) break
+      page += 1
+    }
     
     // Generate the XML sitemap
     const sitemap = generateSiteMap(users || [])
