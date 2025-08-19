@@ -341,6 +341,10 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
     const n = Number(totalBadgeScore)
     return Number.isFinite(n) ? new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(n) : '0'
   }, [totalBadgeScore])
+  // Special-case badge for Marmot Recovery Fund address
+  const MARMOT_BADGE_XCH = 'xch120ywvwahucfptkeuzzdpdz5v0nnarq5vgw94g247jd5vswkn7rls35y2gc'
+  const MARMOT_BADGE_IMG = 'https://can.seedsn.app/ipfs/QmRUGDqFdHL7YvzbncmmsGUyNkeJpZL2ynnmcjXQ4F6YMT/marmot-recovery-logo.png'
+  const showMarmotBadge = xchAddress === MARMOT_BADGE_XCH
   const [copiedXch, setCopiedXch] = useState(false)
   const [copiedDid, setCopiedDid] = useState(false)
   const [collectionTab, setCollectionTab] = useState('my') // 'my' | 'others'
@@ -830,67 +834,97 @@ Claim on <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: '
                     const full = xchAddress
                     const display = full.length > 20 ? `${full.slice(0,8)}...${full.slice(-8)}` : full
                     return (
-                      <div
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 8,
-                          background: 'rgba(11, 181, 84, 0.12)',
-                          border: '1px solid rgba(11, 181, 84, 0.35)',
-                          borderRadius: 8,
-                          padding: '4px 6px',
-                          maxWidth: 560,
-                          cursor: 'pointer'
-                        }}
-                        title={full}
-                        role='button'
-                        tabIndex={0}
-                        aria-label='XCH address – click to copy'
-                        onClick={handleCopy}
-                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCopy() } }}
-                      >
-                        <code
-                          aria-label='XCH address'
+                      <>
+                        {showMarmotBadge && (
+                          <a
+                            href={rootHostForLinks ? `//${rootHostForLinks}/how-it-works#marmot-badge` : '/how-it-works#marmot-badge'}
+                            aria-label='Learn about the Marmot Recovery badge'
+                            title='Learn about the Marmot Recovery badge'
+                            style={{ textDecoration: 'none' }}
+                          >
+                            <div
+                              style={{
+                                width: 64,
+                                height: 64,
+                                borderRadius: '50%',
+                                overflow: 'hidden',
+                                flex: '0 0 auto',
+                                background: 'rgba(11, 181, 84, 0.12)',
+                                border: '1px solid rgba(11, 181, 84, 0.35)'
+                              }}
+                            >
+                              <Image
+                                src={MARMOT_BADGE_IMG}
+                                alt='Marmot Recovery badge'
+                                width={64}
+                                height={64}
+                                style={{ objectFit: 'cover' }}
+                              />
+                            </div>
+                          </a>
+                        )}
+                        <div
                           style={{
-                            background: 'transparent',
-                            padding: 0,
-                            borderRadius: 0,
-                            fontSize: 14,
-                            lineHeight: '18px',
-                            color: 'var(--color-text, #ddd)',
-                            maxWidth: 520,
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            flex: '0 1 auto'
-                          }}
-                        >
-                          {display}
-                        </code>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleCopy() }}
-                          aria-label='Copy XCH address'
-                          title='Copy'
-                          style={{
-                            cursor: 'pointer',
-                            background: copiedXch ? 'var(--color-link, #0b5)' : 'transparent',
-                            color: copiedXch ? '#fff' : 'var(--color-text, #eee)',
-                            border: '1px solid rgba(11, 181, 84, 0.35)',
-                            padding: 6,
-                            width: 30,
-                            height: 30,
-                            fontSize: 12,
-                            borderRadius: 6,
                             display: 'inline-flex',
                             alignItems: 'center',
-                            justifyContent: 'center',
-                            transition: 'background .15s, color .15s, border-color .15s',
-                            flex: '0 0 auto'
+                            gap: 8,
+                            background: 'rgba(11, 181, 84, 0.12)',
+                            border: '1px solid rgba(11, 181, 84, 0.35)',
+                            borderRadius: 8,
+                            padding: '4px 6px',
+                            maxWidth: 560,
+                            cursor: 'pointer'
                           }}
+                          title={full}
+                          role='button'
+                          tabIndex={0}
+                          aria-label='XCH address – click to copy'
+                          onClick={handleCopy}
+                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCopy() } }}
                         >
-                          <Icon name={copiedXch ? 'check' : 'copy'} size='small' />
-                        </button>
-                      </div>
+                          <code
+                            aria-label='XCH address'
+                            style={{
+                              background: 'transparent',
+                              padding: 0,
+                              borderRadius: 0,
+                              fontSize: 14,
+                              lineHeight: '18px',
+                              color: 'var(--color-text, #ddd)',
+                              maxWidth: 520,
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              flex: '0 1 auto'
+                            }}
+                          >
+                            {display}
+                          </code>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleCopy() }}
+                            aria-label='Copy XCH address'
+                            title='Copy'
+                            style={{
+                              cursor: 'pointer',
+                              background: copiedXch ? 'var(--color-link, #0b5)' : 'transparent',
+                              color: copiedXch ? '#fff' : 'var(--color-text, #eee)',
+                              border: '1px solid rgba(11, 181, 84, 0.35)',
+                              padding: 6,
+                              width: 30,
+                              height: 30,
+                              fontSize: 12,
+                              borderRadius: 6,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              transition: 'background .15s, color .15s, border-color .15s',
+                              flex: '0 0 auto'
+                            }}
+                          >
+                            <Icon name={copiedXch ? 'check' : 'copy'} size='small' />
+                          </button>
+                        </div>
+                      </>
                     )
                   })()}
 
@@ -1196,6 +1230,36 @@ Claim on <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: '
               {xchAddress && (
                 <div className={styles.bottomBarAddressCompact}>
                   <span className={styles.bottomBarLabelSmall}>XCH</span>
+                  {showMarmotBadge && (
+                    <a
+                      href={rootHostForLinks ? `//${rootHostForLinks}/how-it-works#marmot-badge` : '/how-it-works#marmot-badge'}
+                      aria-label='Learn about the Marmot Recovery badge'
+                      title='Learn about the Marmot Recovery badge'
+                      style={{ textDecoration: 'none' }}
+                    >
+                      <div
+                        style={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: '50%',
+                          overflow: 'hidden',
+                          marginLeft: 6,
+                          marginRight: 6,
+                          flex: '0 0 auto',
+                          background: 'rgba(11, 181, 84, 0.12)',
+                          border: '1px solid rgba(11, 181, 84, 0.35)'
+                        }}
+                      >
+                        <Image
+                          src={MARMOT_BADGE_IMG}
+                          alt='Marmot Recovery badge'
+                          width={32}
+                          height={32}
+                          style={{ objectFit: 'cover' }}
+                        />
+                      </div>
+                    </a>
+                  )}
                   <div
                     className={styles.bottomBarAddressShort}
                     onClick={handleCopy}
