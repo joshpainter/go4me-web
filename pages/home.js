@@ -8,6 +8,8 @@ import { useTheme } from './_app'
 import { useMemo, useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/router'
 import { getSupabaseClient } from '../lib/supabaseClient'
+import { TakeOfferButton } from '../components/wallet/TakeOfferButton'
+import GlobalWalletBar from '../components/wallet/GlobalWalletBar'
 
 const MOJO_PER_XCH = 1e12
 // Special-case Marmot Recovery Fund XCH address
@@ -701,8 +703,9 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
             style={{ width: '100%', maxWidth: 520 }}
           />
         </div>
-        {/* Right: actions (theme toggle) */}
+        {/* Right: actions (wallet + theme toggle) */}
         <div className={styles.topNavActions}>
+          <GlobalWalletBar inline />
           <button
             type='button'
             onClick={toggleTheme}
@@ -894,13 +897,13 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                       <div className={styles.badgeRow}>
                         {u.lastOfferId && u.lastOfferStatus === 0 ? (
                           <>
-                            <a
-                              href={`https://dexie.space/offers/${u.lastOfferId}`}
-                              target='_blank'
-                              rel='noreferrer noopener'
+                            <TakeOfferButton
+                              offerId={u.lastOfferId}
                               className={styles.miniBadge}
-                              aria-label='View latest offer on Dexie'
-                              title='Dexie'
+                              ariaLabel='Take offer via WalletConnect'
+                              title='Buy with WalletConnect'
+                              labelDefault="Dexie"
+                              labelWhenSage="Take Offer"
                             >
                               <Image
                                 src="https://raw.githubusercontent.com/dexie-space/dexie-kit/main/svg/duck.svg"
@@ -908,8 +911,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                                 width={16}
                                 height={16}
                               />
-                              Dexie
-                            </a>
+                            </TakeOfferButton>
                             <a
                               href={`https://mintgarden.io/offers/${u.lastOfferId}`}
                               target='_blank'
@@ -949,13 +951,11 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                       <div className={styles.badgeRow}>
                         {u.lastOfferId && u.lastOfferStatus === 0 ? (
                           <>
-                            <a
-                              href={`https://dexie.space/offers/${u.lastOfferId}`}
-                              target='_blank'
-                              rel='noreferrer noopener'
+                            <TakeOfferButton
+                              offerId={u.lastOfferId}
                               className={styles.miniBadge}
-                              aria-label='View latest offer on Dexie'
-                              title='Dexie'
+                              ariaLabel='Take offer via WalletConnect'
+                              title='Buy with WalletConnect'
                             >
                               <Image
                                 src="https://raw.githubusercontent.com/dexie-space/dexie-kit/main/svg/duck.svg"
@@ -963,8 +963,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                                 width={16}
                                 height={16}
                               />
-                              Dexie
-                            </a>
+                            </TakeOfferButton>
                             <a
                               href={`https://mintgarden.io/offers/${u.lastOfferId}`}
                               target='_blank'
@@ -1022,13 +1021,11 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                     <>
                       {u.lastOfferId && u.lastOfferStatus === 0 && (
                         <div className={styles.badgeRow}>
-                          <a
-                            href={`https://dexie.space/offers/${u.lastOfferId}`}
-                            target='_blank'
-                            rel='noreferrer noopener'
+                          <TakeOfferButton
+                            offerId={u.lastOfferId}
                             className={styles.miniBadge}
-                            aria-label='View latest offer on Dexie'
-                            title='Dexie'
+                            ariaLabel='Take offer via WalletConnect'
+                            title='Buy with WalletConnect'
                           >
                             <Image
                               src="https://raw.githubusercontent.com/dexie-space/dexie-kit/main/svg/duck.svg"
@@ -1036,8 +1033,8 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                               width={16}
                               height={16}
                             />
-                            Dexie
-                          </a>
+                            Buy
+                          </TakeOfferButton>
                           <a
                             href={`https://mintgarden.io/offers/${u.lastOfferId}`}
                             target='_blank'

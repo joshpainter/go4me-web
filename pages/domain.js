@@ -2,6 +2,9 @@ import Head from 'next/head'
 import Image from 'next/image'
 import Link from 'next/link'
 import styles from '../styles/Home.module.css'
+import GlobalWalletBar from '../components/wallet/GlobalWalletBar'
+import { TakeOfferButton } from '../components/wallet/TakeOfferButton'
+import { TakeMintgardenOfferButton } from '../components/wallet/TakeMintgardenOfferButton'
 import { getSupabaseClient } from '../lib/supabaseClient'
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Icon, Menu, Input, Button } from 'semantic-ui-react'
@@ -725,6 +728,7 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
           />
         </div>
         <div className={styles.topNavActions}>
+          <GlobalWalletBar inline />
           {/* Hide claim button on mobile - will show in mobile banner */}
           <a
             href={`https://x.com/intent/tweet?text=Hi @go4mebot! My XCH address is: `}
@@ -808,20 +812,20 @@ Claim on <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: '
             </div>
           </div>
           <div className={styles.profileRight}>
-            <h1 style={{ margin: 0, fontSize: 48, lineHeight: 1.05 }}>{fullName}</h1>
-            <div style={{ fontWeight: 400, fontSize: 24, marginTop: 6 }}>
+            <h1 className={styles.profileTitle}>{fullName}</h1>
+            <div className={styles.profileUsername}>
               <a
                 href={`https://x.com/${username}`}
                 target="_blank"
                 rel="noreferrer noopener"
-                style={{ color: '#888', textDecoration: 'none' }}
+                className={styles.usernameLink}
                 aria-label={`View @${username} on X`}
               >
                 @{username}
               </a>
             </div>
             {description && (
-              <p className={styles.profileDescription} style={{ margin: '18px 0 16px', lineHeight: 1.4, whiteSpace: 'pre-wrap' }}>{linkify(description)}</p>
+              <p className={styles.profileDescription}>{linkify(description)}</p>
             )}
 
             {/* Mobile Action Buttons - will be moved to bottom bar on mobile */}
@@ -1005,13 +1009,13 @@ Claim on <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: '
                       <span>Latest Offer</span>
                     </div>
                     <div className={styles.offerButtons}>
-                    <a
-                      href={`https://dexie.space/offers/${lastOfferId}`}
-                      target='_blank'
-                      rel='noreferrer'
+                    <TakeOfferButton
+                      offerId={lastOfferId}
                       className={styles.offerButton}
-                      aria-label='View offer on Dexie'
+                      ariaLabel='Take offer via WalletConnect or view on Dexie'
                       title='Dexie'
+                      labelDefault='Dexie'
+                      labelWhenSage='Take Offer'
                     >
                       <Image
                         src="https://raw.githubusercontent.com/dexie-space/dexie-kit/main/svg/duck.svg"
@@ -1019,16 +1023,14 @@ Claim on <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: '
                         width={18}
                         height={18}
                       />
-                      Dexie
-                      <Icon name='external' size='small' />
-                    </a>
-                    <a
-                      href={`https://mintgarden.io/offers/${lastOfferId}`}
-                      target='_blank'
-                      rel='noreferrer'
+                    </TakeOfferButton>
+                    <TakeMintgardenOfferButton
+                      offerId={lastOfferId}
                       className={`${styles.offerButton} ${styles.offerButtonGreen}`}
-                      aria-label='View offer on Mintgarden'
+                      ariaLabel='Take offer via WalletConnect or view on Mintgarden'
                       title='Mintgarden'
+                      labelDefault='Mintgarden'
+                      labelWhenSage='Take Offer'
                     >
                       <Image
                         src="https://mintgarden.io/mint-logo-round.svg"
@@ -1036,9 +1038,7 @@ Claim on <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: '
                         width={18}
                         height={18}
                       />
-                      Mintgarden
-                      <Icon name='external' size='small' />
-                    </a>
+                    </TakeMintgardenOfferButton>
                     </div>
                   </div>
                 )}

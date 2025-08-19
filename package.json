@@ -12,11 +12,22 @@
     "test": "npm run test:all"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/material": "^7.3.1",
     "@supabase/supabase-js": "^2.45.0",
+    "@types/qrcode": "^1.5.5",
+    "@types/react-syntax-highlighter": "^15.5.13",
+    "@walletconnect/sign-client": "2.7.4",
+    "@walletconnect/types": "2.7.4",
+    "@walletconnect/utils": "2.7.4",
+    "@web3modal/standalone": "2.4.1",
     "axios": "^1.11.0",
     "next": "^15.4.6",
+    "qrcode": "^1.5.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-syntax-highlighter": "^15.6.1",
     "semantic-ui-css": "^2.4.1",
     "semantic-ui-react": "^2.1.3"
   },

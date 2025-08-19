@@ -4,6 +4,7 @@ import { Icon } from 'semantic-ui-react'
 import { useState } from 'react'
 import styles from '../styles/Home.module.css'
 import { useTheme } from './_app'
+import GlobalWalletBar from '../components/wallet/GlobalWalletBar'
 
 export async function getServerSideProps(context) {
   // Derive root host (without subdomain) + preserve port so we can build absolute-ish links
@@ -60,8 +61,9 @@ export default function HowItWorks({ rootHostForLinks }) {
           ← Back
         </a>
         <div style={{ flex: 1 }} />
-        {/* Right: theme toggle */}
+        {/* Right: theme toggle + wallet */}
         <div className={styles.topNavActions}>
+          <GlobalWalletBar inline />
           <button
             type='button'
             onClick={toggleTheme}

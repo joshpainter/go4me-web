@@ -1,1 +1,3 @@
-export { default, getServerSideProps } from './home'
+import Home, { getServerSideProps } from './home'
+export { getServerSideProps }
+export default Home
