@@ -96,8 +96,6 @@ export function TakeOfferButton({ offerId, children, className, title, ariaLabel
         {/* Render icon and Dexie label explicitly */}
         {children}
         <span style={{ marginLeft: 4 }}>{labelDefault}</span>
-        {/* External link icon when not connected */}
-        <i aria-hidden="true" className="external small icon" style={{ marginLeft: 4 }}></i>
       </a>
     )
   }
