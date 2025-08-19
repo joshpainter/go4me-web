@@ -343,7 +343,7 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
   }, [totalBadgeScore])
   // Special-case badge for Marmot Recovery Fund address
   const MARMOT_BADGE_XCH = 'xch120ywvwahucfptkeuzzdpdz5v0nnarq5vgw94g247jd5vswkn7rls35y2gc'
-  const MARMOT_BADGE_IMG = 'https://can.seedsn.app/ipfs/QmRUGDqFdHL7YvzbncmmsGUyNkeJpZL2ynnmcjXQ4F6YMT/marmot-recovery-logo.png'
+  const MARMOT_BADGE_IMG = 'https://can.seedsn.app/ipfs/QmTbsAspUtyxSK7W3vmq1bGfRJSisumYApZjnvsg59BhgW/marmot-recovery-logo.png'
   const showMarmotBadge = xchAddress === MARMOT_BADGE_XCH
   const [copiedXch, setCopiedXch] = useState(false)
   const [copiedDid, setCopiedDid] = useState(false)
