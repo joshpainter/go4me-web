@@ -156,22 +156,26 @@ export default function HowItWorks({ rootHostForLinks }) {
           </section>
 
           <section id="marmot-badge" style={{ marginTop: 24 }}>
-            <h3>Marmot Recovery badge</h3>
+            <h3>Marmot Recovery Fund</h3>
+            <p>
+              The Marmot Recovery Foundation is bringing Canada&apos;s most endangered mammal back from the brink of extinction. Donate today!<br />
+              Vancouver Island, B.C. <a href="https://marmots.org" target="_blank" rel="noreferrer">marmots.org</a>
+            </p>
             <p>
               When you set your go4me royalty address to the <strong><a href="https://x.com/MarmotRecovery" target="_blank" rel="noreferrer">@MarmotRecovery</a></strong> address, the sales for new numbered copies created after the change will also go directly to marmots instead of the go4me wallet, in addition to your royalties!
             </p>
             <p>
-              Remember that you can always temporarily change your XCH address for a time, and then change it back. It's up to you! Just tag <strong><a href="https://x.com/go4mebot" target="_blank" rel="noreferrer">@go4mebot</a></strong> with any XCH address and it will always use the last one you gave it. Royalty addresses on existing NFTs cannot be changed, by design, but you can always choose the XCH address to be used for upcoming copies!
+              Remember that you can always temporarily change your XCH address for a time, and then change it back. It&apos;s up to you! Just tag <strong><a href="https://x.com/go4mebot" target="_blank" rel="noreferrer">@go4mebot</a></strong> with any XCH address and it will always use the last one you gave it. Royalty addresses on existing NFTs cannot be changed, by design, but you can always choose the XCH address to be used for upcoming copies!
             </p>
             <p>
-              Be aware that your collection will show the NFTs from the <strong><a href="https://x.com/MarmotRecovery" target="_blank" rel="noreferrer">@MarmotRecovery</a></strong> address, but you can also add your DID to your account and show those as well. We’ll also add a small icon or visualization so you know that someone is donating their profits and sales to marmots.
+              Be aware that your collection will show the NFTs from the <strong><a href="https://x.com/MarmotRecovery" target="_blank" rel="noreferrer">@MarmotRecovery</a></strong> address, but you can also add your DID to your account and show those as well. We&apos;ll also add a small icon or visualization so you know that someone is donating their profits and sales to marmots.
             </p>
             <p>
-              You can get <strong><a href="https://x.com/MarmotRecovery" target="_blank" rel="noreferrer">@MarmotRecovery</a></strong>'s XCH address and watch transactions come in at{' '}
+              You can get <strong><a href="https://x.com/MarmotRecovery" target="_blank" rel="noreferrer">@MarmotRecovery</a></strong>&apos;s XCH address and watch transactions come in at{' '}
               <a href="https://www.spacescan.io/address/xch120ywvwahucfptkeuzzdpdz5v0nnarq5vgw94g247jd5vswkn7rls35y2gc" target="_blank" rel="noreferrer">spacescan.io</a>.
-              {' '}Also remember that your daily airdrop goes to the address you have set, so you'll be donating any $G4M you receive as well!
+              {' '}Also remember that your daily airdrop goes to the address you have set, so you&apos;ll be donating any $G4M you receive as well!
             </p>
-            <p><strong>Let's save some marmots!</strong></p>
+            <p><strong>Let&apos;s save some marmots!</strong></p>
           </section>
 
           <section style={{ marginTop: 24}}>

@@ -10,6 +10,8 @@ import { useRouter } from 'next/router'
 import { getSupabaseClient } from '../lib/supabaseClient'
 
 const MOJO_PER_XCH = 1e12
+// Special-case Marmot Recovery Fund XCH address
+const MARMOT_BADGE_XCH = 'xch120ywvwahucfptkeuzzdpdz5v0nnarq5vgw94g247jd5vswkn7rls35y2gc'
 // Simple formatting helpers
 const formatXCH = (n) => new Intl.NumberFormat(undefined, { maximumFractionDigits: 4 }).format(n);
 const formatInt = (n) => new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(n ?? 0);
@@ -215,7 +217,8 @@ export async function getServerSideProps(context) {
       totalTraded: { column: 'rank_total_traded_value', ascending: true },
       badgeScore: { column: 'rank_total_badge_score', ascending: true },
       recentTrades: { column: 'rank_last_sale', ascending: true },
-      rarest: { column: 'rank_fewest_copies_sold', ascending: true }
+      rarest: { column: 'rank_fewest_copies_sold', ascending: true },
+      marmotRecovery: { column: 'rank_copies_sold', ascending: true }
     }
     if (currentView === 'queue') {
       let qb = supabase
@@ -231,17 +234,47 @@ export async function getServerSideProps(context) {
       error = resp.error
     } else {
       const orderSpec = orderMap[currentView] || orderMap.totalSold
-      let qb = supabase
-        .from('get_leaderboard')
-        .select('*')
-        .order(orderSpec.column, { ascending: orderSpec.ascending })
-        .range(0, PAGE_SIZE - 1)
-      if (q) {
-        qb = qb.or(`username.ilike.%${q}%,name.ilike.%${q}%`)
+      if (currentView === 'marmotRecovery') {
+        // Resolve author_ids that have the Marmot XCH address, then filter leaderboard by those ids
+        const idsResp = await supabase
+          .from('x_users')
+          .select('author_id')
+          .eq('xch_address', MARMOT_BADGE_XCH)
+          .range(0, 9999)
+        if (idsResp.error) {
+          data = []
+          error = idsResp.error
+        } else {
+          const ids = (idsResp.data || []).map(r => r.author_id).filter(Boolean)
+          if (ids.length === 0) {
+            data = []
+            error = null
+          } else {
+            let qb = supabase
+              .from('get_leaderboard')
+              .select('*')
+              .in('author_id', ids)
+              .order(orderSpec.column, { ascending: orderSpec.ascending })
+              .range(0, PAGE_SIZE - 1)
+            if (q) qb = qb.or(`username.ilike.%${q}%,name.ilike.%${q}%`)
+            const resp = await qb
+            data = resp.data
+            error = resp.error
+          }
+        }
+      } else {
+        let qb = supabase
+          .from('get_leaderboard')
+          .select('*')
+          .order(orderSpec.column, { ascending: orderSpec.ascending })
+          .range(0, PAGE_SIZE - 1)
+        if (q) {
+          qb = qb.or(`username.ilike.%${q}%,name.ilike.%${q}%`)
+        }
+        const resp = await qb
+        data = resp.data
+        error = resp.error
       }
-      const resp = await qb
-      data = resp.data
-      error = resp.error
     }
 
     if (error) throw error
@@ -363,7 +396,8 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
           totalTraded: { column: 'rank_total_traded_value', ascending: true },
           badgeScore: { column: 'rank_total_badge_score', ascending: true },
           recentTrades: { column: 'rank_last_sale', ascending: true },
-          rarest: { column: 'rank_fewest_copies_sold', ascending: true }
+          rarest: { column: 'rank_fewest_copies_sold', ascending: true },
+          marmotRecovery: { column: 'rank_copies_sold', ascending: true }
         }
         let data, error
         if (view === 'queue') {
@@ -375,6 +409,29 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
           if (query) qb = qb.or(`username.ilike.%${query}%,name.ilike.%${query}%`)
           const resp = await qb
           data = resp.data; error = resp.error
+        } else if (view === 'marmotRecovery') {
+          const idsResp = await supabase
+            .from('x_users')
+            .select('author_id')
+            .eq('xch_address', MARMOT_BADGE_XCH)
+            .range(0, 9999)
+          if (idsResp.error) { data = []; error = idsResp.error }
+          else {
+            const ids = (idsResp.data || []).map(r => r.author_id).filter(Boolean)
+            if (ids.length === 0) { data = []; error = null }
+            else {
+              const orderSpec = orderMap[view] || orderMap.totalSold
+              let qb = supabase
+                .from('get_leaderboard')
+                .select('*')
+                .in('author_id', ids)
+                .order(orderSpec.column, { ascending: orderSpec.ascending })
+                .range(0, PAGE_SIZE - 1)
+              if (query) qb = qb.or(`username.ilike.%${query}%,name.ilike.%${query}%`)
+              const resp = await qb
+              data = resp.data; error = resp.error
+            }
+          }
         } else {
           const orderSpec = orderMap[view] || orderMap.totalSold
           let qb = supabase
@@ -462,7 +519,8 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
         totalTraded: { column: 'total_traded_value', ascending: false },
         badgeScore: { column: 'rank_total_badge_score', ascending: true },
         recentTrades: { column: 'rank_last_sale', ascending: true },
-        rarest: { column: 'rank_fewest_copies_sold', ascending: true }
+        rarest: { column: 'rank_fewest_copies_sold', ascending: true },
+        marmotRecovery: { column: 'total_sold', ascending: false }
       }
       let data, error
       if (view === 'queue') {
@@ -474,6 +532,29 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
   if (query) qb = qb.or(`username.ilike.%${query}%,name.ilike.%${query}%`)
         const resp = await qb
         data = resp.data; error = resp.error
+      } else if (view === 'marmotRecovery') {
+        const idsResp = await supabase
+          .from('x_users')
+          .select('author_id')
+          .eq('xch_address', MARMOT_BADGE_XCH)
+          .range(0, 9999)
+        if (idsResp.error) { data = []; error = idsResp.error }
+        else {
+          const ids = (idsResp.data || []).map(r => r.author_id).filter(Boolean)
+          if (ids.length === 0) { data = []; error = null }
+          else {
+            const orderSpec = orderMap[view] || orderMap.totalSold
+            let qb = supabase
+              .from('get_leaderboard')
+              .select('*')
+              .in('author_id', ids)
+              .order(orderSpec.column, { ascending: orderSpec.ascending })
+              .range(from, to)
+            if (query) qb = qb.or(`username.ilike.%${query}%,name.ilike.%${query}%`)
+            const resp = await qb
+            data = resp.data; error = resp.error
+          }
+        }
       } else {
         const orderSpec = orderMap[view] || orderMap.totalSold
         let qb = supabase
@@ -715,6 +796,41 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
             onClick={() => setView('recentTrades')}
           />
           <Menu.Item
+            name='Marmot Recovery Fund'
+            active={view === 'marmotRecovery'}
+            onClick={() => setView('marmotRecovery')}
+            as='div'
+          >
+            <span>Marmot Recovery Fund</span>
+            <Link
+              href="/how-it-works#marmot-badge"
+              onClick={(e) => e.stopPropagation()}
+              aria-label="What is the Marmot Recovery Fund?"
+              title="About the Marmot Recovery Fund"
+              style={{ marginLeft: 6, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              <span
+                aria-hidden="true"
+                style={{
+                  width: 18,
+                  height: 18,
+                  borderRadius: '50%',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  lineHeight: '18px',
+                  backgroundColor: 'var(--badge-bg-solid)',
+                  color: 'var(--badge-fg-solid)',
+                  border: '1px solid var(--color-border)'
+                }}
+              >
+                ?
+              </span>
+            </Link>
+          </Menu.Item>
+          <Menu.Item
             name='Queue'
             active={view === 'queue'}
             onClick={() => setView('queue')}
@@ -733,6 +849,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
             <option value="badgeScore">Badge Score</option>
             <option value="rarest">Rarest go4s</option>
             <option value="recentTrades">Recent Trades</option>
+            <option value="marmotRecovery">Marmot Recovery Fund</option>
             <option value="queue">Queue</option>
           </select>
         </div>
@@ -765,7 +882,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                     <div className={styles.username}>@{u.username}</div>
                   )}
                   {u.fullName && <div className={styles.fullName}>{u.fullName}</div>}
-                  {(view === 'totalSold' || view === 'rarest') && (
+                  {(view === 'totalSold' || view === 'rarest' || view === 'marmotRecovery') && (
                     <>
                       <div className={styles.badgeRow}>
                         <span className={styles.miniBadge} title='Total sold'>Sold {u.totalSold}</span>
@@ -896,10 +1013,12 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                   )}
                   {view === 'recentTrades' && u.lastSaleAtMs && (
                     <div className={styles.badgeRow}>
-                      <span className={styles.miniBadge} title={new Date(u.lastSaleAtMs).toLocaleString()}>Last sale {formatRelativeAgo(u.lastSaleAtMs)}</span>
+                      <span suppressHydrationWarning className={styles.miniBadge} title={new Date(u.lastSaleAtMs).toLocaleString()}>
+                        Last sale {formatRelativeAgo(u.lastSaleAtMs)}
+                      </span>
                     </div>
                   )}
-                  {(view !== 'totalSold' && view !== 'totalTraded' && view !== 'rarest' && view !== 'queue') && (
+                  {(view !== 'totalSold' && view !== 'totalTraded' && view !== 'rarest' && view !== 'queue' && view !== 'marmotRecovery') && (
                     <>
                       {u.lastOfferId && u.lastOfferStatus === 0 && (
                         <div className={styles.badgeRow}>
