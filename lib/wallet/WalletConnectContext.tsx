@@ -34,7 +34,7 @@ export function WalletConnectProvider({ children }: PropsWithChildren) {
   const [qrCodeUri, setQrCodeUri] = useState<string>('')
   const [isConnecting, setIsConnecting] = useState(false)
 
-  const reset = () => { setSession(undefined); setAccounts([]); setError(null) }
+  const reset = useCallback(() => { setSession(undefined); setAccounts([]); setError(null) }, [])
 
   const onSessionConnected = useCallback((sess: SessionTypes.Struct) => {
     const allNamespaceAccounts = Object.values(sess.namespaces).map((ns) => ns.accounts).flat()
@@ -98,7 +98,7 @@ export function WalletConnectProvider({ children }: PropsWithChildren) {
     } finally {
       reset()
     }
-  }, [client, session, purgeAllPairings])
+  }, [client, session, purgeAllPairings, reset])
 
   const subscribeToEvents = useCallback(async (c: Client) => {
     c.on('session_update', ({ topic, params }) => {
@@ -157,7 +157,7 @@ export function WalletConnectProvider({ children }: PropsWithChildren) {
         window.removeEventListener('unhandledrejection', handleUnhandledRejection)
       }
     }
-  }, [onSessionConnected])
+  }, [onSessionConnected, reset])
 
   const checkPersistedState = useCallback(async (c: Client) => {
     setPairings(c.pairing.getAll({ active: true }))

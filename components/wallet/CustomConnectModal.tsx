@@ -12,6 +12,7 @@ interface CustomConnectModalProps {
 
 export function CustomConnectModal({ isOpen, onClose, qrCodeUri, isConnecting, error }: CustomConnectModalProps) {
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('')
+  const [copied, setCopied] = useState(false)
 
   // Generate QR code when URI changes
   useEffect(() => {
@@ -119,9 +120,12 @@ export function CustomConnectModal({ isOpen, onClose, qrCodeUri, isConnecting, e
               justifyContent: 'center'
             }}>
               {qrCodeDataUrl ? (
-                <img
+                <Image
                   src={qrCodeDataUrl}
                   alt="WalletConnect QR Code"
+                  width={300}
+                  height={300}
+                  unoptimized
                   style={{ display: 'block', width: '300px', height: '300px' }}
                 />
               ) : (
@@ -146,14 +150,19 @@ export function CustomConnectModal({ isOpen, onClose, qrCodeUri, isConnecting, e
             <div style={{ marginBottom: '16px' }}>
               <button
                 onClick={() => {
-                  navigator.clipboard.writeText(qrCodeUri).catch(() => {
-                    // Silently fail if clipboard access is denied
-                  })
+                  if (!qrCodeUri) return
+                  navigator.clipboard.writeText(qrCodeUri)
+                    .then(() => {
+                      setCopied(true)
+                      setTimeout(() => setCopied(false), 1200)
+                    })
+                    .catch(() => {
+                      // Silently fail if clipboard access is denied
+                    })
                 }}
                 style={{
                   width: '100%',
                   padding: '12px',
-                  backgroundColor: 'var(--color-link)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '8px',
@@ -165,9 +174,10 @@ export function CustomConnectModal({ isOpen, onClose, qrCodeUri, isConnecting, e
                   justifyContent: 'center',
                   gap: '8px'
                 }}
+                className={`copyBtn${copied ? ' copied' : ''}`}
               >
-                <Icon name="copy" />
-                Copy Connection URI
+                <Icon name={copied ? 'check' : 'copy'} />
+                {copied ? 'Copied!' : 'Copy WalletConnect URI'}
               </button>
             </div>
 
@@ -214,6 +224,20 @@ export function CustomConnectModal({ isOpen, onClose, qrCodeUri, isConnecting, e
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
+        }
+        .copyBtn {
+          background: var(--color-link);
+          transition: transform 120ms ease, filter 120ms ease, background 160ms ease;
+        }
+        .copyBtn:hover {
+          filter: brightness(1.05);
+          background: color-mix(in srgb, var(--color-link) 90%, white 10%);
+        }
+        .copyBtn:active {
+          transform: scale(0.98);
+        }
+        .copyBtn.copied {
+          background: #22c55e; /* green to confirm copy */
         }
       `}</style>
     </div>

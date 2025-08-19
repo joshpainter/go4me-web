@@ -56,7 +56,8 @@
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: saturate(120%) blur(6px);
   display: grid;
-  grid-template-columns: 1fr auto 1fr; /* centre column stays centred regardless of side widths */
+  /* Make the centre column flexible so the search bar can grow */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr);
   align-items: center;
   gap: 12px;
   z-index: 1100;

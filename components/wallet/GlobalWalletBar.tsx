@@ -130,14 +130,9 @@ export default function GlobalWalletBar({ inline = false }: { inline?: boolean }
       finally { setBusy(false); hasTriggeredRef.current = true }
     }
     run()
-  }, [session, pendingOfferStr, pendingOfferId, chiaTakeOffer])
+  }, [session, pendingOfferStr, pendingOfferId, chiaTakeOffer, showToast])
 
-  const accountLabel = useMemo(() => {
-    const a = accounts?.[0]
-    if (!a) return '(no account)'
-    if (a.length <= 18) return a
-    return `${a.slice(0, 8)}…${a.slice(-6)}`
-  }, [accounts])
+  // Always render icon-only UI; full/short labels removed per design
 
   const walletName = useMemo(() => {
     // WalletConnect v2 sessions expose peer.metadata.name
@@ -168,9 +163,19 @@ export default function GlobalWalletBar({ inline = false }: { inline?: boolean }
     borderRadius: isMobile ? 10 : 12,
     border: '1px solid var(--color-border)',
     background: 'var(--color-card-bg)', cursor: 'pointer', fontSize: isMobile ? 10 : 12,
-    display: 'inline-flex', alignItems: 'center', gap: isMobile ? 3 : 6, maxWidth: isMobile ? 160 : 220,
+  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: isMobile ? 3 : 6, maxWidth: isMobile ? 200 : 220,
+    lineHeight: 0,
     color: 'var(--color-text)'
   }
+
+  // When used inline in the header, match the dark mode button height (34px) at all widths
+  const chipStyleInlineOverride: React.CSSProperties = inline ? {
+    height: 34,
+    padding: '0 12px',
+    borderRadius: 4,
+    ...(isMobile ? {} : { maxWidth: 'none' })
+  } : {}
+
   const panelStyle: React.CSSProperties = {
     position: 'absolute', top: '100%', right: 0, marginTop: 6,
     background: 'var(--color-surface, rgba(255,255,255,0.97))', color: 'var(--color-text)',
@@ -197,39 +202,39 @@ export default function GlobalWalletBar({ inline = false }: { inline?: boolean }
   return (
     <div ref={rootRef} style={boxStyle} className="wallet-chip">
       {isInitializing && (
-        <div style={chipStyle} aria-live="polite" title="Connecting to wallet…">Wallet</div>
+        <div style={{ ...chipStyle, ...chipStyleInlineOverride }} aria-live="polite" title="Connecting to wallet…">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ display: 'block' }}>
+            <path d="M2 4C2 3.44772 2.44772 3 3 3H13C13.5523 3 14 3.44772 14 4V12C14 12.5523 13.5523 13 13 13H3C2.44772 13 2 12.5523 2 12V4Z" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+            <path d="M2 6H14" stroke="currentColor" strokeWidth="1.5"/>
+            <circle cx="11" cy="9.5" r="0.75" fill="currentColor"/>
+          </svg>
+        </div>
       )}
 
       {!isInitializing && !session && (
-        <button style={chipStyle} onClick={handleConnect} aria-label="Connect wallet" title="Connect wallet">
-          {isMobile ? (
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ display: 'block' }}>
-              <path d="M2 4C2 3.44772 2.44772 3 3 3H13C13.5523 3 14 3.44772 14 4V12C14 12.5523 13.5523 13 13 13H3C2.44772 13 2 12.5523 2 12V4Z" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-              <path d="M2 6H14" stroke="currentColor" strokeWidth="1.5"/>
-              <circle cx="11" cy="9.5" r="0.75" fill="currentColor"/>
-            </svg>
-          ) : 'Connect'}
+        <button style={{ ...chipStyle, ...chipStyleInlineOverride }} onClick={handleConnect} aria-label="Connect wallet" title="Connect wallet">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ display: 'block' }}>
+            <path d="M2 4C2 3.44772 2.44772 3 3 3H13C13.5523 3 14 3.44772 14 4V12C14 12.5523 13.5523 13 13 13H3C2.44772 13 2 12.5523 2 12V4Z" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+            <path d="M2 6H14" stroke="currentColor" strokeWidth="1.5"/>
+            <circle cx="11" cy="9.5" r="0.75" fill="currentColor"/>
+          </svg>
         </button>
       )}
 
       {!isInitializing && session && (
         <>
           <button
-            style={{...chipStyle, color: '#22c55e'}} // Green when connected
+            style={{ ...chipStyle, ...chipStyleInlineOverride, color: '#22c55e' }} // Green when connected
             onClick={() => setOpen(v => !v)}
             aria-expanded={open}
             aria-haspopup="dialog"
             title={`${walletName} • ${accounts?.[0] || ''}`}
           >
-            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {isMobile ? (
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ display: 'inline-block' }}>
-                  <path d="M2 4C2 3.44772 2.44772 3 3 3H13C13.5523 3 14 3.44772 14 4V12C14 12.5523 13.5523 13 13 13H3C2.44772 13 2 12.5523 2 12V4Z" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-                  <path d="M2 6H14" stroke="currentColor" strokeWidth="1.5"/>
-                  <circle cx="11" cy="9.5" r="0.75" fill="currentColor"/>
-                </svg>
-              ) : accountLabel}
-            </span>
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ display: 'block' }}>
+              <path d="M2 4C2 3.44772 2.44772 3 3 3H13C13.5523 3 14 3.44772 14 4V12C14 12.5523 13.5523 13 13 13H3C2.44772 13 2 12.5523 2 12V4Z" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+              <path d="M2 6H14" stroke="currentColor" strokeWidth="1.5"/>
+              <circle cx="11" cy="9.5" r="0.75" fill="currentColor"/>
+            </svg>
           </button>
 
           {open && (

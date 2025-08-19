@@ -717,14 +717,14 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
           </Link>
         )}
         {/* Center: search */}
-        <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+  <div style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <Input
             icon='search'
             size='large'
             placeholder='Search for go4s…'
             value={rawSearch}
             onChange={(_, { value }) => setRawSearch(value)}
-            style={{ width: '100%', maxWidth: 520 }}
+            style={{ width: '100%', maxWidth: 'min(95vw, 2100px)' }}
           />
         </div>
         <div className={styles.topNavActions}>

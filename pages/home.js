@@ -693,14 +693,14 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
           <Image src="/collection-icon.png" alt="go4.me" width={40} height={40} />
         </div>
         {/* Middle: search input */}
-        <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+  <div style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <Input
             icon='search'
             size='large'
             placeholder='Search for go4s…'
             value={rawSearch}
             onChange={(_, { value }) => setRawSearch(value)}
-            style={{ width: '100%', maxWidth: 520 }}
+            style={{ width: '100%', maxWidth: 'min(95vw, 2100px)' }}
           />
         </div>
         {/* Right: actions (wallet + theme toggle) */}
