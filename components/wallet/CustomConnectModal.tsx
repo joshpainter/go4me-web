@@ -195,9 +195,6 @@ export function CustomConnectModal({ isOpen, onClose, qrCodeUri, isConnecting, e
                 <span style={{ fontSize: '12px', padding: '4px 8px', backgroundColor: 'var(--color-border)', borderRadius: '4px' }}>
                   Chia Wallet
                 </span>
-                <span style={{ fontSize: '12px', padding: '4px 8px', backgroundColor: 'var(--color-border)', borderRadius: '4px' }}>
-                  Goby Wallet
-                </span>
               </div>
             </div>
           </div>
