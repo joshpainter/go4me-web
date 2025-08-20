@@ -79,6 +79,47 @@ function GobyButton({ onConnected }: { onConnected?: () => void }) {
   )
 }
 
+function SupportedWalletsList() {
+  // Mobile detection
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
+  const wallets = isMobile
+    ? ['Sage Wallet'] // Mobile: only Sage Wallet (WalletConnect compatible)
+    : ['Sage Wallet', 'Chia Wallet', 'Goby'] // Desktop: all three wallets
+
+  return (
+    <div style={{
+      padding: '16px',
+      backgroundColor: 'var(--color-chip-bg)',
+      borderRadius: '8px',
+      border: '1px solid var(--color-border)'
+    }}>
+      <p style={{ margin: '0 0 8px', fontSize: '14px', fontWeight: '600' }}>Supported Wallets:</p>
+      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
+        {wallets.map((wallet) => (
+          <span
+            key={wallet}
+            style={{
+              fontSize: '12px',
+              padding: '4px 8px',
+              backgroundColor: 'var(--color-border)',
+              borderRadius: '4px'
+            }}
+          >
+            {wallet}
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 interface CustomConnectModalProps {
   isOpen: boolean
   onClose: () => void
@@ -259,22 +300,7 @@ export function CustomConnectModal({ isOpen, onClose, qrCodeUri, isConnecting, e
               </button>
             </div>
 
-            <div style={{
-              padding: '16px',
-              backgroundColor: 'var(--color-chip-bg)',
-              borderRadius: '8px',
-              border: '1px solid var(--color-border)'
-            }}>
-              <p style={{ margin: '0 0 8px', fontSize: '14px', fontWeight: '600' }}>Supported Wallets:</p>
-              <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '12px', padding: '4px 8px', backgroundColor: 'var(--color-border)', borderRadius: '4px' }}>
-                  Sage Wallet
-                </span>
-                <span style={{ fontSize: '12px', padding: '4px 8px', backgroundColor: 'var(--color-border)', borderRadius: '4px' }}>
-                  Chia Wallet
-                </span>
-              </div>
-            </div>
+            <SupportedWalletsList />
           </div>
         ) : (
           <div style={{ textAlign: 'center', padding: '20px' }}>
