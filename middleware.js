@@ -24,7 +24,7 @@ export function middleware(req) {
   const normalizedHost = host === '127.0.0.1' ? 'localhost' : host
 
   // Root domain: do nothing so index/home renders
-  if (normalizedHost === 'go4.me' || normalizedHost.endsWith('.go4.fail') || normalizedHost === 'localhost') {
+  if (normalizedHost === 'go4.me' || normalizedHost.endsWith('go4.fail') || normalizedHost === 'localhost') {
     const res = NextResponse.next()
     res.headers.set('x-mw', 'root')
     return res
