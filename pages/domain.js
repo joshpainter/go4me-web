@@ -192,7 +192,7 @@ export async function getServerSideProps(ctx) {
     const hostHeader = req.headers.host || ''
     const host = hostHeader.split(':')[0]
     const normalized = host === '127.0.0.1' ? 'localhost' : host
-    if (normalized.endsWith('.go4.me') || normalized.endsWith('.localhost')) {
+    if (normalized.endsWith('.go4.me') || normalized.endsWith('.go4.fail') || normalized.endsWith('.localhost')) {
       username = normalized.split('.')[0]
     }
   }
