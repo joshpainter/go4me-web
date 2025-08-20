@@ -13,8 +13,8 @@ export default function GlobalWalletBar({ inline = false }: { inline?: boolean }
   const { showToast } = useToast()
   const { isAvailable: gobyAvailable, isConnected: gobyConnected, accounts: gobyAccounts, connect: gobyConnect, disconnect: gobyDisconnect } = useGoby()
 
-  const isConnectedAny = !!session || gobyConnected
-  const primaryAccount = useMemo(() => (gobyConnected ? (gobyAccounts?.[0] || '') : (accounts?.[0] || '')), [gobyConnected, gobyAccounts, accounts])
+  const isConnectedAny = !!session || (gobyConnected && !isMobile)
+  const primaryAccount = useMemo(() => (gobyConnected && !isMobile ? (gobyAccounts?.[0] || '') : (accounts?.[0] || '')), [gobyConnected, gobyAccounts, accounts, isMobile])
 
 
   const [open, setOpen] = useState(false)
@@ -102,7 +102,7 @@ export default function GlobalWalletBar({ inline = false }: { inline?: boolean }
     if (!rawOfferId && storedId) setPendingOfferId(storedId)
   }, [])
 
-  // Automatically submit the pending Dexie offer once connected
+  // Automatically submit the pending Dexie offer once connected (only for WalletConnect, not Goby on mobile)
   useEffect(() => {
     if (!session || hasTriggeredRef.current) return
     if (!pendingOfferStr && !pendingOfferId) return
@@ -141,12 +141,12 @@ export default function GlobalWalletBar({ inline = false }: { inline?: boolean }
   // Always render icon-only UI; full/short labels removed per design
 
   const walletName = useMemo(() => {
-    if (gobyConnected) return 'Goby'
+    if (gobyConnected && !isMobile) return 'Goby'
     // WalletConnect v2 sessions expose peer.metadata.name
     // Use optional chaining to avoid runtime errors
     // @ts-ignore - session typing may vary
     return session?.peer?.metadata?.name || 'Wallet'
-  }, [session, gobyConnected])
+  }, [session, gobyConnected, isMobile])
 
   async function handleConnect() {
     try {
@@ -218,7 +218,7 @@ export default function GlobalWalletBar({ inline = false }: { inline?: boolean }
         </div>
       )}
 
-      {!isInitializing && gobyConnected && !session && (
+      {!isInitializing && gobyConnected && !session && !isMobile && (
         <>
           <button
             style={{ ...chipStyle, ...chipStyleInlineOverride, color: '#22c55e' }}

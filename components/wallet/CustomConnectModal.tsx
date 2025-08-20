@@ -11,6 +11,15 @@ function GobyButton({ onConnected }: { onConnected?: () => void }) {
     if (isConnected) onConnected?.()
   }, [isConnected, onConnected])
 
+  // Detect mobile devices - hide Goby button on mobile
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
   // Detect theme changes to flip text colour: black in dark mode, white in light mode
   const [isDark, setIsDark] = useState(false)
   useEffect(() => {
@@ -21,6 +30,11 @@ function GobyButton({ onConnected }: { onConnected?: () => void }) {
     obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
     return () => obs.disconnect()
   }, [])
+
+  // Hide Goby button on mobile devices
+  if (isMobile) {
+    return null
+  }
 
   const btnStyle = {
     width: '100%',

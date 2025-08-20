@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useJsonRpc } from '../../lib/wallet/JsonRpcContext'
 import { useWalletConnect } from '../../lib/wallet/WalletConnectContext'
 import { useGoby } from '../../lib/wallet/GobyContext'
@@ -22,18 +22,27 @@ export function TakeOfferButton({ offerId, children, className, title, ariaLabel
   const [busy, setBusy] = useState(false)
   const [resultId, setResultId] = useState<string | null>(null)
 
-  // Consider the user "connected" if either Goby or WalletConnect is connected
-  const isConnectedAny = gobyConnected || !!session
+  // Mobile detection - hide Goby functionality on mobile
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
+  // Consider the user "connected" if either Goby (desktop only) or WalletConnect is connected
+  const isConnectedAny = (gobyConnected && !isMobile) || !!session
 
   async function handleClick() {
     setBusy(true); setResultId(null)
     try {
-      // Prefer connecting Goby if available
-      if (gobyAvailable && !gobyConnected) {
+      // Prefer connecting Goby if available and not on mobile
+      if (gobyAvailable && !gobyConnected && !isMobile) {
         try { await gobyConnect() } catch {}
       }
       // Otherwise, ensure WalletConnect session exists
-      if (!gobyConnected && !session) {
+      if (!(gobyConnected && !isMobile) && !session) {
         await connect()
       }
 
@@ -85,8 +94,8 @@ export function TakeOfferButton({ offerId, children, className, title, ariaLabel
     }
   }
 
-  // If neither Goby nor WalletConnect is connected, fall back to Dexie link behaviour
-  if (!gobyConnected && !session) {
+  // If neither Goby (desktop only) nor WalletConnect is connected, fall back to Dexie link behaviour
+  if (!(gobyConnected && !isMobile) && !session) {
     return (
       <a
         href={`https://dexie.space/offers/${offerId}`}
