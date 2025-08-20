@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useJsonRpc } from '../../lib/wallet/JsonRpcContext'
 import { useWalletConnect } from '../../lib/wallet/WalletConnectContext'
+import { useGoby } from '../../lib/wallet/GobyContext'
 import { useToast } from '../ui/Toast'
 
 type Props = {
@@ -16,20 +17,23 @@ type Props = {
 export function TakeOfferButton({ offerId, children, className, title, ariaLabel, labelDefault = 'Dexie', labelWhenSage = 'Take Offer' }: Props) {
   const { chiaTakeOffer } = useJsonRpc()
   const { session, connect, reset } = useWalletConnect()
+  const { isAvailable: gobyAvailable, isConnected: gobyConnected, connect: gobyConnect } = useGoby()
   const { showToast } = useToast()
   const [busy, setBusy] = useState(false)
   const [resultId, setResultId] = useState<string | null>(null)
 
-  // Determine wallet name/type
-  // @ts-ignore: session typing may vary across wc versions
-  const walletName: string | undefined = session?.peer?.metadata?.name
-  const isSage = (walletName || '').toLowerCase().includes('sage')
+  // Consider the user "connected" if either Goby or WalletConnect is connected
+  const isConnectedAny = gobyConnected || !!session
 
   async function handleClick() {
     setBusy(true); setResultId(null)
     try {
-      // Ensure wallet is connected first
-      if (!session) {
+      // Prefer connecting Goby if available
+      if (gobyAvailable && !gobyConnected) {
+        try { await gobyConnect() } catch {}
+      }
+      // Otherwise, ensure WalletConnect session exists
+      if (!gobyConnected && !session) {
         await connect()
       }
 
@@ -81,8 +85,8 @@ export function TakeOfferButton({ offerId, children, className, title, ariaLabel
     }
   }
 
-  // If no wallet session, fall back to Dexie link behaviour
-  if (!session) {
+  // If neither Goby nor WalletConnect is connected, fall back to Dexie link behaviour
+  if (!gobyConnected && !session) {
     return (
       <a
         href={`https://dexie.space/offers/${offerId}`}
@@ -115,9 +119,9 @@ export function TakeOfferButton({ offerId, children, className, title, ariaLabel
           : children
             ? <span style={{ display: 'inline-flex', alignItems: 'center' }}>
                 {children}
-                <span style={{ marginLeft: 4 }}>{isSage ? labelWhenSage : labelDefault}</span>
+                <span style={{ marginLeft: 4 }}>{isConnectedAny ? labelWhenSage : labelDefault}</span>
               </span>
-            : (isSage ? labelWhenSage : labelDefault)
+            : (isConnectedAny ? labelWhenSage : labelDefault)
         }
       </button>
       {resultId && <span style={{ fontSize: 12 }}>Tx: {resultId}</span>}

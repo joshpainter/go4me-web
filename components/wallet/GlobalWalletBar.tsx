@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useWalletConnect } from '../../lib/wallet/WalletConnectContext'
 import { useJsonRpc } from '../../lib/wallet/JsonRpcContext'
+import { useGoby } from '../../lib/wallet/GobyContext'
 import { useToast } from '../ui/Toast'
 
 // Small, global wallet control fixed at the top-right.
@@ -10,6 +11,11 @@ export default function GlobalWalletBar({ inline = false }: { inline?: boolean }
   const { isInitializing, session, accounts, connect, disconnect } = useWalletConnect()
   const { chiaTakeOffer } = useJsonRpc()
   const { showToast } = useToast()
+  const { isAvailable: gobyAvailable, isConnected: gobyConnected, accounts: gobyAccounts, connect: gobyConnect, disconnect: gobyDisconnect } = useGoby()
+
+  const isConnectedAny = !!session || gobyConnected
+  const primaryAccount = useMemo(() => (gobyConnected ? (gobyAccounts?.[0] || '') : (accounts?.[0] || '')), [gobyConnected, gobyAccounts, accounts])
+
 
   const [open, setOpen] = useState(false)
   const [pendingOfferId, setPendingOfferId] = useState<string | null>(null)
@@ -135,11 +141,12 @@ export default function GlobalWalletBar({ inline = false }: { inline?: boolean }
   // Always render icon-only UI; full/short labels removed per design
 
   const walletName = useMemo(() => {
+    if (gobyConnected) return 'Goby'
     // WalletConnect v2 sessions expose peer.metadata.name
     // Use optional chaining to avoid runtime errors
     // @ts-ignore - session typing may vary
     return session?.peer?.metadata?.name || 'Wallet'
-  }, [session])
+  }, [session, gobyConnected])
 
   async function handleConnect() {
     try {
@@ -211,7 +218,42 @@ export default function GlobalWalletBar({ inline = false }: { inline?: boolean }
         </div>
       )}
 
-      {!isInitializing && !session && (
+      {!isInitializing && gobyConnected && !session && (
+        <>
+          <button
+            style={{ ...chipStyle, ...chipStyleInlineOverride, color: '#22c55e' }}
+            onClick={() => setOpen(v => !v)}
+            aria-expanded={open}
+            aria-haspopup="dialog"
+            title={`Goby • ${primaryAccount}`}
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ display: 'block' }}>
+              <path d="M2 4C2 3.44772 2.44772 3 3 3H13C13.5523 3 14 3.44772 14 4V12C14 12.5523 13.5523 13 13 13H3C2.44772 13 2 12.5523 2 12V4Z" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+              <path d="M2 6H14" stroke="currentColor" strokeWidth="1.5"/>
+              <circle cx="11" cy="9.5" r="0.75" fill="currentColor"/>
+            </svg>
+          </button>
+
+          {open && (
+            <div role="dialog" aria-label="Wallet details" style={{ ...panelStyle, ...(themeIsDark ? darkPanel : {}) }}>
+              <div style={{ display: 'grid', gap: 8 }}>
+                <div style={{ fontWeight: 600 }}>Goby</div>
+                <div style={subtleText}>Network</div>
+                <div style={{ fontSize: 12 }}>chia:mainnet</div>
+                <div style={subtleText}>Account</div>
+                <div style={{ ...mono, fontSize: 12, wordBreak: 'break-all' }}>{primaryAccount || '(none)'}</div>
+                {busy && <div style={{ fontSize: 12 }}>Processing Dexie offer…</div>}
+                {resultId && <div style={{ fontSize: 12 }}>Tx: {resultId}</div>}
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 6 }}>
+                  <button style={actionBtn} onClick={() => { setOpen(false); gobyDisconnect() }}>Disconnect</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {!isInitializing && !session && !gobyConnected && (
         <button style={{ ...chipStyle, ...chipStyleInlineOverride }} onClick={handleConnect} aria-label="Connect wallet" title="Connect wallet">
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ display: 'block' }}>
             <path d="M2 4C2 3.44772 2.44772 3 3 3H13C13.5523 3 14 3.44772 14 4V12C14 12.5523 13.5523 13 13 13H3C2.44772 13 2 12.5523 2 12V4Z" stroke="currentColor" strokeWidth="1.5" fill="none"/>

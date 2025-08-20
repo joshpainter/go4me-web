@@ -3,6 +3,7 @@ import '../styles/globals.css'
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { WalletConnectProvider } from '../lib/wallet/WalletConnectContext'
 import { JsonRpcProvider } from '../lib/wallet/JsonRpcContext'
+import { GobyProvider } from '../lib/wallet/GobyContext'
 import { ToastProvider } from '../components/ui/Toast'
 
 const ThemeContext = createContext({ theme: 'light', toggleTheme: () => {} })
@@ -141,13 +142,15 @@ function MyApp({ Component, pageProps }) {
 
   return (
     <ToastProvider>
-      <WalletConnectProvider>
-        <JsonRpcProvider>
-          <ThemeContext.Provider value={{ theme, toggleTheme }}>
-            <Component {...pageProps} />
-          </ThemeContext.Provider>
-        </JsonRpcProvider>
-      </WalletConnectProvider>
+      <GobyProvider>
+        <WalletConnectProvider>
+          <JsonRpcProvider>
+            <ThemeContext.Provider value={{ theme, toggleTheme }}>
+              <Component {...pageProps} />
+            </ThemeContext.Provider>
+          </JsonRpcProvider>
+        </WalletConnectProvider>
+      </GobyProvider>
     </ToastProvider>
   )
 }

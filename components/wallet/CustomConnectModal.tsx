@@ -1,6 +1,69 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { Icon } from 'semantic-ui-react'
+import { useGoby } from '../../lib/wallet/GobyContext'
+
+function GobyButton({ onConnected }: { onConnected?: () => void }) {
+  const { isAvailable, isConnected, connect } = useGoby()
+
+  // Auto-close modal once Goby is connected
+  useEffect(() => {
+    if (isConnected) onConnected?.()
+  }, [isConnected, onConnected])
+
+  // Detect theme changes to flip text colour: black in dark mode, white in light mode
+  const [isDark, setIsDark] = useState(false)
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    const getDark = () => document.documentElement.getAttribute('data-theme') === 'dark'
+    setIsDark(getDark())
+    const obs = new MutationObserver(() => setIsDark(getDark()))
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+    return () => obs.disconnect()
+  }, [])
+
+  const btnStyle = {
+    width: '100%',
+    padding: '12px',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: 600,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    margin: '8px 0 16px',
+  } as const
+  const textColour = isDark ? '#000000' : '#ffffff'
+
+  if (!isAvailable) {
+    return (
+      <a
+        href="https://chrome.google.com/webstore/detail/goby-chia-wallet/" target="_blank" rel="noreferrer noopener"
+        className="copyBtn"
+        style={{ ...btnStyle, color: textColour }}
+      >
+        <Icon name="chrome" /> Install Goby (Chrome)
+      </a>
+    )
+  }
+
+  if (!isConnected) {
+    return (
+      <button onClick={() => connect()} className="copyBtn" style={{ ...btnStyle, color: textColour }}>
+        <Icon name="plug" /> Connect with Goby
+      </button>
+    )
+  }
+
+  return (
+    <button className="copyBtn" style={{ ...btnStyle, color: textColour, backgroundColor: '#22c55e', cursor: 'default' }} disabled>
+      <Icon name="check" /> Connected with Goby
+    </button>
+  )
+}
 
 interface CustomConnectModalProps {
   isOpen: boolean
@@ -108,6 +171,7 @@ export function CustomConnectModal({ isOpen, onClose, qrCodeUri, isConnecting, e
             <p style={{ marginBottom: '20px', color: 'var(--color-text)' }}>
               Scan this QR code with your Chia wallet to connect
             </p>
+            <GobyButton onConnected={onClose} />
             <div style={{
               padding: '16px',
               backgroundColor: '#ffffff',
