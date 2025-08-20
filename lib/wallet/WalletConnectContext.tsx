@@ -1,10 +1,11 @@
 import Client from '@walletconnect/sign-client'
 import { PairingTypes, SessionTypes } from '@walletconnect/types'
 import { getSdkError } from '@walletconnect/utils'
-import React, { createContext, PropsWithChildren, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { createContext, PropsWithChildren, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { METADATA, REQUIRED_NAMESPACES } from '../wc/wallet-connect'
 import { PROJECT_ID, RELAY_URL, CHAIN_ID } from '../wc/env'
 import { CustomConnectModal } from '../../components/wallet/CustomConnectModal'
+import { crossDomainStorage } from './CrossDomainStorage'
 
 interface WalletConnectContextValue {
   client?: Client
@@ -52,14 +53,32 @@ export function WalletConnectProvider({ children }: PropsWithChildren) {
     } catch {}
   }, [])
 
+  // Aggressively clear stale core storage entries that can cause "No matching key"
+  const hardResetCore = useCallback(async (c: Client) => {
+    try {
+      const storage = (c as any).core?.storage
+      if (!storage || !storage.getKeys) return
+      const keys: string[] = await storage.getKeys()
+      const toRemove = keys.filter(k => (
+        k.includes('core:pairing') ||
+        k.includes('core:history') ||
+        k.includes('core:expirer') ||
+        k.includes('core:messages')
+      ))
+      for (const k of toRemove) {
+        try { await storage.removeItem(k) } catch {}
+      }
+    } catch {}
+  }, [])
+
   const connect = useCallback(async () => {
     if (!client) throw new Error('WalletConnect is not initialized')
+    if (isConnecting) return
 
     try {
       setIsConnecting(true)
       setShowModal(true)
       setError(null)
-      purgeAllPairings(client)
 
       // Force a fresh pairing every time to avoid undefined pairing keys
       const { uri, approval } = await client.connect({ pairingTopic: undefined, requiredNamespaces: REQUIRED_NAMESPACES })
@@ -82,7 +101,7 @@ export function WalletConnectProvider({ children }: PropsWithChildren) {
       setIsConnecting(false)
       if (!('message' in e)) setError('WalletConnect error')
     }
-  }, [client, onSessionConnected, purgeAllPairings])
+  }, [client, onSessionConnected, purgeAllPairings, hardResetCore, isConnecting])
 
   const disconnect = useCallback(async () => {
     try {
@@ -173,18 +192,32 @@ export function WalletConnectProvider({ children }: PropsWithChildren) {
   const createClient = useCallback(async () => {
     setIsInitializing(true)
     try {
-      const safeMeta = { ...METADATA, url: typeof window !== 'undefined' ? window.location.origin : 'http://localhost' }
-      const c = await Client.init({ relayUrl: RELAY_URL, projectId: PROJECT_ID, metadata: safeMeta })
+      // Clean legacy storage/cookies once on boot
+      try { (crossDomainStorage as any).cleanupLegacy?.() } catch {}
 
-      // Patch the client to suppress cleanupDuplicatePairings errors
-      if ((c as any).cleanupDuplicatePairings) {
-        const originalCleanup = (c as any).cleanupDuplicatePairings.bind(c)
-        ;(c as any).cleanupDuplicatePairings = async (...args: any[]) => {
+      const safeMeta = { ...METADATA, url: typeof window !== 'undefined' ? window.location.origin : 'http://localhost' }
+      const c = await Client.init({
+        relayUrl: RELAY_URL,
+        projectId: PROJECT_ID,
+        metadata: safeMeta,
+        storage: crossDomainStorage
+      })
+
+      // Patch the engine's cleanupDuplicatePairings to a no-op to avoid benign WC issue
+      const engine: any = (c as any).engine || c
+      if (engine && typeof engine.cleanupDuplicatePairings === 'function') {
+        engine.cleanupDuplicatePairings = async () => { /* no-op: prevents spurious 'No matching key' */ }
+      }
+      // Also guard onSessionSettleRequest to ignore this specific benign error
+      if (engine && typeof engine.onSessionSettleRequest === 'function') {
+        const origSettle = engine.onSessionSettleRequest.bind(engine)
+        engine.onSessionSettleRequest = async (...args: any[]) => {
           try {
-            return await originalCleanup(...args)
+            return await origSettle(...args)
           } catch (error: any) {
-            // Silently ignore "No matching key" errors from cleanup
-            if (error?.message?.includes('No matching key') || error?.message?.includes('pairing: undefined')) {
+            const msg = String(error?.message || error || '')
+            if (msg.includes('No matching key') && msg.includes('pairing')) {
+              // Ignore and continue; state will be reconciled by subsequent events
               return
             }
             throw error
@@ -208,6 +241,38 @@ export function WalletConnectProvider({ children }: PropsWithChildren) {
   }, [client])
 
   useEffect(() => { if (!client) createClient() }, [client, createClient])
+
+  // Sync session state across tabs/subdomains
+  useEffect(() => {
+    if (typeof window === 'undefined' || !client) return
+
+    const handleStorageChange = async () => {
+      try {
+        const sessions = client.session.getAll()
+        if (sessions.length > 0 && !session) {
+          // Session exists but not in current context - sync it
+          const latestSession = sessions[sessions.length - 1]
+          onSessionConnected(latestSession)
+        } else if (sessions.length === 0 && session) {
+          // Session was disconnected in another tab - sync disconnect
+          reset()
+        }
+      } catch {
+        // Ignore sync errors
+      }
+    }
+
+    // Listen for storage changes (works across tabs in same domain)
+    window.addEventListener('storage', handleStorageChange)
+
+    // For cross-subdomain sync, poll periodically (fallback)
+    const syncInterval = setInterval(handleStorageChange, 5000)
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      clearInterval(syncInterval)
+    }
+  }, [client, session, onSessionConnected, reset])
 
   const value = useMemo(() => ({
     chainId: CHAIN_ID,

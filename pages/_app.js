@@ -21,22 +21,30 @@ function MyApp({ Component, pageProps }) {
     } catch {}
 
     // Comprehensive WalletConnect error suppression
-    const isWalletConnectError = (message) => {
-      return message && (
-        message.includes('No matching key') ||
-        message.includes('pairing: undefined') ||
-        message.includes('cleanupDuplicatePairings') ||
-        message.includes('onSessionSettleRequest') ||
-        message.includes('getData') ||
-        message.includes('getRecord') ||
-        message.includes('onRelayEventResponse') ||
-        message.includes('core/pairing') ||
-        message.includes('history:') ||
-        message.includes('webpack-internal') ||
-        message.includes('@walletconnect/core') ||
-        message.includes('@walletconnect/sign-client')
-      )
+    const isWalletConnectMessage = (val) => {
+      if (!val) return false
+      if (typeof val === 'string') {
+        return (
+          val.includes('No matching key') ||
+          val.includes('pairing: undefined') ||
+          val.includes('cleanupDuplicatePairings') ||
+          val.includes('onSessionSettleRequest') ||
+          val.includes('getData') ||
+          val.includes('getRecord') ||
+          val.includes('onRelayEventResponse') ||
+          val.includes('core/pairing') ||
+          val.includes('@walletconnect/core') ||
+          val.includes('@walletconnect/sign-client')
+        )
+      }
+      if (val && typeof val === 'object') {
+        if (val.message && typeof val.message === 'string') return isWalletConnectMessage(val.message)
+        if (val.context && typeof val.context === 'string' && val.context.startsWith('core')) return true
+      }
+      return false
     }
+
+    const isWalletConnectError = (...args) => args.some(isWalletConnectMessage)
 
     // Override window.onerror to catch all errors
     const originalOnError = window.onerror
