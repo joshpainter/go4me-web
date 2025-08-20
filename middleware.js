@@ -24,14 +24,14 @@ export function middleware(req) {
   const normalizedHost = host === '127.0.0.1' ? 'localhost' : host
 
   // Root domain: do nothing so index/home renders
-  if (normalizedHost === 'go4.me' || normalizedHost === 'localhost') {
+  if (normalizedHost === 'go4.me' || normalizedHost.endsWith('.go4.fail') || normalizedHost === 'localhost') {
     const res = NextResponse.next()
     res.headers.set('x-mw', 'root')
     return res
   }
 
   // username.go4.me OR username.localhost
-  if (normalizedHost.endsWith('.go4.me') || normalizedHost.endsWith('.localhost')) {
+  if (normalizedHost.endsWith('.go4.me') || normalizedHost.endsWith('.go4.fail') || normalizedHost.endsWith('.localhost')) {
     const parts = normalizedHost.split('.')
     const sub = parts[0]
     if (sub && sub !== 'go4' && sub !== 'localhost') {
