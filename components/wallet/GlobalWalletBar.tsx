@@ -13,10 +13,6 @@ export default function GlobalWalletBar({ inline = false }: { inline?: boolean }
   const { showToast } = useToast()
   const { isAvailable: gobyAvailable, isConnected: gobyConnected, accounts: gobyAccounts, connect: gobyConnect, disconnect: gobyDisconnect } = useGoby()
 
-  const isConnectedAny = !!session || (gobyConnected && !isMobile)
-  const primaryAccount = useMemo(() => (gobyConnected && !isMobile ? (gobyAccounts?.[0] || '') : (accounts?.[0] || '')), [gobyConnected, gobyAccounts, accounts, isMobile])
-
-
   const [open, setOpen] = useState(false)
   const [pendingOfferId, setPendingOfferId] = useState<string | null>(null)
   const [pendingOfferStr, setPendingOfferStr] = useState<string | null>(null)
@@ -25,6 +21,9 @@ export default function GlobalWalletBar({ inline = false }: { inline?: boolean }
   const [isMobile, setIsMobile] = useState(false)
   const hasTriggeredRef = useRef(false)
   const rootRef = useRef<HTMLDivElement | null>(null)
+
+  const isConnectedAny = !!session || (gobyConnected && !isMobile)
+  const primaryAccount = useMemo(() => (gobyConnected && !isMobile ? (gobyAccounts?.[0] || '') : (accounts?.[0] || '')), [gobyConnected, gobyAccounts, accounts, isMobile])
 
   // Mobile detection
   useEffect(() => {
