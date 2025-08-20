@@ -67,7 +67,9 @@ const nextConfig = {
     'localhost:3000',
     '*.localhost:3000',
     'go4.me',
-    '*.go4.me'
+    '*.go4.me',
+    'go4.fail',
+    '*.go4.fail'
   ],
   async headers() {
     return [
@@ -109,6 +111,7 @@ const nextConfig = {
       { protocol: 'https', hostname: 'go4me-domains.s3.amazonaws.com', pathname: '/**' },
       { protocol: 'https', hostname: 'can.seedsn.app', pathname: '/**' },
       { protocol: 'https', hostname: 'go4.me', pathname: '/**' },
+      { protocol: 'https', hostname: 'go4.fail', pathname: '/**' },
       { protocol: 'https', hostname: 'raw.githubusercontent.com', pathname: '/**' },
       { protocol: 'https', hostname: 'mintgarden.io', pathname: '/**' },
       { protocol: 'https', hostname: 'assets.mainnet.mintgarden.io', pathname: '/**' }
