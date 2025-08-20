@@ -10,14 +10,13 @@ import { useToast } from '../ui/Toast'
 export default function GlobalWalletBar({ inline = false }: { inline?: boolean }) {
   const { isInitializing, session, accounts, connect, disconnect } = useWalletConnect()
   const { chiaTakeOffer } = useJsonRpc()
-  const { showToast } = useToast()
+  const { showToast, showTransactionSuccess } = useToast()
   const { isAvailable: gobyAvailable, isConnected: gobyConnected, accounts: gobyAccounts, connect: gobyConnect, disconnect: gobyDisconnect } = useGoby()
 
   const [open, setOpen] = useState(false)
   const [pendingOfferId, setPendingOfferId] = useState<string | null>(null)
   const [pendingOfferStr, setPendingOfferStr] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-  const [resultId, setResultId] = useState<string | null>(null)
   const [isMobile, setIsMobile] = useState(false)
   const hasTriggeredRef = useRef(false)
   const rootRef = useRef<HTMLDivElement | null>(null)
@@ -107,7 +106,7 @@ export default function GlobalWalletBar({ inline = false }: { inline?: boolean }
     if (!pendingOfferStr && !pendingOfferId) return
 
     const run = async () => {
-      setBusy(true); setResultId(null)
+      setBusy(true)
       try {
         let offer: string | null = pendingOfferStr
         if (!offer && pendingOfferId) {
@@ -118,8 +117,7 @@ export default function GlobalWalletBar({ inline = false }: { inline?: boolean }
         }
         if (!offer || typeof offer !== 'string') throw new Error('No offer found to submit')
         const r = await chiaTakeOffer({ offer })
-        setResultId(r.id)
-        showToast('Offer accepted successfully! Transaction submitted to the blockchain.', 'success')
+        showTransactionSuccess(r.id)
         setPendingOfferId(null); setPendingOfferStr(null)
         sessionStorage.removeItem('pendingOfferId'); sessionStorage.removeItem('pendingOfferStr')
       } catch (e: any) {
@@ -242,7 +240,6 @@ export default function GlobalWalletBar({ inline = false }: { inline?: boolean }
                 <div style={subtleText}>Account</div>
                 <div style={{ ...mono, fontSize: 12, wordBreak: 'break-all' }}>{primaryAccount || '(none)'}</div>
                 {busy && <div style={{ fontSize: 12 }}>Processing Dexie offer…</div>}
-                {resultId && <div style={{ fontSize: 12 }}>Tx: {resultId}</div>}
                 <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 6 }}>
                   <button style={actionBtn} onClick={() => { setOpen(false); gobyDisconnect() }}>Disconnect</button>
                 </div>
@@ -287,7 +284,6 @@ export default function GlobalWalletBar({ inline = false }: { inline?: boolean }
                 <div style={subtleText}>Account</div>
                 <div style={{ ...mono, fontSize: 12, wordBreak: 'break-all' }}>{accounts?.[0] || '(none)'}</div>
                 {busy && <div style={{ fontSize: 12 }}>Processing Dexie offer…</div>}
-                {resultId && <div style={{ fontSize: 12 }}>Tx: {resultId}</div>}
                 <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 6 }}>
                   <button style={actionBtn} onClick={() => { setOpen(false); disconnect() }}>Disconnect</button>
                 </div>
