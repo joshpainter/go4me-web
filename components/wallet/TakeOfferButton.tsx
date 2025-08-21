@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useJsonRpc } from '../../lib/wallet/JsonRpcContext'
 import { useWalletConnect } from '../../lib/wallet/WalletConnectContext'
+import { useGoby } from '../../lib/wallet/GobyContext'
 import { useToast } from '../ui/Toast'
 
 type Props = {
@@ -16,21 +17,33 @@ type Props = {
 export function TakeOfferButton({ offerId, children, className, title, ariaLabel, labelDefault = 'Dexie', labelWhenSage = 'Take Offer' }: Props) {
   const { chiaTakeOffer } = useJsonRpc()
   const { session, connect, reset } = useWalletConnect()
-  const { showToast } = useToast()
+  const { isAvailable: gobyAvailable, isConnected: gobyConnected, connect: gobyConnect } = useGoby()
+  const { showToast, showTransactionSuccess } = useToast()
   const [busy, setBusy] = useState(false)
   const [resultId, setResultId] = useState<string | null>(null)
 
-  // Determine wallet name/type
-  // @ts-ignore: session typing may vary across wc versions
-  const walletName: string | undefined = session?.peer?.metadata?.name
-  const isSage = (walletName || '').toLowerCase().includes('sage')
+  // Mobile detection - hide Goby functionality on mobile
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
+  // Consider the user "connected" if either WalletConnect or Goby (desktop only) is connected
+  const isConnectedAny = !!session || (gobyConnected && !isMobile)
 
   async function handleClick() {
     setBusy(true); setResultId(null)
     try {
-      // Ensure wallet is connected first
+      // Prefer WalletConnect - ensure session exists first
       if (!session) {
         await connect()
+      }
+      // If WalletConnect failed and Goby is available (desktop only), try Goby as fallback
+      if (!session && gobyAvailable && !gobyConnected && !isMobile) {
+        try { await gobyConnect() } catch {}
       }
 
       // Fetch offer file from Dexie API
@@ -53,8 +66,10 @@ export function TakeOfferButton({ offerId, children, className, title, ariaLabel
       const r = await chiaTakeOffer({ offer })
       // r may be null/undefined if rejected in some wallets; guard access
       if (r && (r as any).id) {
-        setResultId((r as any).id)
-        showToast('Offer accepted successfully! Transaction submitted to the blockchain.', 'success')
+        const transactionId = (r as any).id
+        setResultId(transactionId)
+        // Show transaction success popup with hash
+        showTransactionSuccess(transactionId)
       }
     } catch (e: any) {
       const msg = (e?.message || String(e))
@@ -81,8 +96,8 @@ export function TakeOfferButton({ offerId, children, className, title, ariaLabel
     }
   }
 
-  // If no wallet session, fall back to Dexie link behaviour
-  if (!session) {
+  // If neither WalletConnect nor Goby (desktop only) is connected, fall back to Dexie link behaviour
+  if (!session && !(gobyConnected && !isMobile)) {
     return (
       <a
         href={`https://dexie.space/offers/${offerId}`}
@@ -115,9 +130,9 @@ export function TakeOfferButton({ offerId, children, className, title, ariaLabel
           : children
             ? <span style={{ display: 'inline-flex', alignItems: 'center' }}>
                 {children}
-                <span style={{ marginLeft: 4 }}>{isSage ? labelWhenSage : labelDefault}</span>
+                <span style={{ marginLeft: 4 }}>{isConnectedAny ? labelWhenSage : labelDefault}</span>
               </span>
-            : (isSage ? labelWhenSage : labelDefault)
+            : (isConnectedAny ? labelWhenSage : labelDefault)
         }
       </button>
       {resultId && <span style={{ fontSize: 12 }}>Tx: {resultId}</span>}

@@ -1,6 +1,124 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { Icon } from 'semantic-ui-react'
+import { useGoby } from '../../lib/wallet/GobyContext'
+
+function GobyButton({ onConnected }: { onConnected?: () => void }) {
+  const { isAvailable, isConnected, connect } = useGoby()
+
+  // Auto-close modal once Goby is connected
+  useEffect(() => {
+    if (isConnected) onConnected?.()
+  }, [isConnected, onConnected])
+
+  // Detect mobile devices - hide Goby button on mobile
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
+  // Detect theme changes to flip text colour: black in dark mode, white in light mode
+  const [isDark, setIsDark] = useState(false)
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    const getDark = () => document.documentElement.getAttribute('data-theme') === 'dark'
+    setIsDark(getDark())
+    const obs = new MutationObserver(() => setIsDark(getDark()))
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+    return () => obs.disconnect()
+  }, [])
+
+  // Hide Goby button on mobile devices
+  if (isMobile) {
+    return null
+  }
+
+  const btnStyle = {
+    width: '100%',
+    padding: '12px',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: 600,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    margin: '8px 0 16px',
+  } as const
+  const textColour = isDark ? '#000000' : '#ffffff'
+
+  if (!isAvailable) {
+    return (
+      <a
+        href="https://chrome.google.com/webstore/detail/goby-chia-wallet/" target="_blank" rel="noreferrer noopener"
+        className="copyBtn"
+        style={{ ...btnStyle, color: textColour }}
+      >
+        <Icon name="chrome" /> Install Goby (Chrome)
+      </a>
+    )
+  }
+
+  if (!isConnected) {
+    return (
+      <button onClick={() => connect()} className="copyBtn" style={{ ...btnStyle, color: textColour }}>
+        <Icon name="plug" /> Connect with Goby
+      </button>
+    )
+  }
+
+  return (
+    <button className="copyBtn" style={{ ...btnStyle, color: textColour, backgroundColor: '#22c55e', cursor: 'default' }} disabled>
+      <Icon name="check" /> Connected with Goby
+    </button>
+  )
+}
+
+function SupportedWalletsList() {
+  // Mobile detection
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
+  const wallets = isMobile
+    ? ['Sage Wallet'] // Mobile: only Sage Wallet (WalletConnect compatible)
+    : ['Sage Wallet', 'Chia Wallet'] // Desktop: WalletConnect compatible wallets first
+
+  return (
+    <div style={{
+      padding: '16px',
+      backgroundColor: 'var(--color-chip-bg)',
+      borderRadius: '8px',
+      border: '1px solid var(--color-border)'
+    }}>
+      <p style={{ margin: '0 0 8px', fontSize: '14px', fontWeight: '600' }}>Supported Wallets:</p>
+      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
+        {wallets.map((wallet) => (
+          <span
+            key={wallet}
+            style={{
+              fontSize: '12px',
+              padding: '4px 8px',
+              backgroundColor: 'var(--color-border)',
+              borderRadius: '4px'
+            }}
+          >
+            {wallet}
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 interface CustomConnectModalProps {
   isOpen: boolean
@@ -13,6 +131,15 @@ interface CustomConnectModalProps {
 export function CustomConnectModal({ isOpen, onClose, qrCodeUri, isConnecting, error }: CustomConnectModalProps) {
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('')
   const [copied, setCopied] = useState(false)
+
+  // Mobile detection - hide browser extension section on mobile
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   // Generate QR code when URI changes
   useEffect(() => {
@@ -181,22 +308,17 @@ export function CustomConnectModal({ isOpen, onClose, qrCodeUri, isConnecting, e
               </button>
             </div>
 
-            <div style={{
-              padding: '16px',
-              backgroundColor: 'var(--color-chip-bg)',
-              borderRadius: '8px',
-              border: '1px solid var(--color-border)'
-            }}>
-              <p style={{ margin: '0 0 8px', fontSize: '14px', fontWeight: '600' }}>Supported Wallets:</p>
-              <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '12px', padding: '4px 8px', backgroundColor: 'var(--color-border)', borderRadius: '4px' }}>
-                  Sage Wallet
-                </span>
-                <span style={{ fontSize: '12px', padding: '4px 8px', backgroundColor: 'var(--color-border)', borderRadius: '4px' }}>
-                  Chia Wallet
-                </span>
+            <SupportedWalletsList />
+
+            {/* Goby as alternative option - only show on desktop */}
+            {!isMobile && (
+              <div style={{ marginTop: '16px' }}>
+                <p style={{ margin: '0 0 8px', fontSize: '12px', color: 'var(--color-text-subtle)', textAlign: 'center' }}>
+                  Or connect with browser extension:
+                </p>
+                <GobyButton onConnected={onClose} />
               </div>
-            </div>
+            )}
           </div>
         ) : (
           <div style={{ textAlign: 'center', padding: '20px' }}>
