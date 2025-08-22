@@ -18,7 +18,7 @@ export function TakeOfferButton({ offerId, children, className, title, ariaLabel
   const { chiaTakeOffer } = useJsonRpc()
   const { session, connect, reset } = useWalletConnect()
   const { isAvailable: gobyAvailable, isConnected: gobyConnected, connect: gobyConnect } = useGoby()
-  const { showToast } = useToast()
+  const { showToast, showTransactionSuccess } = useToast() as any
   const [busy, setBusy] = useState(false)
   const [resultId, setResultId] = useState<string | null>(null)
 
@@ -66,8 +66,10 @@ export function TakeOfferButton({ offerId, children, className, title, ariaLabel
       const r = await chiaTakeOffer({ offer })
       // r may be null/undefined if rejected in some wallets; guard access
       if (r && (r as any).id) {
-        setResultId((r as any).id)
-        showToast('Offer accepted successfully! Transaction submitted to the blockchain.', 'success')
+        const txId = (r as any).id as string
+        setResultId(txId)
+        // Show transaction success popup with small-font hash
+        showTransactionSuccess?.(txId, 'Offer accepted successfully!')
       }
     } catch (e: any) {
       const msg = (e?.message || String(e))
