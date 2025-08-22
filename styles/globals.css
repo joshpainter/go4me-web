@@ -109,6 +109,128 @@ a {
   box-shadow: none !important;
 }
 
+/* Dark mode: make Semantic UI Dropdown darker and readable */
+[data-theme='dark'] .ui.dropdown {
+  background: var(--color-bg-alt) !important;
+  color: var(--color-text) !important;
+  border-color: var(--color-border) !important;
+}
+[data-theme='dark'] .ui.dropdown > .text {
+  color: var(--color-text) !important;
+}
+[data-theme='dark'] .ui.dropdown > .default.text {
+  color: var(--color-text-subtle) !important;
+}
+[data-theme='dark'] .ui.dropdown .menu {
+  background: var(--color-bg-alt) !important;
+  border-color: var(--color-border) !important;
+}
+[data-theme='dark'] .ui.dropdown .menu > .item {
+  background: var(--color-bg-alt) !important;
+  color: var(--color-text) !important;
+  border-top: 1px solid var(--color-border) !important;
+}
+[data-theme='dark'] .ui.dropdown .menu > .item:hover {
+  background: var(--color-bg) !important;
+  color: var(--color-text) !important;
+}
+[data-theme='dark'] .ui.dropdown .menu > .item.selected {
+  background: var(--color-bg) !important;
+  color: var(--color-text) !important;
+}
+[data-theme='dark'] .ui.dropdown .menu > .item.active {
+  background: var(--color-link) !important;
+  color: white !important;
+}
+
+/* Ensure dropdown menus overlay above neighbouring elements */
+.ui.dropdown .menu { z-index: 2000 !important; }
+
+/* Offers filter label responsive sizing */
+.offers-filter-label {
+  font-size: 14px;
+}
+
+/* Offers filter dropdown responsive sizing */
+.offers-filter-dropdown {
+  /* Desktop default - nice and readable */
+  min-width: 140px !important;
+  font-size: 14px !important;
+  flex: 0 0 auto;
+}
+
+.offers-filter-dropdown > .text {
+  font-size: 14px !important;
+}
+
+.offers-filter-dropdown .menu > .item {
+  font-size: 14px !important;
+}
+
+/* Tablet - slightly smaller */
+@media (max-width: 768px) {
+  .offers-filter-label {
+    font-size: 13px;
+  }
+
+  .offers-filter-dropdown {
+    min-width: 120px !important;
+    font-size: 13px !important;
+    flex: 1 1 auto;
+  }
+
+  .offers-filter-dropdown > .text {
+    font-size: 13px !important;
+  }
+
+  .offers-filter-dropdown .menu > .item {
+    font-size: 13px !important;
+  }
+}
+
+/* Mobile - compact but still usable */
+@media (max-width: 480px) {
+  .offers-filter-label {
+    font-size: 12px;
+  }
+
+  .offers-filter-dropdown {
+    font-size: 12px !important;
+    min-width: 90px !important;
+    flex: 1 1 auto;
+  }
+
+  .offers-filter-dropdown > .text {
+    font-size: 12px !important;
+  }
+
+  .offers-filter-dropdown .menu > .item {
+    font-size: 12px !important;
+    padding: 8px 12px !important;
+  }
+}
+
+/* Very small phones - minimal but functional */
+@media (max-width: 360px) {
+  .offers-filter-label {
+    font-size: 11px;
+  }
+
+  .offers-filter-dropdown {
+    font-size: 11px !important;
+    min-width: 80px !important;
+  }
+
+  .offers-filter-dropdown > .text {
+    font-size: 11px !important;
+  }
+
+  .offers-filter-dropdown .menu > .item {
+    font-size: 11px !important;
+    padding: 6px 10px !important;
+  }
+}
+
 /* CRITICAL MOBILE FIXES */
 /* Fix menu overflow with horizontal scroll */
 @media (max-width: 768px) {

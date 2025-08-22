@@ -10,7 +10,7 @@ import { useRouter } from 'next/router'
 import { getSupabaseClient } from '../lib/supabaseClient'
 import { TakeOfferButton } from '../components/wallet/TakeOfferButton'
 import GlobalWalletBar from '../components/wallet/GlobalWalletBar'
-import UserBadgeDisplay from '../components/UserBadgeDisplay'
+
 
 
 const MOJO_PER_XCH = 1e12
@@ -897,14 +897,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                       <div className={styles.badgeRow}>
                         <span className={styles.miniBadge} title='Total sold'>Sold {u.totalSold}</span>
                         <span className={styles.miniBadge} title='XCH total sold'>{formatXCH(u.totalTradedXCH)} XCH</span>
-                        {view === 'rarest' && u.lastOfferId && (
-                          <UserBadgeDisplay
-                            lastOfferId={u.lastOfferId}
-                            lastOfferStatus={u.lastOfferStatus}
-                            userId={u.id || u.username}
-                            className={styles.miniBadge}
-                          />
-                        )}
+
                       </div>
                       <div className={styles.badgeRow}>
                         <span className={styles.miniBadge} title='Royalties'>Royalties {formatXCH(u.totalRoyaltiesXCH ?? (u.totalTradedXCH * 0.10))} XCH</span>
