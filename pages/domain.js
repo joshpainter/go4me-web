@@ -63,11 +63,11 @@ function DomainPfpFlip({ avatarUrl, xPfpUrl, username, linkHref, rankCopiesSold 
           <div style={faceStyle}>
             {linkHref ? (
               <a href={linkHref} target='_blank' rel='noreferrer noopener' aria-label={username ? `Open full-size avatar for ${username}` : 'Open full-size avatar'} style={{ position: 'absolute', inset: 0 }}>
-                <Image src={avatarUrl} alt={commonAlt} fill sizes="225px" style={{ objectFit: 'cover' }} />
+                <Image src={avatarUrl} alt={commonAlt} fill sizes="(max-width: 640px) 172px, (max-width: 1024px) 200px, 225px" style={{ objectFit: 'cover' }} quality={85} />
               </a>
             ) : (
               <div style={{ position: 'absolute', inset: 0 }}>
-                <Image src={avatarUrl} alt={commonAlt} fill sizes="225px" style={{ objectFit: 'cover' }} />
+                <Image src={avatarUrl} alt={commonAlt} fill sizes="(max-width: 640px) 172px, (max-width: 1024px) 200px, 225px" style={{ objectFit: 'cover' }} quality={85} />
               </div>
             )}
           </div>
@@ -77,12 +77,12 @@ function DomainPfpFlip({ avatarUrl, xPfpUrl, username, linkHref, rankCopiesSold 
             {linkHref ? (
               <a href={linkHref} target='_blank' rel='noreferrer noopener' aria-label={username ? `Open full-size avatar for ${username}` : 'Open full-size avatar'} style={{ position: 'absolute', inset: 0 }}>
                 <div style={{ position: 'absolute', top: '50%', left: '50%', width: '88%', height: '88%', transform: 'translate(-50%, -50%)', borderRadius: '50%', overflow: 'hidden' }}>
-                  <Image src={xPfpUrl || avatarUrl} alt={commonAlt} fill sizes="225px" style={{ objectFit: 'cover' }} />
+                  <Image src={xPfpUrl || avatarUrl} alt={commonAlt} fill sizes="(max-width: 640px) 172px, (max-width: 1024px) 200px, 225px" style={{ objectFit: 'cover' }} quality={85} />
                 </div>
               </a>
             ) : (
               <div style={{ position: 'absolute', top: '50%', left: '50%', width: '88%', height: '88%', transform: 'translate(-50%, -50%)', borderRadius: '50%', overflow: 'hidden' }}>
-                <Image src={xPfpUrl || avatarUrl} alt={commonAlt} fill sizes="225px" style={{ objectFit: 'cover' }} />
+                <Image src={xPfpUrl || avatarUrl} alt={commonAlt} fill sizes="(max-width: 640px) 172px, (max-width: 1024px) 200px, 225px" style={{ objectFit: 'cover' }} quality={85} />
               </div>
             )}
           </div>
@@ -152,12 +152,12 @@ function PfpFlipThumb({
             {profileHref ? (
               <a href={profileHref} aria-label={username ? `Open ${username}.go4.me` : 'Open profile'}>
                 <div style={{ position: 'absolute', inset: 0 }}>
-                  <Image src={frontUrl} alt={commonAlt} fill sizes="180px" style={{ objectFit: 'cover' }} />
+                  <Image src={frontUrl} alt={commonAlt} fill sizes="(max-width: 640px) 150px, (max-width: 1024px) 172px, 180px" style={{ objectFit: 'cover' }} quality={80} />
                 </div>
               </a>
             ) : (
               <div style={{ position: 'absolute', inset: 0 }}>
-                <Image src={frontUrl} alt={commonAlt} fill sizes="180px" style={{ objectFit: 'cover' }} />
+                <Image src={frontUrl} alt={commonAlt} fill sizes="(max-width: 640px) 150px, (max-width: 1024px) 172px, 180px" style={{ objectFit: 'cover' }} quality={80} />
               </div>
             )}
           </div>
@@ -166,12 +166,12 @@ function PfpFlipThumb({
             {profileHref ? (
               <a href={profileHref} aria-label={username ? `Open ${username}.go4.me` : 'Open profile'} style={{ position: 'absolute', inset: 0 }}>
                 <div style={{ position: 'absolute', top: '50%', left: '50%', width: '80%', height: '80%', transform: 'translate(-50%, -50%)', borderRadius: '50%', overflow: 'hidden', boxShadow: '0 8px 20px rgba(0,0,0,0.25)' }}>
-                  <Image src={backUrl} alt={commonAlt} fill sizes="180px" style={{ objectFit: 'cover' }} />
+                  <Image src={backUrl} alt={commonAlt} fill sizes="(max-width: 640px) 120px, (max-width: 1024px) 138px, 144px" style={{ objectFit: 'cover' }} quality={80} />
                 </div>
               </a>
             ) : (
               <div style={{ position: 'absolute', top: '50%', left: '50%', width: '80%', height: '80%', transform: 'translate(-50%, -50%)', borderRadius: '50%', overflow: 'hidden', boxShadow: '0 8px 20px rgba(0,0,0,0.25)' }}>
-                <Image src={backUrl} alt={commonAlt} fill sizes="180px" style={{ objectFit: 'cover' }} />
+                <Image src={backUrl} alt={commonAlt} fill sizes="(max-width: 640px) 120px, (max-width: 1024px) 138px, 144px" style={{ objectFit: 'cover' }} quality={80} />
               </div>
             )}
           </div>
@@ -759,12 +759,12 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
   <div className={styles.stickyTopbar}>
         {rootHostForLinks ? (
           <a href={`//${rootHostForLinks}/`} aria-label="Back to leaderboard home" className={styles.topNavLink}>
-            <Image src="/collection-icon.png" alt="go4.me" width={40} height={40} />
+            <Image src="/collection-icon.png" alt="go4.me" width={40} height={40} quality={90} />
             ← Back
           </a>
         ) : (
           <Link href="/" aria-label="Back to leaderboard home" className={styles.topNavLink}>
-            <Image src="/collection-icon.png" alt="go4.me" width={40} height={40} />
+            <Image src="/collection-icon.png" alt="go4.me" width={40} height={40} quality={90} />
             ← Back
           </Link>
         )}
@@ -915,6 +915,7 @@ Claim on <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: '
                                 width={64}
                                 height={64}
                                 style={{ objectFit: 'cover' }}
+                                quality={85}
                               />
                             </div>
                           </a>
@@ -1362,6 +1363,7 @@ Claim on <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: '
                           width={32}
                           height={32}
                           style={{ objectFit: 'cover' }}
+                          quality={85}
                         />
                       </div>
                     </a>

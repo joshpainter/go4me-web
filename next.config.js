@@ -147,7 +147,7 @@ const nextConfig = {
               "base-uri 'self'",
               "form-action 'self'",
               "frame-ancestors 'none'",
-              "frame-src 'self' https://*.walletconnect.com https://*.walletconnect.org https://verify.walletconnect.com https://walletconnect.com https://walletconnect.org https://platform.twitter.com",
+              "frame-src 'self' https://*.walletconnect.com https://*.walletconnect.org https://verify.walletconnect.com https://walletconnect.com https://walletconnect.org https://platform.twitter.com https://vercel.live https://*.vercel.live",
               "connect-src 'self' https: wss: data: blob:",
               "worker-src 'self' blob:",
               "manifest-src 'self'",
@@ -164,9 +164,9 @@ const nextConfig = {
     minimumCacheTTL: 31536000,
     // Enable modern image formats for better compression
     formats: ['image/webp', 'image/avif'],
-    // Define responsive image sizes for better performance
+    // Define responsive image sizes for better performance - optimized for actual usage
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    imageSizes: [16, 32, 48, 64, 96, 128, 172, 180, 225, 256, 384],
     // Modern remotePatterns configuration for Next.js 14
     remotePatterns: [
       { protocol: 'https', hostname: 'go4me-pfps.s3.amazonaws.com', pathname: '/**' },
