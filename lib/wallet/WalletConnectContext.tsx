@@ -186,7 +186,7 @@ export function WalletConnectProvider({ children }: PropsWithChildren) {
       try {
         // Check if session is expired
         if (sess.expiry && sess.expiry * 1000 < Date.now()) {
-          try { c.session.delete(sess.topic, getSdkError('EXPIRED')) } catch {}
+          try { c.session.delete(sess.topic, getSdkError('USER_DISCONNECTED')) } catch {}
           return
         }
 
@@ -194,7 +194,7 @@ export function WalletConnectProvider({ children }: PropsWithChildren) {
         onSessionConnected(sess)
         return sess
       } catch (e: any) {
-        try { c.session.delete(sess.topic, getSdkError('GENERIC')) } catch {}
+        try { c.session.delete(sess.topic, getSdkError('USER_DISCONNECTED')) } catch {}
       }
     }
   }, [session, onSessionConnected])
@@ -266,12 +266,12 @@ export function WalletConnectProvider({ children }: PropsWithChildren) {
           // Validate session before syncing
           try {
             if (latestSession.expiry && latestSession.expiry * 1000 < Date.now()) {
-              try { client.session.delete(latestSession.topic, getSdkError('EXPIRED')) } catch {}
+              try { client.session.delete(latestSession.topic, getSdkError('USER_DISCONNECTED')) } catch {}
               return
             }
             onSessionConnected(latestSession)
           } catch (e: any) {
-            try { client.session.delete(latestSession.topic, getSdkError('GENERIC')) } catch {}
+            try { client.session.delete(latestSession.topic, getSdkError('USER_DISCONNECTED')) } catch {}
           }
         } else if (sessions.length === 0 && session) {
           // Session was disconnected in another tab - sync disconnect
