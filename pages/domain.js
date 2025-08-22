@@ -558,8 +558,11 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
       ogImage = `${scheme}://${rootHostForLinks}${ogImage}`
     }
   }
+
+
   const metaTitle = fullName ? `${fullName} (@${username}) on go4.me` : `@${username} on go4.me`
   const metaDesc = description ? description.slice(0, 200) : 'Claim your free, custom go4.me PFP and earn royalties whenever others purchase it.'
+  const pageTitle = `${username}.go4.me`
 
   // removed birthday confetti logic
 
@@ -702,7 +705,7 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
   return (
     <div className={`${styles.container} ${styles.domainPage}`}>
       <Head>
-        <title>{`${username}.go4.me`}</title>
+        <title>{pageTitle}</title>
         <link rel="icon" href="/collection-icon.png" />
         {/* Open Graph / Twitter Card Meta */}
         {pageUrl && <link rel="canonical" href={pageUrl} />}

@@ -362,11 +362,15 @@ export async function getCachedUserOffers(username: string): Promise<ProcessedOf
     // Filter out any null results
     const validProcessedOffers = processedOffers.filter((offer): offer is ProcessedOffer => offer !== null)
 
-    // Sort by price (lowest first) - prioritize XCH offers, then by amount
+    // Sort by price (lowest first) - prioritize XCH offers, then G4M, then other tokens
     validProcessedOffers.sort((a, b) => {
-      // Prioritize XCH offers over CAT tokens
+      // Prioritize XCH offers first
       if (a.price_asset === 'XCH' && b.price_asset !== 'XCH') return -1
       if (a.price_asset !== 'XCH' && b.price_asset === 'XCH') return 1
+
+      // Then prioritize G4M offers over other CAT tokens
+      if (a.price_asset === 'G4M' && b.price_asset !== 'G4M' && b.price_asset !== 'XCH') return -1
+      if (a.price_asset !== 'G4M' && b.price_asset === 'G4M' && a.price_asset !== 'XCH') return 1
 
       // If same asset type, sort by amount
       return a.price_amount - b.price_amount

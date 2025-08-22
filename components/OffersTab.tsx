@@ -1,10 +1,80 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import Image from 'next/image'
 import { Icon, Dropdown, Loader } from 'semantic-ui-react'
 import { CollectionOffer } from '../lib/offers-cache'
 import { TakeOfferButton } from './wallet/TakeOfferButton'
 import { TakeMintgardenOfferButton } from './wallet/TakeMintgardenOfferButton'
 import styles from '../styles/Home.module.css'
+
+// Constants for better performance
+const SORT_OPTIONS = [
+  { key: 'price-asc', text: 'Price: Low to High', value: 'price-asc' },
+  { key: 'price-desc', text: 'Price: High to Low', value: 'price-desc' },
+  { key: 'date-newest', text: 'Date: Newest First', value: 'date-newest' },
+  { key: 'date-oldest', text: 'Date: Oldest First', value: 'date-oldest' }
+]
+
+// Reusable style objects
+const FILTER_CONTAINER_STYLE = {
+  display: 'flex',
+  gap: '8px',
+  marginBottom: 20,
+  justifyContent: 'flex-start' as const,
+  flexWrap: 'wrap' as const,
+  alignItems: 'center' as const,
+  overflow: 'visible' as const
+}
+
+const FILTER_LABEL_STYLE = {
+  fontWeight: 500,
+  color: 'var(--color-text)',
+  flexShrink: 0,
+  minWidth: 'fit-content' as const
+}
+
+const DROPDOWN_STYLE = {
+  backgroundColor: 'var(--color-bg-alt)',
+  color: 'var(--color-text)',
+  border: '1px solid var(--color-border)'
+}
+
+const SORT_WRAPPER_STYLE = {
+  display: 'flex',
+  alignItems: 'center' as const,
+  gap: '8px',
+  flexShrink: 0
+}
+
+// Asset priority helper function
+const getAssetPriority = (asset: string): number => {
+  if (asset === 'XCH') return 0
+  if (asset === 'G4M') return 1
+  return 2
+}
+
+// Optimized sorting function
+const createSortComparator = (sortBy: string) => {
+  return (a: CollectionOffer, b: CollectionOffer): number => {
+    switch (sortBy) {
+      case 'price-asc':
+      case 'price-desc': {
+        const priorityA = getAssetPriority(a.price_asset)
+        const priorityB = getAssetPriority(b.price_asset)
+
+        if (priorityA !== priorityB) return priorityA - priorityB
+
+        const priceComparison = a.price_amount - b.price_amount
+        return sortBy === 'price-asc' ? priceComparison : -priceComparison
+      }
+      case 'date-newest':
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      case 'date-oldest':
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      default:
+        return 0
+    }
+  }
+}
 
 interface OffersTabProps {
   username: string
@@ -18,77 +88,102 @@ export function OffersTab({ username, rootHostForLinks, offers, isLoading = fals
   // Filter states
   const [selectedCurrency, setSelectedCurrency] = useState<string>('all')
   const [selectedBadge, setSelectedBadge] = useState<string>('all')
+  const [sortBy, setSortBy] = useState<string>('price-asc')
 
-  // Dependent filter logic
-  // Offers filtered by the other dropdown to build context-aware options
-  const offersFilteredByBadge = useMemo(() => (
-    selectedBadge === 'all' ? offers : offers.filter(o => o.badge_name === selectedBadge)
-  ), [offers, selectedBadge])
+  // Consolidated filtering and sorting logic for better performance
+  const { filteredOffers, offersFilteredByBadge, offersFilteredByCurrency } = useMemo(() => {
+    // Pre-filter for context-aware dropdowns
+    const byBadge = selectedBadge === 'all' ? offers : offers.filter(o => o.badge_name === selectedBadge)
+    const byCurrency = selectedCurrency === 'all' ? offers : offers.filter(o => o.price_asset === selectedCurrency)
 
-  const offersFilteredByCurrency = useMemo(() => (
-    selectedCurrency === 'all' ? offers : offers.filter(o => o.price_asset === selectedCurrency)
-  ), [offers, selectedCurrency])
-
-  // Final offers filtered by both selections
-  const filteredOffers = useMemo(() => {
-    return offers.filter(o => (
+    // Final filtered offers
+    const filtered = offers.filter(o => (
       (selectedCurrency === 'all' || o.price_asset === selectedCurrency) &&
       (selectedBadge === 'all' || o.badge_name === selectedBadge)
     ))
-  }, [offers, selectedCurrency, selectedBadge])
 
-  // Build currency options based on the badge-filtered set
-  const { currencyCountsFilteredByBadge, currencyKeysFilteredByBadge } = useMemo(() => {
-    const map = new Map<string, number>()
+    // Apply optimized sorting
+    const sortComparator = createSortComparator(sortBy)
+    const sorted = [...filtered].sort(sortComparator)
+
+    return {
+      filteredOffers: sorted,
+      offersFilteredByBadge: byBadge,
+      offersFilteredByCurrency: byCurrency
+    }
+  }, [offers, selectedCurrency, selectedBadge, sortBy])
+
+  // Optimized dropdown options creation
+  const { currencyOptions, badgeOptions } = useMemo(() => {
+    // Build currency counts and options
+    const currencyMap = new Map<string, number>()
     for (const o of offersFilteredByBadge) {
-      if (o.price_asset) map.set(o.price_asset, (map.get(o.price_asset) || 0) + 1)
+      if (o.price_asset) currencyMap.set(o.price_asset, (currencyMap.get(o.price_asset) || 0) + 1)
     }
-    const keys = Array.from(map.keys()).sort()
-    return { currencyCountsFilteredByBadge: map, currencyKeysFilteredByBadge: keys }
-  }, [offersFilteredByBadge])
 
-  // Build badge options based on the currency-filtered set
-  const { badgeCountsFilteredByCurrency, badgeKeysFilteredByCurrency } = useMemo(() => {
-    const map = new Map<string, number>()
+    // Sort currency keys with asset priority
+    const currencyKeys = Array.from(currencyMap.keys()).sort((a, b) => {
+      const priorityA = getAssetPriority(a)
+      const priorityB = getAssetPriority(b)
+      if (priorityA !== priorityB) return priorityA - priorityB
+      return a.localeCompare(b)
+    })
+
+    const currencyOpts = [
+      { key: 'all', text: `All Currencies (${offersFilteredByBadge.length})`, value: 'all' }
+    ]
+    for (const k of currencyKeys) {
+      const count = currencyMap.get(k) || 0
+      currencyOpts.push({ key: k, text: `${k} (${count})`, value: k })
+    }
+    // Ensure selected currency remains visible
+    if (selectedCurrency !== 'all' && !currencyMap.has(selectedCurrency)) {
+      currencyOpts.push({ key: selectedCurrency, text: `${selectedCurrency} (0)`, value: selectedCurrency })
+    }
+
+    // Build badge counts and options
+    const badgeMap = new Map<string, number>()
     for (const o of offersFilteredByCurrency) {
-      if (o.badge_name) map.set(o.badge_name, (map.get(o.badge_name) || 0) + 1)
+      if (o.badge_name) badgeMap.set(o.badge_name, (badgeMap.get(o.badge_name) || 0) + 1)
     }
-    const keys = Array.from(map.keys()).sort()
-    return { badgeCountsFilteredByCurrency: map, badgeKeysFilteredByCurrency: keys }
-  }, [offersFilteredByCurrency])
 
-  // Create dropdown options with counts (context-aware)
-  const currencyOptions = useMemo(() => {
-    const baseCount = offersFilteredByBadge.length
-    const opts = [
-      { key: 'all', text: `All Currencies (${baseCount})`, value: 'all' }
+    const badgeKeys = Array.from(badgeMap.keys()).sort()
+    const badgeOpts = [
+      { key: 'all', text: `All Badges (${offersFilteredByCurrency.length})`, value: 'all' }
     ]
-    for (const k of currencyKeysFilteredByBadge) {
-      const count = currencyCountsFilteredByBadge.get(k) || 0
-      opts.push({ key: k, text: `${k} (${count})`, value: k })
+    for (const k of badgeKeys) {
+      const count = badgeMap.get(k) || 0
+      badgeOpts.push({ key: k, text: `${k} (${count})`, value: k })
     }
-    // Ensure the currently selected currency remains visible even if count is 0 due to other filter
-    if (selectedCurrency !== 'all' && !currencyCountsFilteredByBadge.has(selectedCurrency)) {
-      opts.push({ key: selectedCurrency, text: `${selectedCurrency} (0)`, value: selectedCurrency })
+    // Ensure selected badge remains visible
+    if (selectedBadge !== 'all' && !badgeMap.has(selectedBadge)) {
+      badgeOpts.push({ key: selectedBadge, text: `${selectedBadge} (0)`, value: selectedBadge })
     }
-    return opts
-  }, [offersFilteredByBadge.length, currencyKeysFilteredByBadge, currencyCountsFilteredByBadge, selectedCurrency])
 
-  const badgeOptions = useMemo(() => {
-    const baseCount = offersFilteredByCurrency.length
-    const opts = [
-      { key: 'all', text: `All Badges (${baseCount})`, value: 'all' }
-    ]
-    for (const k of badgeKeysFilteredByCurrency) {
-      const count = badgeCountsFilteredByCurrency.get(k) || 0
-      opts.push({ key: k, text: `${k} (${count})`, value: k })
+    return {
+      currencyOptions: currencyOpts,
+      badgeOptions: badgeOpts
     }
-    // Ensure the currently selected badge remains visible even if count is 0 due to other filter
-    if (selectedBadge !== 'all' && !badgeCountsFilteredByCurrency.has(selectedBadge)) {
-      opts.push({ key: selectedBadge, text: `${selectedBadge} (0)`, value: selectedBadge })
-    }
-    return opts
-  }, [offersFilteredByCurrency.length, badgeKeysFilteredByCurrency, badgeCountsFilteredByCurrency, selectedBadge])
+  }, [offersFilteredByBadge, offersFilteredByCurrency, selectedCurrency, selectedBadge])
+
+  // Event handlers with useCallback for performance
+  const handleCurrencyChange = useCallback((_: any, { value }: { value: any }) => {
+    setSelectedCurrency(value as string)
+  }, [])
+
+  const handleBadgeChange = useCallback((_: any, { value }: { value: any }) => {
+    setSelectedBadge(value as string)
+  }, [])
+
+  const handleSortChange = useCallback((_: any, { value }: { value: any }) => {
+    setSortBy(value as string)
+  }, [])
+
+  const handleReset = useCallback(() => {
+    setSelectedCurrency('all')
+    setSelectedBadge('all')
+    setSortBy('price-asc')
+  }, [])
 
   // Loading state
   if (isLoading) {
@@ -132,71 +227,13 @@ export function OffersTab({ username, rootHostForLinks, offers, isLoading = fals
     )
   }
 
-  // Skeleton loading component
-  const SkeletonCard = () => (
-    <div className={styles.lbCard} style={{ opacity: 0.6 }}>
-      <div className={styles.cardImgWrap} style={{ background: 'var(--skeleton-stop-1)' }}>
-        <div style={{
-          width: '100%',
-          height: '100%',
-          background: 'linear-gradient(90deg, var(--skeleton-stop-1) 25%, var(--skeleton-stop-2) 50%, var(--skeleton-stop-1) 75%)',
-          backgroundSize: '200% 100%',
-          animation: 'shimmer 1.5s infinite'
-        }} />
-      </div>
-      <div className={styles.cardBody}>
-        <div style={{
-          height: '16px',
-          background: 'var(--skeleton-stop-1)',
-          borderRadius: '4px',
-          marginBottom: '8px'
-        }} />
-        <div style={{
-          height: '12px',
-          background: 'var(--skeleton-stop-1)',
-          borderRadius: '4px',
-          width: '70%',
-          marginBottom: '12px'
-        }} />
-        <div className={styles.badgeRow}>
-          <div style={{
-            height: '20px',
-            background: 'var(--skeleton-stop-1)',
-            borderRadius: '10px',
-            width: '60px'
-          }} />
-          <div style={{
-            height: '20px',
-            background: 'var(--skeleton-stop-1)',
-            borderRadius: '10px',
-            width: '80px'
-          }} />
-        </div>
-      </div>
-    </div>
-  )
+
 
   return (
     <div>
       {/* Filter Controls - Optimised for mobile */}
-      <div style={{
-        display: 'flex',
-        gap: '8px',
-        marginBottom: 20,
-        justifyContent: 'flex-start',
-        flexWrap: 'wrap', // Allow wrapping to avoid horizontal scrolling on small screens
-        alignItems: 'center',
-        overflow: 'visible' // Allow dropdown menus to render outside the row without being clipped
-      }}>
-        <span
-          className="offers-filter-label"
-          style={{
-            fontWeight: 500,
-            color: 'var(--color-text)',
-            flexShrink: 0, // Do not shrink the label
-            minWidth: 'fit-content'
-          }}
-        >
+      <div style={FILTER_CONTAINER_STYLE}>
+        <span className="offers-filter-label" style={FILTER_LABEL_STYLE}>
           Filter:
         </span>
         <Dropdown
@@ -205,13 +242,9 @@ export function OffersTab({ username, rootHostForLinks, offers, isLoading = fals
           compact
           options={currencyOptions}
           value={selectedCurrency}
-          onChange={(_, { value }) => setSelectedCurrency(value as string)}
+          onChange={handleCurrencyChange}
           className="offers-filter-dropdown"
-          style={{
-            backgroundColor: 'var(--color-bg-alt)',
-            color: 'var(--color-text)',
-            border: '1px solid var(--color-border)'
-          }}
+          style={DROPDOWN_STYLE}
         />
         <Dropdown
           placeholder="Badge"
@@ -219,20 +252,28 @@ export function OffersTab({ username, rootHostForLinks, offers, isLoading = fals
           compact
           options={badgeOptions}
           value={selectedBadge}
-          onChange={(_, { value }) => setSelectedBadge(value as string)}
+          onChange={handleBadgeChange}
           className="offers-filter-dropdown"
-          style={{
-            backgroundColor: 'var(--color-bg-alt)',
-            color: 'var(--color-text)',
-            border: '1px solid var(--color-border)'
-          }}
+          style={DROPDOWN_STYLE}
         />
-        {(selectedCurrency !== 'all' || selectedBadge !== 'all') && (
+        <div style={SORT_WRAPPER_STYLE}>
+          <span className="offers-filter-label" style={FILTER_LABEL_STYLE}>
+            Sort:
+          </span>
+          <Dropdown
+            placeholder="Sort"
+            selection
+            compact
+            options={SORT_OPTIONS}
+            value={sortBy}
+            onChange={handleSortChange}
+            className="offers-filter-dropdown"
+            style={DROPDOWN_STYLE}
+          />
+        </div>
+        {(selectedCurrency !== 'all' || selectedBadge !== 'all' || sortBy !== 'price-asc') && (
           <button
-            onClick={() => {
-              setSelectedCurrency('all')
-              setSelectedBadge('all')
-            }}
+            onClick={handleReset}
             style={{
               padding: '6px 12px',
               fontSize: '12px',
@@ -252,7 +293,7 @@ export function OffersTab({ username, rootHostForLinks, offers, isLoading = fals
               e.currentTarget.style.color = 'var(--color-text-subtle)'
             }}
           >
-            Clear Filters
+            Reset
           </button>
         )}
       </div>
@@ -264,7 +305,7 @@ export function OffersTab({ username, rootHostForLinks, offers, isLoading = fals
         color: 'var(--color-text-subtle)',
         textAlign: 'center'
       }}>
-        Showing {filteredOffers.length} of {offers.length} offer{offers.length !== 1 ? 's' : ''} for @{username} NFTs, sorted by price (lowest first)
+        Showing {filteredOffers.length} of {offers.length} offer{offers.length !== 1 ? 's' : ''} for @{username} NFTs
       </div>
 
       {/* No filtered results message */}
