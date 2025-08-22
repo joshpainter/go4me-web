@@ -1,6 +1,7 @@
 import Head from 'next/head'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useRouter } from 'next/router'
 import styles from '../styles/Home.module.css'
 import GlobalWalletBar from '../components/wallet/GlobalWalletBar'
 import { TakeOfferButton } from '../components/wallet/TakeOfferButton'
@@ -350,6 +351,7 @@ export async function getServerSideProps(ctx) {
 }
 
 export default function DomainPage({ user, ownedPfps = [], otherOwners = [], ownedHasMore = false, othersHasMore = false, userOffers = [], pageSize = 60, rootHostForLinks, ownedCount = 0, othersCount = 0, initialQuery = '' }) {
+  const router = useRouter()
   const { username, fullName, description, avatarUrl, xPfpUrl, xchAddress, didAddress, lastOfferId, totalBadgeScore = 0 } = user
   const formattedBadgeScore = useMemo(() => {
     const n = Number(totalBadgeScore)
@@ -706,6 +708,7 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
     <div className={`${styles.container} ${styles.domainPage}`}>
       <Head>
         <title>{pageTitle}</title>
+        <meta name="description" content={metaDesc} />
         <link rel="icon" href="/collection-icon.png" />
         {/* Open Graph / Twitter Card Meta */}
         {pageUrl && <link rel="canonical" href={pageUrl} />}
@@ -721,6 +724,36 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
         <meta name="twitter:description" content={metaDesc} />
         <meta name="twitter:image" content={ogImage} />
         <meta name="twitter:site" content="@go4mebot" />
+
+        {/* Structured Data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "ProfilePage",
+              "mainEntity": {
+                "@type": "Person",
+                "name": fullName || username,
+                "alternateName": `@${username}`,
+                "description": description || `${username}'s go4.me profile - Chia NFT collector and trader`,
+                "image": ogImage,
+                "url": pageUrl,
+                "sameAs": xPfpUrl ? [`https://x.com/${username}`] : undefined
+              },
+              "about": {
+                "@type": "Thing",
+                "name": "Chia NFT Collection",
+                "description": "go4.me PFP collection and marketplace"
+              },
+              "isPartOf": {
+                "@type": "WebSite",
+                "name": "go4.me",
+                "url": "https://go4.me/"
+              }
+            })
+          }}
+        />
       </Head>
   {/* Sticky top bar with centered search */}
   <div className={styles.stickyTopbar}>
@@ -1086,23 +1119,41 @@ Claim on <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: '
           {/* Desktop Menu */}
           <Menu secondary pointing className={styles.desktopTabMenu} style={{ marginBottom: 10 }}>
             <Menu.Item
+              as='a'
+              href={`?tab=my`}
               name='my'
               active={collectionTab === 'my'}
-              onClick={() => setCollectionTab('my')}
+              onClick={(e) => {
+                e.preventDefault()
+                setCollectionTab('my')
+                router.push({ pathname: router.pathname, query: { ...router.query, tab: 'my' } }, undefined, { shallow: true })
+              }}
             >
               My Collection ({ownedTotalCount || 0})
             </Menu.Item>
             <Menu.Item
+              as='a'
+              href={`?tab=others`}
               name='others'
               active={collectionTab === 'others'}
-              onClick={() => setCollectionTab('others')}
+              onClick={(e) => {
+                e.preventDefault()
+                setCollectionTab('others')
+                router.push({ pathname: router.pathname, query: { ...router.query, tab: 'others' } }, undefined, { shallow: true })
+              }}
             >
               Other Owners ({othersTotalCount || 0})
             </Menu.Item>
             <Menu.Item
+              as='a'
+              href={`?tab=offers`}
               name='offers'
               active={collectionTab === 'offers'}
-              onClick={() => setCollectionTab('offers')}
+              onClick={(e) => {
+                e.preventDefault()
+                setCollectionTab('offers')
+                router.push({ pathname: router.pathname, query: { ...router.query, tab: 'offers' } }, undefined, { shallow: true })
+              }}
             >
               <Icon name='handshake' size='small' style={{ marginRight: 4 }} />
               Offers ({actualOffersCount})
@@ -1113,7 +1164,11 @@ Claim on <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: '
           <div className={styles.mobileTabSelector}>
             <select
               value={collectionTab}
-              onChange={(e) => setCollectionTab(e.target.value)}
+              onChange={(e) => {
+                const newTab = e.target.value
+                setCollectionTab(newTab)
+                router.push({ pathname: router.pathname, query: { ...router.query, tab: newTab } }, undefined, { shallow: true })
+              }}
               className={styles.mobileTabDropdown}
             >
               <option value="my">My Collection ({ownedTotalCount || 0})</option>
@@ -1151,7 +1206,11 @@ Claim on <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: '
           {(() => {
             // Render offers tab
             if (collectionTab === 'offers') {
-              return <OffersTab username={username} rootHostForLinks={rootHostForLinks} offers={userOffers} />
+              return <OffersTab
+                username={username}
+                rootHostForLinks={rootHostForLinks}
+                offers={userOffers}
+              />
             }
 
             // Render collection tabs (my/others)

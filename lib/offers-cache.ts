@@ -48,10 +48,10 @@ interface ProcessedOffer extends CollectionOffer {}
 const cache = new Map<string, CacheEntry>()
 
 // Cache TTL configurations (optimised for production)
-// RAW_OFFERS and PROCESSED_OFFERS set to 1 minute to keep cross-domain views in sync
+// RAW_OFFERS and PROCESSED_OFFERS set to 2 minutes to keep cross-domain views in sync
 const CACHE_TTL = {
-  RAW_OFFERS: 1 * 60 * 1000,      // 1 minute - offers change frequently
-  PROCESSED_OFFERS: 1 * 60 * 1000, // 1 minute - keep consistent across domains
+  RAW_OFFERS: 2 * 60 * 1000,      // 2 minutes - offers change frequently
+  PROCESSED_OFFERS: 2 * 60 * 1000, // 2 minutes - keep consistent across domains
   NFT_METADATA: 24 * 60 * 60 * 1000, // 24 hours - metadata rarely changes
   FAILED_REQUESTS: 2 * 60 * 1000    // 2 minutes - retry failed requests sooner
 }
@@ -68,8 +68,8 @@ const ALL_OFFERS_KEY = 'all_collection_offers'
 
 // Enhanced rate limiting with burst capacity
 const apiCallTimestamps: number[] = []
-const MAX_API_CALLS_PER_MINUTE = 15 // Increased for better performance
-const BURST_CAPACITY = 5 // Allow burst of 5 calls
+const MAX_API_CALLS_PER_MINUTE = 30 // Increased for better performance
+const BURST_CAPACITY = 10 // Allow burst of 10 calls
 
 // Performance metrics
 let cacheStats = {
@@ -99,7 +99,20 @@ async function fetchNFTMetadata(nftId: string): Promise<MintgardenNFTMetadata | 
     // Check rate limiting before making API call
     checkRateLimit()
 
-    const response = await fetch(`https://api.mintgarden.io/nfts/${nftId}`)
+    // Add timeout to prevent hanging requests
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 second timeout
+
+    const response = await fetch(`https://api.mintgarden.io/nfts/${nftId}`, {
+      signal: controller.signal,
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    })
+
+    clearTimeout(timeoutId)
+
     if (!response.ok) {
       throw new Error(`Mintgarden API error: ${response.status}`)
     }
@@ -115,13 +128,18 @@ async function fetchNFTMetadata(nftId: string): Promise<MintgardenNFTMetadata | 
 
     return metadata
   } catch (error) {
+    // Handle timeout and other errors gracefully
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.warn(`Mintgarden API timeout for ${nftId}`)
+    } else {
     console.warn(`Failed to fetch NFT metadata for ${nftId}:`, error)
+    }
 
-    // Cache null result for 5 minutes to avoid repeated failed requests
+    // Cache null result for 2 minutes to avoid repeated failed requests (reduced from 5 minutes)
     nftMetadataCache.set(nftId, {
       data: null,
       timestamp: now,
-      expiresAt: now + (5 * 60 * 1000) // 5 minutes
+      expiresAt: now + (2 * 60 * 1000) // 2 minutes
     })
 
     return null

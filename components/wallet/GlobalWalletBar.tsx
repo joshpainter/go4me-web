@@ -3,6 +3,7 @@ import { useWalletConnect } from '../../lib/wallet/WalletConnectContext'
 import { useJsonRpc } from '../../lib/wallet/JsonRpcContext'
 import { useGoby } from '../../lib/wallet/GobyContext'
 import { useToast } from '../ui/Toast'
+import { useMobileDetection, useDebounceResize } from '../../lib/hooks/useDebounceResize'
 
 // Small, global wallet control fixed at the top-right.
 // Shows a compact button with wallet id + type; clicking reveals details and a
@@ -17,51 +18,33 @@ export default function GlobalWalletBar({ inline = false }: { inline?: boolean }
   const [pendingOfferId, setPendingOfferId] = useState<string | null>(null)
   const [pendingOfferStr, setPendingOfferStr] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
   const hasTriggeredRef = useRef(false)
   const rootRef = useRef<HTMLDivElement | null>(null)
+
+  // Use optimized mobile detection hook
+  const isMobile = useMobileDetection(768)
 
   const isConnectedAny = !!session || (gobyConnected && !isMobile)
   const primaryAccount = useMemo(() => (gobyConnected && !isMobile ? (gobyAccounts?.[0] || '') : (accounts?.[0] || '')), [gobyConnected, gobyAccounts, accounts, isMobile])
 
-  // Mobile detection
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768)
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
-  }, [])
-
-  // Track mobile vs desktop for responsive sizing
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    const mq = window.matchMedia('(max-width: 640px)')
-    const update = () => setIsMobile(mq.matches)
-    update()
-    mq.addEventListener('change', update)
-    return () => mq.removeEventListener('change', update)
-  }, [])
-
   // Position just below stickyTopbar when present; otherwise, near top-right
   const [topOffset, setTopOffset] = useState(8)
   const [layer, setLayer] = useState(1200)
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    const compute = () => {
-      const el = document.querySelector('.stickyTopbar') as HTMLElement | null
-      if (el) {
-        const h = el.getBoundingClientRect().height || 50
-        setTopOffset(Math.round(h + 8))
-        setLayer(1101) // stickyTopbar is 1100; sit just above it
-      } else {
-        setTopOffset(8)
-        setLayer(1200)
-      }
+
+  // Use debounced resize hook to prevent forced reflows
+  const computePosition = () => {
+    const el = document.querySelector('.stickyTopbar') as HTMLElement | null
+    if (el) {
+      const h = el.getBoundingClientRect().height || 50
+      setTopOffset(Math.round(h + 8))
+      setLayer(1101) // stickyTopbar is 1100; sit just above it
+    } else {
+      setTopOffset(8)
+      setLayer(1200)
     }
-    compute()
-    window.addEventListener('resize', compute)
-    return () => window.removeEventListener('resize', compute)
-  }, [])
+  }
+
+  useDebounceResize(computePosition, 100, true)
 
   // Close on outside click
   useEffect(() => {

@@ -50,7 +50,23 @@ export default function HowItWorks({ rootHostForLinks }) {
     <div className={styles.container}>
       <Head>
         <title>How it works • go4.me</title>
+        <meta name="description" content="Learn how to claim your free go4.me PFP, earn royalties from sales, and participate in the Chia NFT ecosystem. Simple steps to get started with go4.me." />
+        <link rel="canonical" href="https://go4.me/how-it-works" />
         <link rel="icon" href="/collection-icon.png" />
+
+        {/* Open Graph / Twitter Card Meta */}
+        <meta property="og:site_name" content="go4.me" />
+        <meta property="og:url" content="https://go4.me/how-it-works" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="How it works • go4.me" />
+        <meta property="og:description" content="Learn how to claim your free go4.me PFP, earn royalties from sales, and participate in the Chia NFT ecosystem. Simple steps to get started with go4.me." />
+        <meta property="og:image" content="https://go4.me/collection-icon.png" />
+        <meta property="og:image:alt" content="go4.me collection icon" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="How it works • go4.me" />
+        <meta name="twitter:description" content="Learn how to claim your free go4.me PFP, earn royalties from sales, and participate in the Chia NFT ecosystem. Simple steps to get started with go4.me." />
+        <meta name="twitter:image" content="https://go4.me/collection-icon.png" />
+        <meta name="twitter:site" content="@go4mebot" />
       </Head>
 
       {/* Sticky top bar (no search, includes back link) */}
@@ -98,6 +114,7 @@ export default function HowItWorks({ rootHostForLinks }) {
             alt="go4.me collection icon"
             width={160}
             height={160}
+            sizes="(max-width: 480px) 100px, (max-width: 640px) 130px, 160px"
             style={{ filter: 'drop-shadow(0 6px 10px rgba(0,0,0,0.28))' }}
             priority
           />

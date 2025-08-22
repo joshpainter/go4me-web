@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { useJsonRpc } from '../../lib/wallet/JsonRpcContext'
 import { useWalletConnect } from '../../lib/wallet/WalletConnectContext'
 import { useGoby } from '../../lib/wallet/GobyContext'
 import { useToast } from '../ui/Toast'
+import { useMobileDetection } from '../../lib/hooks/useDebounceResize'
 
 type Props = {
   offerId: string
@@ -23,13 +24,7 @@ export function TakeOfferButton({ offerId, children, className, title, ariaLabel
   const [resultId, setResultId] = useState<string | null>(null)
 
   // Mobile detection - hide Goby functionality on mobile
-  const [isMobile, setIsMobile] = useState(false)
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768)
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
-  }, [])
+  const isMobile = useMobileDetection(768)
 
   // Consider the user "connected" if either Goby (desktop only) or WalletConnect is connected
   const isConnectedAny = (gobyConnected && !isMobile) || !!session

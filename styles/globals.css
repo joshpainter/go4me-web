@@ -78,6 +78,30 @@ a {
   box-sizing: border-box;
 }
 
+/* Performance optimizations to prevent forced reflows */
+.ui.dropdown .menu,
+.ui.modal,
+.ui.popup {
+  /* Use transform instead of changing position properties */
+  will-change: transform, opacity;
+  /* Enable hardware acceleration */
+  transform: translateZ(0);
+}
+
+/* Optimize animations to use only transform and opacity */
+.ui.transition {
+  /* Prefer transform over layout-affecting properties */
+  will-change: transform, opacity;
+}
+
+/* Prevent layout thrashing on resize */
+.ui.container,
+.ui.grid,
+.ui.segment {
+  /* Use contain to limit layout recalculation scope */
+  contain: layout style;
+}
+
 /* Semantic UI adjustments for dark theme visibility */
 [data-theme='dark'] .ui.secondary.pointing.menu .item {
   color: var(--color-text-subtle) !important;

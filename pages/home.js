@@ -127,7 +127,7 @@ function PfpFlipCard({ user, rootHostForLinks, idx }) {
                     src={user.avatarUrl}
                     alt={commonAlt}
                     fill
-                    sizes="(max-width: 640px) 150px, 200px"
+                    sizes="(max-width: 480px) 120px, (max-width: 640px) 150px, (max-width: 1024px) 180px, 200px"
                     style={{ objectFit: 'cover' }}
                     priority={idx < 4}
                     fetchPriority={idx < 4 ? 'high' : 'auto'}
@@ -142,7 +142,7 @@ function PfpFlipCard({ user, rootHostForLinks, idx }) {
                   src={user.avatarUrl}
                   alt={commonAlt}
                   fill
-                  sizes="(max-width: 640px) 150px, 200px"
+                  sizes="(max-width: 480px) 120px, (max-width: 640px) 150px, (max-width: 1024px) 180px, 200px"
                   style={{ objectFit: 'cover' }}
                   priority={idx < 4}
                   fetchPriority={idx < 4 ? 'high' : 'auto'}
@@ -158,12 +158,12 @@ function PfpFlipCard({ user, rootHostForLinks, idx }) {
             {profileHref ? (
               <a href={profileHref} aria-label={`Open ${user.username}.go4.me`} style={{ position: 'absolute', inset: 0 }}>
                 <div style={{ position: 'absolute', top: '50%', left: '50%', width: '80%', height: '80%', transform: 'translate(-50%, -50%)', borderRadius: '50%', overflow: 'hidden', boxShadow: '0 8px 20px rgba(0,0,0,0.25)' }}>
-                  <Image src={user.xPfpUrl || user.avatarUrl} alt={commonAlt} fill sizes="180px" style={{ objectFit: 'cover' }} priority={idx < 4} />
+                  <Image src={user.xPfpUrl || user.avatarUrl} alt={commonAlt} fill sizes="(max-width: 480px) 96px, (max-width: 640px) 120px, (max-width: 1024px) 144px, 160px" style={{ objectFit: 'cover' }} priority={idx < 4} />
                 </div>
               </a>
             ) : (
               <div style={{ position: 'absolute', top: '50%', left: '50%', width: '80%', height: '80%', transform: 'translate(-50%, -50%)', borderRadius: '50%', overflow: 'hidden', boxShadow: '0 8px 20px rgba(0,0,0,0.25)' }}>
-                <Image src={user.xPfpUrl || user.avatarUrl} alt={commonAlt} fill sizes="180px" style={{ objectFit: 'cover' }} priority={idx < 4} />
+                <Image src={user.xPfpUrl || user.avatarUrl} alt={commonAlt} fill sizes="(max-width: 480px) 96px, (max-width: 640px) 120px, (max-width: 1024px) 144px, 160px" style={{ objectFit: 'cover' }} priority={idx < 4} />
               </div>
             )}
           </div>
@@ -677,8 +677,24 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
   return (
     <div className={styles.container}>
       <Head>
-        <title>go4.me</title>
+        <title>go4.me • Chia NFT Leaderboard & Marketplace</title>
+        <meta name="description" content="Claim your free, custom go4.me PFP and earn royalties whenever others purchase it. Browse the leaderboard, discover top collectors, and trade Chia NFTs." />
+        <link rel="canonical" href="https://go4.me/" />
         <link rel="icon" href="/collection-icon.png" />
+
+        {/* Open Graph / Twitter Card Meta */}
+        <meta property="og:site_name" content="go4.me" />
+        <meta property="og:url" content="https://go4.me/" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="go4.me • Chia NFT Leaderboard & Marketplace" />
+        <meta property="og:description" content="Claim your free, custom go4.me PFP and earn royalties whenever others purchase it. Browse the leaderboard, discover top collectors, and trade Chia NFTs." />
+        <meta property="og:image" content="https://go4.me/collection-icon.png" />
+        <meta property="og:image:alt" content="go4.me collection icon" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="go4.me • Chia NFT Leaderboard & Marketplace" />
+        <meta name="twitter:description" content="Claim your free, custom go4.me PFP and earn royalties whenever others purchase it. Browse the leaderboard, discover top collectors, and trade Chia NFTs." />
+        <meta name="twitter:image" content="https://go4.me/collection-icon.png" />
+        <meta name="twitter:site" content="@go4mebot" />
 
         {/* Critical resource hints for LCP optimization */}
         <link rel="preload" href="/fonts/Inter-VariableFont_slnt,wght.ttf" as="font" type="font/ttf" crossOrigin="" />
@@ -745,6 +761,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
             alt="go4.me collection icon"
             width={180}
             height={180}
+            sizes="(max-width: 480px) 120px, (max-width: 640px) 150px, 180px"
             style={{ filter: 'drop-shadow(0 8px 12px rgba(0,0,0,0.35))' }}
             priority
           />

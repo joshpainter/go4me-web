@@ -1,6 +1,7 @@
-import { createContext, PropsWithChildren, useContext, useEffect, useState } from 'react'
+import { createContext, PropsWithChildren, useContext } from 'react'
 import { useWalletConnect } from './WalletConnectContext'
 import { useGoby } from './GobyContext'
+import { useMobileDetection } from '../hooks/useDebounceResize'
 import { ChiaMethod } from '../wc/wallet-connect'
 
 interface ChiaTakeOfferRequest {
@@ -19,13 +20,7 @@ export function JsonRpcProvider({ children }: PropsWithChildren) {
   const { isAvailable: gobyAvailable, isConnected: gobyConnected, request: gobyRequest, connect: gobyConnect } = useGoby()
 
   // Mobile detection - disable Goby functionality on mobile
-  const [isMobile, setIsMobile] = useState(false)
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768)
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
-  }, [])
+  const isMobile = useMobileDetection(768)
 
   async function request<T>(method: ChiaMethod, params: unknown): Promise<T> {
     // Prefer Goby when available and connected (desktop only)

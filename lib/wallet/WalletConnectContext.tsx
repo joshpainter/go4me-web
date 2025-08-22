@@ -171,44 +171,8 @@ export function WalletConnectProvider({ children }: PropsWithChildren) {
       // Quiet noisy logs from underlying client; handle per-request errors in callers
     })
 
-    // Add global error handlers to suppress WalletConnect internal errors
-    if (typeof window !== 'undefined') {
-      const originalConsoleError = console.error
-      console.error = (...args: any[]) => {
-        const message = args.join(' ')
-        // Suppress specific WalletConnect errors that are noise
-        if (message.includes('No matching key') ||
-            message.includes('pairing: undefined') ||
-            message.includes('getRecord') ||
-            message.includes('cleanupDuplicatePairings') ||
-            message.includes('onSessionSettleRequest') ||
-            message.includes('onRelayEventResponse')) {
-          return // silently ignore
-        }
-        originalConsoleError.apply(console, args)
-      }
-
-      // Handle unhandled promise rejections from WalletConnect
-      const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-        const message = event.reason?.message || String(event.reason)
-        if (message.includes('No matching key') ||
-            message.includes('pairing: undefined') ||
-            message.includes('getRecord') ||
-            message.includes('cleanupDuplicatePairings') ||
-            message.includes('onSessionSettleRequest') ||
-            message.includes('onRelayEventResponse')) {
-          event.preventDefault() // prevent the error from showing
-          return
-        }
-      }
-      window.addEventListener('unhandledrejection', handleUnhandledRejection)
-
-      // Store cleanup function
-      ;(c as any)._cleanup = () => {
-        console.error = originalConsoleError
-        window.removeEventListener('unhandledrejection', handleUnhandledRejection)
-      }
-    }
+    // Global error suppression is centralised in pages/_app.js for production only.
+    // No additional console/error overrides are set here to keep behaviour consistent across the app.
   }, [onSessionConnected, reset])
 
   const checkPersistedState = useCallback(async (c: Client) => {

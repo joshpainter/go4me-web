@@ -48,6 +48,12 @@ function MyApp({ Component, pageProps }) {
       const isWalletConnectError = (message) => {
         if (!message || typeof message !== 'string') return false
 
+        // Specific suppression: WalletConnect verify frame CSP noise
+        // Example: Refused to frame 'https://verify.walletconnect.com/' because an ancestor violates the following Content Security Policy directive: "frame-ancestors ..."
+        if (message.includes('verify.walletconnect.com') && (message.includes('Refused to frame') || message.includes('frame-ancestors'))) {
+          return true
+        }
+
         // Check cache first
         if (errorCache.has(message)) {
           return errorCache.get(message)

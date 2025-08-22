@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { Icon } from 'semantic-ui-react'
 import { useGoby } from '../../lib/wallet/GobyContext'
+import { useMobileDetection } from '../../lib/hooks/useDebounceResize'
 
 function GobyButton({ onConnected }: { onConnected?: () => void }) {
   const { isAvailable, isConnected, connect } = useGoby()
@@ -12,13 +13,7 @@ function GobyButton({ onConnected }: { onConnected?: () => void }) {
   }, [isConnected, onConnected])
 
   // Detect mobile devices - hide Goby button on mobile
-  const [isMobile, setIsMobile] = useState(false)
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768)
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
-  }, [])
+  const isMobile = useMobileDetection(768)
 
   // Detect theme changes to flip text colour: black in dark mode, white in light mode
   const [isDark, setIsDark] = useState(false)
@@ -81,13 +76,7 @@ function GobyButton({ onConnected }: { onConnected?: () => void }) {
 
 function SupportedWalletsList() {
   // Mobile detection
-  const [isMobile, setIsMobile] = useState(false)
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768)
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
-  }, [])
+  const isMobile = useMobileDetection(768)
 
   const wallets = isMobile
     ? ['Sage Wallet'] // Mobile: only Sage Wallet (WalletConnect compatible)
@@ -189,7 +178,7 @@ export function CustomConnectModal({ isOpen, onClose, qrCodeUri, isConnecting, e
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <Image src="/collection-icon.png" alt="go4.me" width={32} height={32} />
+            <Image src="/collection-icon.png" alt="go4.me" width={32} height={32} sizes="32px" />
             <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '600' }}>Connect Wallet</h2>
           </div>
           <button
@@ -244,6 +233,7 @@ export function CustomConnectModal({ isOpen, onClose, qrCodeUri, isConnecting, e
                   alt="WalletConnect QR Code"
                   width={300}
                   height={300}
+                  sizes="(max-width: 480px) 250px, 300px"
                   unoptimized
                   style={{ display: 'block', width: '300px', height: '300px' }}
                 />

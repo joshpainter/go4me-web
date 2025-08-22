@@ -55,14 +55,21 @@ export async function getAllCollectionOffers(): Promise<DexieOffer[]> {
 
     while (hasMorePages) {
       const url = `${DEXIE_BASE_URL}/offers?offered_or_requested=${COLLECTION_ID}&status=0&sort=price&compact=true&page=${page}&page_size=${pageSize}`
-      
+
+      // Add timeout to prevent hanging requests
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+
       const response = await fetch(url, {
         method: 'GET',
+        signal: controller.signal,
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json'
         }
       })
+
+      clearTimeout(timeoutId)
 
       if (!response.ok) {
         throw new Error(`Dexie API error: ${response.status} ${response.statusText}`)

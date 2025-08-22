@@ -19,8 +19,7 @@ export default function Document() {
         <link rel="dns-prefetch" href="https://dexie.space" />
         <link rel="dns-prefetch" href="https://assets.mainnet.mintgarden.io" />
         
-        {/* Ensure HTTPS for any external resources */}
-        <meta httpEquiv="Content-Security-Policy" content="upgrade-insecure-requests" />
+        {/* CSP is now handled in next.config.js headers */}
 
         {/* Resource hints for critical resources */}
         <link rel="preload" href="/fonts/Inter-VariableFont_slnt,wght.ttf" as="font" type="font/ttf" crossOrigin="" />
