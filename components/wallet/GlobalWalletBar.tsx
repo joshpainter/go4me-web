@@ -133,7 +133,7 @@ export default function GlobalWalletBar({ inline = false }: { inline?: boolean }
       finally { setBusy(false); hasTriggeredRef.current = true }
     }
     run()
-  }, [session, pendingOfferStr, pendingOfferId, chiaTakeOffer, showToast])
+  }, [session, pendingOfferStr, pendingOfferId, chiaTakeOffer, showToast, showTransactionSuccess])
 
   // Always render icon-only UI; full/short labels removed per design
 
