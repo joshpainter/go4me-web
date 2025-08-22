@@ -162,8 +162,6 @@ const nextConfig = {
     // Cache optimized images on the CDN for a long time (in seconds)
     // These avatars and PFP thumbnails are immutable, so a 1-year TTL is safe
     minimumCacheTTL: 31536000,
-    // Optimize image quality for better compression
-    quality: 85,
     // Enable modern image formats for better compression
     formats: ['image/webp', 'image/avif'],
     // Define responsive image sizes for better performance
