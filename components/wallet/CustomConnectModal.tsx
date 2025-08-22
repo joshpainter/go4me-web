@@ -91,7 +91,7 @@ function SupportedWalletsList() {
 
   const wallets = isMobile
     ? ['Sage Wallet'] // Mobile: only Sage Wallet (WalletConnect compatible)
-    : ['Sage Wallet', 'Chia Wallet'] // Desktop: WalletConnect compatible wallets first
+    : ['Sage Wallet', 'Chia Wallet', 'Goby'] // Desktop: all three wallets
 
   return (
     <div style={{
@@ -131,15 +131,6 @@ interface CustomConnectModalProps {
 export function CustomConnectModal({ isOpen, onClose, qrCodeUri, isConnecting, error }: CustomConnectModalProps) {
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('')
   const [copied, setCopied] = useState(false)
-
-  // Mobile detection - hide browser extension section on mobile
-  const [isMobile, setIsMobile] = useState(false)
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768)
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
-  }, [])
 
   // Generate QR code when URI changes
   useEffect(() => {
@@ -310,16 +301,6 @@ export function CustomConnectModal({ isOpen, onClose, qrCodeUri, isConnecting, e
             </div>
 
             <SupportedWalletsList />
-
-            {/* Goby as alternative option - only show on desktop */}
-            {!isMobile && (
-              <div style={{ marginTop: '16px' }}>
-                <p style={{ margin: '0 0 8px', fontSize: '12px', color: 'var(--color-text-subtle)', textAlign: 'center' }}>
-                  Or connect with browser extension:
-                </p>
-                <GobyButton onConnected={onClose} />
-              </div>
-            )}
           </div>
         ) : (
           <div style={{ textAlign: 'center', padding: '20px' }}>

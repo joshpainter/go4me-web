@@ -18,7 +18,7 @@ export function TakeOfferButton({ offerId, children, className, title, ariaLabel
   const { chiaTakeOffer } = useJsonRpc()
   const { session, connect, reset } = useWalletConnect()
   const { isAvailable: gobyAvailable, isConnected: gobyConnected, connect: gobyConnect } = useGoby()
-  const { showToast, showTransactionSuccess } = useToast()
+  const { showToast } = useToast()
   const [busy, setBusy] = useState(false)
   const [resultId, setResultId] = useState<string | null>(null)
 
@@ -31,19 +31,19 @@ export function TakeOfferButton({ offerId, children, className, title, ariaLabel
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
-  // Consider the user "connected" if either WalletConnect or Goby (desktop only) is connected
-  const isConnectedAny = !!session || (gobyConnected && !isMobile)
+  // Consider the user "connected" if either Goby (desktop only) or WalletConnect is connected
+  const isConnectedAny = (gobyConnected && !isMobile) || !!session
 
   async function handleClick() {
     setBusy(true); setResultId(null)
     try {
-      // Prefer WalletConnect - ensure session exists first
-      if (!session) {
-        await connect()
-      }
-      // If WalletConnect failed and Goby is available (desktop only), try Goby as fallback
-      if (!session && gobyAvailable && !gobyConnected && !isMobile) {
+      // Prefer connecting Goby if available and not on mobile
+      if (gobyAvailable && !gobyConnected && !isMobile) {
         try { await gobyConnect() } catch {}
+      }
+      // Otherwise, ensure WalletConnect session exists
+      if (!(gobyConnected && !isMobile) && !session) {
+        await connect()
       }
 
       // Fetch offer file from Dexie API
@@ -66,10 +66,8 @@ export function TakeOfferButton({ offerId, children, className, title, ariaLabel
       const r = await chiaTakeOffer({ offer })
       // r may be null/undefined if rejected in some wallets; guard access
       if (r && (r as any).id) {
-        const transactionId = (r as any).id
-        setResultId(transactionId)
-        // Show transaction success popup with hash
-        showTransactionSuccess(transactionId)
+        setResultId((r as any).id)
+        showToast('Offer accepted successfully! Transaction submitted to the blockchain.', 'success')
       }
     } catch (e: any) {
       const msg = (e?.message || String(e))
@@ -96,8 +94,8 @@ export function TakeOfferButton({ offerId, children, className, title, ariaLabel
     }
   }
 
-  // If neither WalletConnect nor Goby (desktop only) is connected, fall back to Dexie link behaviour
-  if (!session && !(gobyConnected && !isMobile)) {
+  // If neither Goby (desktop only) nor WalletConnect is connected, fall back to Dexie link behaviour
+  if (!(gobyConnected && !isMobile) && !session) {
     return (
       <a
         href={`https://dexie.space/offers/${offerId}`}
