@@ -167,6 +167,8 @@ const nextConfig = {
     // Define responsive image sizes for better performance - optimized for actual usage
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 172, 180, 225, 256, 384],
+    // Configure image quality levels to avoid Next.js 16 warnings
+    qualities: [50, 75, 80, 85, 90, 95, 100],
     // Modern remotePatterns configuration for Next.js 14
     remotePatterns: [
       { protocol: 'https', hostname: 'go4me-pfps.s3.amazonaws.com', pathname: '/**' },
