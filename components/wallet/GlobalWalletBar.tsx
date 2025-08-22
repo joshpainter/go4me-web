@@ -10,8 +10,8 @@ import { useToast } from '../ui/Toast'
 export default function GlobalWalletBar({ inline = false }: { inline?: boolean }) {
   const { isInitializing, session, accounts, connect, disconnect } = useWalletConnect()
   const { chiaTakeOffer } = useJsonRpc()
-  const { showToast, showTransactionSuccess } = useToast()
-  const { isAvailable: gobyAvailable, isConnected: gobyConnected, accounts: gobyAccounts, connect: gobyConnect, disconnect: gobyDisconnect } = useGoby()
+  const { showToast } = useToast()
+  const { isConnected: gobyConnected, accounts: gobyAccounts, disconnect: gobyDisconnect } = useGoby()
 
   const [open, setOpen] = useState(false)
   const [pendingOfferId, setPendingOfferId] = useState<string | null>(null)
@@ -21,8 +21,12 @@ export default function GlobalWalletBar({ inline = false }: { inline?: boolean }
   const hasTriggeredRef = useRef(false)
   const rootRef = useRef<HTMLDivElement | null>(null)
 
-  const isConnectedAny = !!session || (gobyConnected && !isMobile)
-  const primaryAccount = useMemo(() => (gobyConnected && !isMobile ? (gobyAccounts?.[0] || '') : (accounts?.[0] || '')), [gobyConnected, gobyAccounts, accounts, isMobile])
+
+
+  const primaryAccount = useMemo(() => (session ? (accounts?.[0] || '') : (gobyConnected && !isMobile ? (gobyAccounts?.[0] || '') : '')), [session, accounts, gobyConnected, gobyAccounts, isMobile])
+
+
+  const primaryAccount = useMemo(() => (session ? (accounts?.[0] || '') : (gobyConnected && !isMobile ? (gobyAccounts?.[0] || '') : '')), [session, accounts, gobyConnected, gobyAccounts, isMobile])
 
   // Mobile detection
   useEffect(() => {
@@ -138,11 +142,15 @@ export default function GlobalWalletBar({ inline = false }: { inline?: boolean }
   // Always render icon-only UI; full/short labels removed per design
 
   const walletName = useMemo(() => {
+    // Prefer WalletConnect name first
+    if (session) {
+      // WalletConnect v2 sessions expose peer.metadata.name
+      // Use optional chaining to avoid runtime errors
+      // @ts-ignore - session typing may vary
+      return session?.peer?.metadata?.name || 'Wallet'
+    }
     if (gobyConnected && !isMobile) return 'Goby'
-    // WalletConnect v2 sessions expose peer.metadata.name
-    // Use optional chaining to avoid runtime errors
-    // @ts-ignore - session typing may vary
-    return session?.peer?.metadata?.name || 'Wallet'
+    return 'Wallet'
   }, [session, gobyConnected, isMobile])
 
   async function handleConnect() {
@@ -240,6 +248,7 @@ export default function GlobalWalletBar({ inline = false }: { inline?: boolean }
                 <div style={subtleText}>Account</div>
                 <div style={{ ...mono, fontSize: 12, wordBreak: 'break-all' }}>{primaryAccount || '(none)'}</div>
                 {busy && <div style={{ fontSize: 12 }}>Processing Dexie offer…</div>}
+                {resultId && <div style={{ fontSize: 12 }}>Tx: {resultId}</div>}
                 <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 6 }}>
                   <button style={actionBtn} onClick={() => { setOpen(false); gobyDisconnect() }}>Disconnect</button>
                 </div>

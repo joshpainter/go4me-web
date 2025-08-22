@@ -971,6 +971,8 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                               className={styles.miniBadge}
                               ariaLabel='Take offer via WalletConnect'
                               title='Buy with WalletConnect'
+                              labelDefault="Dexie"
+                              labelWhenSage="Take Offer"
                             >
                               <Image
                                 src="https://raw.githubusercontent.com/dexie-space/dexie-kit/main/svg/duck.svg"
@@ -1039,8 +1041,10 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                           <TakeOfferButton
                             offerId={u.lastOfferId}
                             className={styles.miniBadge}
-                            ariaLabel='Take offer via WalletConnect'
-                            title='Buy with WalletConnect'
+                            ariaLabel='Take offer via WalletConnect or view on Dexie'
+                            title='Dexie'
+                            labelDefault="Dexie"
+                            labelWhenSage="Take Offer"
                           >
                             <Image
                               src="https://raw.githubusercontent.com/dexie-space/dexie-kit/main/svg/duck.svg"
@@ -1048,7 +1052,6 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                               width={16}
                               height={16}
                             />
-                            Buy
                           </TakeOfferButton>
                           <a
                             href={`https://mintgarden.io/offers/${u.lastOfferId}`}

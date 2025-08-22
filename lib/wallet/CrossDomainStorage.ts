@@ -241,9 +241,9 @@ class CrossDomainStorage implements IKeyValueStorage {
     }
   }
 
-  // Debug utility to check storage state
+  // Debug utility to check storage state (development only)
   async debugStorage(): Promise<void> {
-    if (typeof console === 'undefined') return
+    if (typeof console === 'undefined' || process.env.NODE_ENV === 'production') return
 
     console.log('CrossDomainStorage Debug:')
     console.log('- Domain:', this.domain || '(host-only cookie)')
@@ -265,7 +265,7 @@ export const crossDomainStorage = new CrossDomainStorage()
 // Export class for testing
 export { CrossDomainStorage }
 
-// Debug function for development
-if (typeof window !== 'undefined') {
+// Debug function for development only
+if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
   (window as any).debugWalletStorage = () => crossDomainStorage.debugStorage()
 }
