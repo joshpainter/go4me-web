@@ -101,9 +101,29 @@ export default function GlobalOfferMonitor() {
       gap: 12px;
     `
 
+    // Add bell icon for offer notifications
+    const contentDiv = document.createElement('div')
+    contentDiv.style.cssText = `
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+    `
+
+    if (isSuccess && options.isPersistent) {
+      const bellIcon = document.createElement('span')
+      bellIcon.innerHTML = '🔔'
+      bellIcon.style.cssText = `
+        font-size: 16px;
+        flex-shrink: 0;
+      `
+      contentDiv.appendChild(bellIcon)
+    }
+
     const textDiv = document.createElement('div')
     textDiv.textContent = message
     textDiv.style.flex = '1'
+    contentDiv.appendChild(textDiv)
 
     // Add close button for persistent notifications
     if (isPersistent) {
@@ -118,10 +138,10 @@ export default function GlobalOfferMonitor() {
           }
         }, 300)
       }
-      messageDiv.appendChild(textDiv)
+      messageDiv.appendChild(contentDiv)
       messageDiv.appendChild(closeButton)
     } else {
-      messageDiv.appendChild(textDiv)
+      messageDiv.appendChild(contentDiv)
     }
 
     notification.appendChild(messageDiv)

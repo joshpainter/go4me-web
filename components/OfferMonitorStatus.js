@@ -70,8 +70,8 @@ export default function OfferMonitorStatus() {
       }}
       title={`Monitoring ${starredCount} starred user${starredCount !== 1 ? 's' : ''} for new offers`}
     >
-      <Icon 
-        name={isMonitoring ? 'eye' : 'eye slash'} 
+      <Icon
+        name={isMonitoring ? 'bell' : 'bell outline'}
         style={{ margin: 0, fontSize: '12px' }}
       />
       <span>
