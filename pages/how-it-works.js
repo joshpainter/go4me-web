@@ -190,10 +190,10 @@ export default function HowItWorks({ rootHostForLinks }) {
           <section style={{ marginTop: 24}}>
             <h3>Expiring Offers and Decreasing Prices</h3>
             <p>
-              If a PFP offer for XCH expires after 7 days, it will be regenerated as a $G4M offer. If that offer also expires after another 7 days, it will be regenerated as a slightly cheaper $G4M offer. It will continue decreasing in price every 7 days until sold or until it reaches 200 $G4M, at which point it will not go lower. The price of the $G4M offer will be calculated based on the current market price according to TibetSwap.
+              If a PFP offer for XCH expires, it will be regenerated as a $G4M offer. If that offer also expires, it will be regenerated as a slightly cheaper $G4M offer. It will continue decreasing in price until sold or until it reaches 200 $G4M, at which point it will not go lower. The price of the $G4M offer will be calculated based on the current market price according to TibetSwap.
             </p>
             <p>
-              Once sold, the next edition will be generated and offered for the normal XCH price again for 7 days, and the cycle will repeat. And don&apos;t forget: you still get 10% royalty on every sale, including $G4M tokens!
+              Once sold, the next edition will be generated and offered for the normal XCH price again, and the cycle will repeat. And don&apos;t forget: you still get 10% royalty on every sale, including $G4M tokens!
             </p>
           </section>
 
