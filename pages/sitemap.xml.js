@@ -1,7 +1,8 @@
 import { getSupabaseClient } from '../lib/supabaseClient'
+import { SITE_CONFIG, SITEMAP_CONFIG } from '../lib/constants'
 
 function generateSiteMap(users) {
-  const baseUrl = 'https://go4.me'
+  const baseUrl = SITE_CONFIG.url
   
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -69,7 +70,7 @@ function generateSiteMap(users) {
       if (!user.username) return ''
       return `
   <url>
-    <loc>https://${user.username}.go4.me/</loc>
+    <loc>https://${user.username}.${SITE_CONFIG.url.replace('https://', '')}/</loc>
     <lastmod>${new Date().toISOString()}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
@@ -84,8 +85,7 @@ export async function getServerSideProps({ res }) {
   
   try {
     // Page through users to include all profile pages without exceeding limits
-    const PAGE_SIZE = 1000 // Supabase default max is often 1000; keep requests efficient
-    const MAX_USERS = 10000 // Safety cap to avoid huge sitemaps/timeouts
+    const { PAGE_SIZE, MAX_USERS } = SITEMAP_CONFIG
     let page = 0
     const users = []
 

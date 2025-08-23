@@ -9,6 +9,8 @@ import { getSupabaseClient } from '../lib/supabaseClient'
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Icon, Menu, Input, Button } from 'semantic-ui-react'
 import { useTheme } from './_app'
+import { PersonSchema, BreadcrumbSchema } from '../components/SEO/StructuredData'
+import { SITE_CONFIG } from '../lib/constants'
 // Flip component for profile avatar (front: go4me PFP, back: X image)
 function DomainPfpFlip({ avatarUrl, xPfpUrl, username, linkHref, rankCopiesSold }) {
   const [isFlipped, setIsFlipped] = useState(false)
@@ -542,7 +544,7 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
       ogImage = `${scheme}://${rootHostForLinks}${ogImage}`
     }
   }
-  const metaTitle = fullName ? `${fullName} (@${username}) on go4.me` : `@${username} on go4.me`
+  const metaTitle = fullName ? `${fullName} (@${username}) on ${SITE_CONFIG.name}` : `@${username} on ${SITE_CONFIG.name}`
   const metaDesc = description ? description.slice(0, 200) : 'Claim your free, custom go4.me PFP and earn royalties whenever others purchase it.'
 
   // removed birthday confetti logic
@@ -686,11 +688,12 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
   return (
     <div className={`${styles.container} ${styles.domainPage}`}>
       <Head>
-        <title>{`${username}.go4.me`}</title>
+        <title>{`${username}.${SITE_CONFIG.name}`}</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/collection-icon.png" />
         {/* Open Graph / Twitter Card Meta */}
         {pageUrl && <link rel="canonical" href={pageUrl} />}
-        <meta property="og:site_name" content="go4.me" />
+        <meta property="og:site_name" content={SITE_CONFIG.name} />
         {pageUrl && <meta property="og:url" content={pageUrl} />}
         <meta property="og:type" content="website" />
         <meta property="og:title" content={metaTitle} />
@@ -701,8 +704,21 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
         <meta name="twitter:title" content={metaTitle} />
         <meta name="twitter:description" content={metaDesc} />
         <meta name="twitter:image" content={ogImage} />
-        <meta name="twitter:site" content="@go4mebot" />
+        <meta name="twitter:site" content={SITE_CONFIG.twitter} />
       </Head>
+      <PersonSchema
+        username={username}
+        fullName={fullName}
+        description={description}
+        avatarUrl={ogImage}
+        profileUrl={pageUrl}
+      />
+      <BreadcrumbSchema
+        items={[
+          { name: SITE_CONFIG.name, url: `${SITE_CONFIG.url}/` },
+          { name: `${username}`, url: pageUrl }
+        ]}
+      />
   {/* Sticky top bar with centered search */}
   <div className={styles.stickyTopbar}>
         {rootHostForLinks ? (

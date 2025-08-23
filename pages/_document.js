@@ -4,6 +4,12 @@ export default function Document() {
   return (
     <Html lang="en">
       <Head>
+        {/* Essential meta tags */}
+        <meta charSet="utf-8" />
+        <meta name="robots" content="index, follow" />
+        <meta name="author" content="go4.me" />
+        <meta name="theme-color" content="#000000" />
+
         {/* Preconnect to external domains for performance */}
 
 

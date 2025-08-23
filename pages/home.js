@@ -10,6 +10,8 @@ import { useRouter } from 'next/router'
 import { getSupabaseClient } from '../lib/supabaseClient'
 import { TakeOfferButton } from '../components/wallet/TakeOfferButton'
 import GlobalWalletBar from '../components/wallet/GlobalWalletBar'
+import { OrganizationSchema, WebSiteSchema } from '../components/SEO/StructuredData'
+import { SITE_CONFIG } from '../lib/constants'
 
 const MOJO_PER_XCH = 1e12
 // Special-case Marmot Recovery Fund XCH address
@@ -670,16 +672,34 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
   return (
     <div className={styles.container}>
       <Head>
-        <title>go4.me</title>
+        <title>{SITE_CONFIG.name}</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="description" content={SITE_CONFIG.defaultMetaDescription} />
         <link rel="icon" href="/collection-icon.png" />
+        <link rel="canonical" href={`${SITE_CONFIG.url}/`} />
+
+        {/* Open Graph / Twitter Card Meta */}
+        <meta property="og:site_name" content={SITE_CONFIG.name} />
+        <meta property="og:url" content={`${SITE_CONFIG.url}/`} />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content={SITE_CONFIG.name} />
+        <meta property="og:description" content={SITE_CONFIG.defaultMetaDescription} />
+        <meta property="og:image" content={SITE_CONFIG.banner} />
+        <meta property="og:image:alt" content={`${SITE_CONFIG.name} NFT leaderboard`} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={SITE_CONFIG.name} />
+        <meta name="twitter:description" content={SITE_CONFIG.defaultMetaDescription} />
+        <meta name="twitter:image" content={SITE_CONFIG.banner} />
+        <meta name="twitter:site" content={SITE_CONFIG.twitter} />
 
         {/* Critical resource hints for LCP optimization */}
         <link rel="preload" href="/fonts/Inter-VariableFont_slnt,wght.ttf" as="font" type="font/ttf" crossOrigin="" />
         <link rel="preconnect" href="https://wsrdqcvzoshyjvtfsjjp.supabase.co" />
         <link rel="preconnect" href="https://can.seedsn.app" />
 
-
       </Head>
+      <OrganizationSchema />
+      <WebSiteSchema />
       <Script
         id="x-widgets"
         strategy="lazyOnload"

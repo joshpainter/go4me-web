@@ -4,6 +4,7 @@ import { Icon } from 'semantic-ui-react'
 import { useState } from 'react'
 import styles from '../styles/Home.module.css'
 import { useTheme } from './_app'
+import { SITE_CONFIG } from '../lib/constants'
 import GlobalWalletBar from '../components/wallet/GlobalWalletBar'
 
 export async function getServerSideProps(context) {
@@ -49,8 +50,25 @@ export default function HowItWorks({ rootHostForLinks }) {
   return (
     <div className={styles.container}>
       <Head>
-        <title>How it works • go4.me</title>
+        <title>{`How it works • ${SITE_CONFIG.name}`}</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="description" content="Learn how to claim your free go4.me PFP NFT, earn royalties, and participate in the Chia NFT marketplace. Step-by-step guide to getting started." />
         <link rel="icon" href="/collection-icon.png" />
+        <link rel="canonical" href={`${SITE_CONFIG.url}/how-it-works`} />
+
+        {/* Open Graph / Twitter Card Meta */}
+        <meta property="og:site_name" content={SITE_CONFIG.name} />
+        <meta property="og:url" content={`${SITE_CONFIG.url}/how-it-works`} />
+        <meta property="og:type" content="article" />
+        <meta property="og:title" content={`How it works • ${SITE_CONFIG.name}`} />
+        <meta property="og:description" content="Learn how to claim your free go4.me PFP NFT, earn royalties, and participate in the Chia NFT marketplace. Step-by-step guide to getting started." />
+        <meta property="og:image" content={SITE_CONFIG.banner} />
+        <meta property="og:image:alt" content={`${SITE_CONFIG.name} how it works guide`} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={`How it works • ${SITE_CONFIG.name}`} />
+        <meta name="twitter:description" content="Learn how to claim your free go4.me PFP NFT, earn royalties, and participate in the Chia NFT marketplace. Step-by-step guide to getting started." />
+        <meta name="twitter:image" content={SITE_CONFIG.banner} />
+        <meta name="twitter:site" content={SITE_CONFIG.twitter} />
       </Head>
 
       {/* Sticky top bar (no search, includes back link) */}
