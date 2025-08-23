@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Icon } from 'semantic-ui-react'
+import { getWatchlistData, STORAGE_KEY, isProduction } from '../lib/watchlistStorage'
 
 export default function OfferMonitorStatus() {
   const [starredCount, setStarredCount] = useState(0)
@@ -18,10 +19,24 @@ export default function OfferMonitorStatus() {
 
       window.addEventListener('watchlistChanged', handleChange)
       window.addEventListener('storage', (e) => {
-        if (e.key === 'go4me_watchlist') {
+        if (e.key === STORAGE_KEY) {
           updateStatus()
         }
       })
+
+      // Also listen for cookie changes in production
+      if (isProduction()) {
+        // Poll for cookie changes since there's no cookie change event
+        const cookieCheckInterval = setInterval(() => {
+          updateStatus()
+        }, 1000) // Check every second
+
+        return () => {
+          window.removeEventListener('watchlistChanged', handleChange)
+          window.removeEventListener('storage', handleChange)
+          clearInterval(cookieCheckInterval)
+        }
+      }
 
       return () => {
         window.removeEventListener('watchlistChanged', handleChange)
@@ -34,8 +49,7 @@ export default function OfferMonitorStatus() {
     if (typeof window === 'undefined') return
 
     try {
-      const watchlist = localStorage.getItem('go4me_watchlist')
-      const starred = watchlist ? JSON.parse(watchlist) : []
+      const starred = getWatchlistData()
       setStarredCount(starred.length)
       setIsMonitoring(starred.length > 0)
     } catch (error) {
