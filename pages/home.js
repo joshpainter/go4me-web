@@ -11,8 +11,6 @@ import { getSupabaseClient } from '../lib/supabaseClient'
 import { TakeOfferButton } from '../components/wallet/TakeOfferButton'
 import GlobalWalletBar from '../components/wallet/GlobalWalletBar'
 
-
-
 const MOJO_PER_XCH = 1e12
 // Special-case Marmot Recovery Fund XCH address
 const MARMOT_BADGE_XCH = 'xch120ywvwahucfptkeuzzdpdz5v0nnarq5vgw94g247jd5vswkn7rls35y2gc'
@@ -169,7 +167,6 @@ function PfpFlipCard({ user, rootHostForLinks, idx }) {
           </div>
         </div>
       </div>
-
     </div>
   )
 }
@@ -354,8 +351,6 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
   const PAGE_SIZE = 100
   const sentinelRef = useRef(null)
   const [intersectionSupported, setIntersectionSupported] = useState(true)
-
-
 
   useEffect(() => {
     const desiredQuery = {}
@@ -655,12 +650,10 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
     return () => observer.disconnect()
   }, [hasMore, loadMore, intersectionSupported])
 
-
-
   // Simple in-memory filtering and sorting each render (small data pages)
   const renderList = useMemo(() => {
-    const arr = [...loadedUsers]
     // Data already server-ordered; fallback sort if needed
+    const arr = [...loadedUsers]
   if (view === 'queue') arr.sort((a, b) => (a.rankQueuePosition || 0) - (b.rankQueuePosition || 0))
   else if (view === 'totalTraded') arr.sort((a, b) => (a.rankTotalTradedValue || 0) - (b.rankTotalTradedValue || 0))
   else if (view === 'rarest') arr.sort((a, b) => (a.rankFewestCopiesSold || 0) - (b.rankFewestCopiesSold || 0))
@@ -897,7 +890,6 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                       <div className={styles.badgeRow}>
                         <span className={styles.miniBadge} title='Total sold'>Sold {u.totalSold}</span>
                         <span className={styles.miniBadge} title='XCH total sold'>{formatXCH(u.totalTradedXCH)} XCH</span>
-
                       </div>
                       <div className={styles.badgeRow}>
                         <span className={styles.miniBadge} title='Royalties'>Royalties {formatXCH(u.totalRoyaltiesXCH ?? (u.totalTradedXCH * 0.10))} XCH</span>
@@ -1183,7 +1175,6 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
           </div>
         </div>
       </div>
-
     </div>
   )
 }
