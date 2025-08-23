@@ -18,7 +18,7 @@ type Props = {
 export function TakeOfferButton({ offerId, children, className, title, ariaLabel, labelDefault = 'Dexie', labelWhenSage = 'Take Offer' }: Props) {
   const { chiaTakeOffer } = useJsonRpc()
   const { session, connect, reset } = useWalletConnect()
-  const { isAvailable: gobyAvailable, isConnected: gobyConnected, connect: gobyConnect } = useGoby()
+  const { isConnected: gobyConnected } = useGoby()
   const { showToast, showTransactionSuccess } = useToast() as any
   const [busy, setBusy] = useState(false)
   const [resultId, setResultId] = useState<string | null>(null)
@@ -32,12 +32,8 @@ export function TakeOfferButton({ offerId, children, className, title, ariaLabel
   async function handleClick() {
     setBusy(true); setResultId(null)
     try {
-      // Prefer connecting Goby if available and not on mobile
-      if (gobyAvailable && !gobyConnected && !isMobile) {
-        try { await gobyConnect() } catch {}
-      }
-      // Otherwise, ensure WalletConnect session exists
-      if (!(gobyConnected && !isMobile) && !session) {
+      // Simple logic: if nothing connected, pop out connection modal
+      if (!session && !(gobyConnected && !isMobile)) {
         await connect()
       }
 
