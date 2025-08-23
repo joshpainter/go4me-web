@@ -114,8 +114,7 @@ const nextConfig = {
       { protocol: 'https', hostname: 'go4.fail', pathname: '/**' },
       { protocol: 'https', hostname: 'raw.githubusercontent.com', pathname: '/**' },
       { protocol: 'https', hostname: 'mintgarden.io', pathname: '/**' },
-      { protocol: 'https', hostname: 'assets.mainnet.mintgarden.io', pathname: '/**' },
-      { protocol: 'https', hostname: 'nft.dexie.space', pathname: '/**' }
+      { protocol: 'https', hostname: 'assets.mainnet.mintgarden.io', pathname: '/**' }
     ]
   }
 }
