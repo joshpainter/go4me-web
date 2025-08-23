@@ -27,7 +27,7 @@ export default function GlobalOfferMonitor() {
     // Validate link if provided
     const validatedLink = link && isValidUrl(link) ? link : null
 
-    // Remove existing temporary notifications to prevent stacking
+    // Remove existing temporary notifications to prevent overlap
     if (!isPersistent) {
       const existingTempNotifications = document.querySelectorAll('.go4me-notification:not([data-persistent="true"])')
       existingTempNotifications.forEach(notification => {
@@ -37,9 +37,9 @@ export default function GlobalOfferMonitor() {
       })
     }
 
-    // Calculate position - persistent notifications stack, temporary ones replace
-    const existingPersistentNotifications = document.querySelectorAll('.go4me-notification[data-persistent="true"]')
-    const topOffset = 20 + (existingPersistentNotifications.length * 80)
+    // Calculate position - all notifications appear under each other
+    const existingNotifications = document.querySelectorAll('.go4me-notification')
+    const topOffset = 20 + (existingNotifications.length * 90) // 90px spacing for better readability
 
     // Create notification container
     const notification = document.createElement('div')
@@ -188,6 +188,9 @@ export default function GlobalOfferMonitor() {
   useEffect(() => {
     if (typeof window === 'undefined') return
 
+    // Expose global notification function for other components
+    window.globalShowNotification = showNotification
+
     // Increment reference count
     globalMonitorRefCount++
 
@@ -238,6 +241,11 @@ export default function GlobalOfferMonitor() {
         globalMonitorInstance.stopMonitoring()
         globalMonitorInstance = null
         globalMonitorRefCount = 0 // Reset to prevent negative counts
+
+        // Clean up global notification function
+        if (typeof window !== 'undefined') {
+          delete window.globalShowNotification
+        }
       }
 
       monitorRef.current = null
