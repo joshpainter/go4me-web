@@ -27,13 +27,26 @@ export default function GlobalOfferMonitor() {
     // Validate link if provided
     const validatedLink = link && isValidUrl(link) ? link : null
 
-    // Calculate position to avoid stacking
-    const existingNotifications = document.querySelectorAll('.go4me-notification')
-    const topOffset = 20 + (existingNotifications.length * 80) // Stack notifications
+    // Remove existing temporary notifications to prevent stacking
+    if (!isPersistent) {
+      const existingTempNotifications = document.querySelectorAll('.go4me-notification:not([data-persistent="true"])')
+      existingTempNotifications.forEach(notification => {
+        if (notification.parentNode) {
+          notification.parentNode.removeChild(notification)
+        }
+      })
+    }
+
+    // Calculate position - persistent notifications stack, temporary ones replace
+    const existingPersistentNotifications = document.querySelectorAll('.go4me-notification[data-persistent="true"]')
+    const topOffset = 20 + (existingPersistentNotifications.length * 80)
 
     // Create notification container
     const notification = document.createElement('div')
     notification.className = 'go4me-notification'
+    if (isPersistent) {
+      notification.setAttribute('data-persistent', 'true')
+    }
     notification.style.cssText = `
       position: fixed;
       top: ${topOffset}px;

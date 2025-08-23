@@ -227,7 +227,7 @@ export default function WatchlistButton({ user }) {
         setIsInWatchlist(false)
 
         // Show notification
-        showNotification(`⭐ Unstarred ${user.username}`)
+        showNotification(`🔔 Notifications disabled for ${user.username}`)
 
         // Dispatch custom event for same-page updates
         window.dispatchEvent(new CustomEvent('watchlistChanged', {
@@ -247,7 +247,7 @@ export default function WatchlistButton({ user }) {
         setIsInWatchlist(true)
 
         // Show notification
-        showNotification(`⭐ Starred ${user.username}!`)
+        showNotification(`🔔 Notifications enabled for ${user.username}!`)
 
         // Dispatch custom event for same-page updates
         window.dispatchEvent(new CustomEvent('watchlistChanged', {
@@ -266,11 +266,11 @@ export default function WatchlistButton({ user }) {
 
   return (
     <Icon
-      name={isInWatchlist ? 'star' : 'star outline'}
+      name={isInWatchlist ? 'bell' : 'bell outline'}
       color={isInWatchlist ? 'yellow' : 'grey'}
       style={{ cursor: 'pointer', fontSize: '1.2em' }}
       onClick={handleClick}
-      title={isInWatchlist ? `Unstar ${user.username}` : `Star ${user.username}`}
+      title={isInWatchlist ? `Stop notifications for ${user.username}` : `Get notifications for ${user.username}`}
     />
   )
 }
