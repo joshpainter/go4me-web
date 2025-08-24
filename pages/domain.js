@@ -235,16 +235,16 @@ export async function getServerSideProps(ctx) {
       if (ownedResp.error) throw new Error(ownedResp.error.message)
       const ownedData = ownedResp.data || []
       ownedPfps = ownedData.map((r, idx) => {
-        const pfpUsername = r.pfp_username || r.username || null
-        const cid = r.pfp_ipfs_cid || r.pfpCid || r.cid || null
+        const pfpUsername = r.pfp_username || null
+        const cid = r.pfp_ipfs_cid || null
         const dataUri = r.pfp_data_uri || ''
         const frontUrl = dataUri || ((cid && pfpUsername) ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-go4me.png` : (r.image_url || r.generated_pfp_url || ''))
         const backUrl = (cid && pfpUsername) ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-x.png` : (dataUri || r.image_url || r.generated_pfp_url || '')
         return {
-          id: r.nft_id || r.id || `owned-${idx}`,
+          id: r.nft_id,
           frontUrl,
           backUrl,
-          pfpName: r.pfp_name || r.name || `#${r.nft_id || idx + 1}`,
+          pfpName: r.pfp_name,
           pfpUsername,
           lastOfferId: r.last_offerid || r.lastOfferId || null,
           lastOfferStatus: (r.last_offer_status ?? r.lastOfferStatus ?? null),
@@ -263,19 +263,19 @@ export async function getServerSideProps(ctx) {
       if (othersResp.error) throw new Error(othersResp.error.message)
       const othersData = othersResp.data || []
       otherOwners = othersData.map((r, idx) => {
-        const pfpUsername = r.pfp_username || r.username || null
-        const cid = r.pfp_ipfs_cid || r.pfpCid || r.cid || null
+        const pfpUsername = r.pfp_username || null
+        const cid = r.pfp_ipfs_cid || null
         const dataUri = r.pfp_data_uri || ''
         const frontUrl = dataUri || ((cid && pfpUsername) ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-go4me.png` : (r.image_url || r.generated_pfp_url || ''))
         const backUrl = (cid && pfpUsername) ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-x.png` : (dataUri || r.image_url || r.generated_pfp_url || '')
         return {
-          id: r.nft_id || r.id || `other-${idx}`,
+          id: r.pfp_author_id,
           frontUrl,
           backUrl,
-          pfpName: r.pfp_name || r.name || `#${r.nft_id || idx + 1}`,
+          pfpName: r.pfp_name,
           pfpUsername,
-          lastOfferId: r.last_offerid || r.lastOfferId || null,
-          lastOfferStatus: (r.last_offer_status ?? r.lastOfferStatus ?? null),
+          lastOfferId: r.last_offerid || null,
+          lastOfferStatus: (r.last_offer_status ?? null),
           rankQueuePosition: r.rank_queue_position ?? null,
         }
       })
@@ -345,19 +345,19 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
   const mapRow = useCallback((r, idx, prefix='dyn') => {
     const dataUri = r.pfp_data_uri || ''
     const pfpUsername = r.pfp_username || r.username || null
-    const cid = r.pfp_ipfs_cid || r.pfpCid || r.cid || null
+    const cid = r.pfp_ipfs_cid || null
     const frontUrl = dataUri || ((cid && pfpUsername) ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-go4me.png` : (r.image_url || r.generated_pfp_url || ''))
     const backUrl = (cid && pfpUsername) ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-x.png` : (dataUri || r.image_url || r.generated_pfp_url || '')
     return {
-      id: r.nft_id || r.id || `${prefix}-${idx}`,
+      id: r.nft_id || r.pfp_author_id,
       frontUrl,
       backUrl,
-      pfpName: r.pfp_name || r.name || `#${r.nft_id || idx + 1}`,
-  pfpUsername,
-  lastOfferId: r.last_offerid || r.lastOfferId || null,
-  lastOfferStatus: (r.last_offer_status ?? r.lastOfferStatus ?? null),
-  // If the view supplies queue minutes for this PFP, keep it so we can show ETA.
-  rankQueuePosition: r.rank_queue_position ?? null
+      pfpName: r.pfp_name,
+      pfpUsername,
+      lastOfferId: r.last_offerid || null,
+      lastOfferStatus: r.last_offer_status ?? r.lastOfferStatus ?? null,
+      // If the view supplies queue minutes for this PFP, keep it so we can show ETA.
+      rankQueuePosition: r.rank_queue_position ?? null
     }
   }, [])
 

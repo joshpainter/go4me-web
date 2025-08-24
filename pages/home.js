@@ -214,11 +214,11 @@ export async function getServerSideProps(context) {
     users = (data || []).map(row => {
       if (currentView === 'queue') {
         return {
-          id: row.author_id || row.username,
+          id: row.author_id,
           username: row.username,
           fullName: row.full_name || row.name,
-          avatarUrl: row.pfp_ipfs_cid && row.username ? ('https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png') : '',
-          xPfpUrl: row.pfp_ipfs_cid && row.username ? ('https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png') : '',
+          avatarUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png',
+          xPfpUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png',
           lastNftSeriesNumber: row.last_nft_series_number ?? 0,
           rankQueuePosition: row.rank_queue_position ?? 0,
           _search: ((row.username || '') + ' ' + (row.full_name || row.name || '')).toLowerCase(),
@@ -240,16 +240,16 @@ export async function getServerSideProps(context) {
         averageSaleXCH: avgSalesAmount / MOJO_PER_XCH,
         avgTimeToSellMs: avgTimeToSell,
         lastOfferId: row.last_offerid,
-  lastOfferStatus: row.last_offer_status,
-  lastSaleAtMs: row.last_sale_at ? new Date(row.last_sale_at).getTime() : null,
+        lastOfferStatus: row.last_offer_status,
+        lastSaleAtMs: row.last_sale_at ? new Date(row.last_sale_at).getTime() : null,
         rankCopiesSold: row.rank_copies_sold,
         rankFewestCopiesSold: row.rank_fewest_copies_sold,
         rankTotalTradedValue: row.rank_total_traded_value,
-  rankLastSale: row.rank_last_sale,
-  rankTotalBadgeScore: row.rank_total_badge_score,
-  // Expose queue minutes if present on this view so we can show ETA on Coming Soon badges
-  rankQueuePosition: row.rank_queue_position ?? null,
-  totalBadgeScore: row.total_badge_score || 0,
+        rankLastSale: row.rank_last_sale,
+        rankTotalBadgeScore: row.rank_total_badge_score,
+        // Expose queue minutes if present on this view so we can show ETA on Coming Soon badges
+        rankQueuePosition: row.rank_queue_position ?? null,
+        totalBadgeScore: row.total_badge_score || 0,
         _search: ((row.username) + ' ' + (row.name)).toLowerCase(),
       }
       user.displayTotalTradedXCH = formatXCH(user.totalTradedXCH)
@@ -325,11 +325,11 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
         const mapped = (data || []).map(row => {
           if (view === 'queue') {
             return {
-              id: row.author_id || row.username,
+              id: row.author_id,
               username: row.username,
-              fullName: row.full_name || row.name,
-              avatarUrl: row.pfp_ipfs_cid && row.username ? ('https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png') : '',
-              xPfpUrl: row.pfp_ipfs_cid && row.username ? ('https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png') : '',
+              fullName: row.full_name,
+              avatarUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png',
+              xPfpUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png',
               lastNftSeriesNumber: row.last_nft_series_number ?? 0,
               rankQueuePosition: row.rank_queue_position ?? 0,
               _search: ((row.username || '') + ' ' + (row.full_name || row.name || '')).toLowerCase(),
@@ -395,11 +395,11 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
       const mapped = (data || []).map(row => {
         if (view === 'queue') {
           return {
-            id: row.author_id || row.username,
+            id: row.author_id,
             username: row.username,
-            fullName: row.full_name || row.name,
-            avatarUrl: row.pfp_ipfs_cid && row.username ? ('https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png') : '',
-            xPfpUrl: row.pfp_ipfs_cid && row.username ? ('https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png') : '',
+            fullName: row.full_name,
+            avatarUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png',
+            xPfpUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png',
             lastNftSeriesNumber: row.last_nft_series_number ?? 0,
             rankQueuePosition: row.rank_queue_position ?? 0,
             _search: ((row.username || '') + ' ' + (row.full_name || row.name || '')).toLowerCase(),
