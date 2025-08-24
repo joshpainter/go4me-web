@@ -124,18 +124,38 @@ export default function GlobalWalletBar({ inline = false }: { inline?: boolean }
         sessionStorage.removeItem('pendingOfferId'); sessionStorage.removeItem('pendingOfferStr')
       } catch (e: any) {
         const msg = e?.message || String(e)
-        let userMessage = msg
-        if (msg.includes('Coin selection error: no spendable coins')) {
-          userMessage = 'Insufficient funds: No spendable coins available in your wallet'
-        } else if (msg.includes('Coin selection error')) {
-          userMessage = 'Insufficient funds: Unable to select coins for this transaction'
+        const isRejection = /reject|denied|cancel|close|user.?reject|user.?denied|user.?cancel/i.test(msg)
+        const isConnectionError = /session not found|pairing|no matching key|history:|please request after current approval resolve/i.test(msg)
+
+        // Only reset wallet connections for actual connection errors, not user rejections
+        if (isConnectionError) {
+          // Reset the specific wallet that had the connection error
+          if (msg.includes('session not found') || msg.includes('pairing') || msg.includes('no matching key')) {
+            // WalletConnect connection error
+            disconnect?.()
+          } else if (msg.includes('please request after current approval resolve') && gobyConnected) {
+            // Goby pending state error
+            try { gobyDisconnect?.() } catch {}
+          }
         }
-        showToast(userMessage, 'error')
+
+        // Only show error toast if it's not a user rejection
+        if (!isRejection) {
+          let userMessage = msg
+          if (msg.includes('Coin selection error: no spendable coins')) {
+            userMessage = 'Insufficient funds: No spendable coins available in your wallet'
+          } else if (msg.includes('Coin selection error')) {
+            userMessage = 'Insufficient funds: Unable to select coins for this transaction'
+          } else if (msg.includes('please request after current approval resolve')) {
+            userMessage = 'Wallet is still processing previous request. Try disconnecting and reconnecting your wallet, then try again.'
+          }
+          showToast(userMessage, 'error')
+        }
       }
       finally { setBusy(false); hasTriggeredRef.current = true }
     }
     run()
-  }, [session, pendingOfferStr, pendingOfferId, chiaTakeOffer, showToast])
+  }, [session, pendingOfferStr, pendingOfferId, chiaTakeOffer, showToast, disconnect, gobyConnected, gobyDisconnect])
 
   // Always render icon-only UI; full/short labels removed per design
 

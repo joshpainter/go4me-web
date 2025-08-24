@@ -7,9 +7,11 @@ interface ToastProps {
   isVisible: boolean
   onClose: () => void
   duration?: number
+  link?: string
+  linkText?: string
 }
 
-export function Toast({ message, type, isVisible, onClose, duration = 5000 }: ToastProps) {
+export function Toast({ message, type, isVisible, onClose, duration = 5000, link, linkText }: ToastProps) {
   const [isAnimating, setIsAnimating] = useState(false)
 
   useEffect(() => {
@@ -79,14 +81,31 @@ export function Toast({ message, type, isVisible, onClose, duration = 5000 }: To
         }} 
       />
       <div style={{ flex: 1 }}>
-        <div style={{ 
-          color: colors.text, 
-          fontSize: '14px', 
+        <div style={{
+          color: colors.text,
+          fontSize: '14px',
           fontWeight: '500',
           lineHeight: '1.4',
           wordBreak: 'break-word'
         }}>
           {message}
+          {link && (
+            <div style={{ marginTop: '8px' }}>
+              <a
+                href={link}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  color: colors.text,
+                  textDecoration: 'underline',
+                  fontSize: '12px',
+                  fontWeight: 'normal'
+                }}
+              >
+                {linkText || 'View Transaction'}
+              </a>
+            </div>
+          )}
         </div>
       </div>
       <button
@@ -110,19 +129,24 @@ export function Toast({ message, type, isVisible, onClose, duration = 5000 }: To
 }
 
 interface ToastContextType {
-  showToast: (message: string, type?: 'error' | 'success' | 'warning' | 'info') => void
+  showToast: (message: string, type?: 'error' | 'success' | 'warning' | 'info', link?: string, linkText?: string) => void
 }
 
 import { createContext, useContext, ReactNode } from 'react'
 
 const ToastContext = createContext<ToastContextType | null>(null)
 
-export function ToastProvider({ children }: { children: ReactNode }) {
-  const [toasts, setToasts] = useState<Array<{ id: number; message: string; type: 'error' | 'success' | 'warning' | 'info' }>>([])
+let toastIdCounter = 0
 
-  const showToast = (message: string, type: 'error' | 'success' | 'warning' | 'info' = 'info') => {
-    const id = Date.now()
-    setToasts(prev => [...prev, { id, message, type }])
+export function ToastProvider({ children }: { children: ReactNode }) {
+  const [toasts, setToasts] = useState<Array<{ id: number; message: string; type: 'error' | 'success' | 'warning' | 'info'; link?: string; linkText?: string }>>([])
+
+  const showToast = (message: string, type: 'error' | 'success' | 'warning' | 'info' = 'info', link?: string, linkText?: string) => {
+    const id = ++toastIdCounter
+    setToasts(prev => {
+      const newToasts = [...prev, { id, message, type, link, linkText }]
+      return newToasts.slice(-5) // Limit concurrent toasts
+    })
   }
 
   const removeToast = (id: number) => {
@@ -139,6 +163,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           type={toast.type}
           isVisible={true}
           onClose={() => removeToast(toast.id)}
+          link={toast.link}
+          linkText={toast.linkText}
         />
       ))}
     </ToastContext.Provider>

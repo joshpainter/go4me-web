@@ -346,6 +346,7 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
     const n = Number(totalBadgeScore)
     return Number.isFinite(n) ? new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(n) : '0'
   }, [totalBadgeScore])
+
   // Special-case badge for Marmot Recovery Fund address
   const MARMOT_BADGE_XCH = 'xch120ywvwahucfptkeuzzdpdz5v0nnarq5vgw94g247jd5vswkn7rls35y2gc'
   const MARMOT_BADGE_IMG = 'https://can.seedsn.app/ipfs/QmTbsAspUtyxSK7W3vmq1bGfRJSisumYApZjnvsg59BhgW/marmot-recovery-logo.png'
@@ -1080,7 +1081,8 @@ Claim on <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: '
 
     {/* Collection Tabs */}
   <div style={{ marginTop: 30, width: '100%', maxWidth: 1100, marginLeft: 'auto', marginRight: 'auto', alignSelf: 'stretch' }}>
-          <Menu secondary pointing style={{ marginBottom: 10 }}>
+          {/* Desktop Menu */}
+          <Menu secondary pointing className={styles.desktopTabMenu} style={{ marginBottom: 10 }}>
             <Menu.Item
               name='my'
               active={collectionTab === 'my'}
@@ -1095,11 +1097,24 @@ Claim on <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: '
             >
               Other Owners ({othersTotalCount || 0})
             </Menu.Item>
+
           </Menu>
+
+          {/* Mobile Dropdown */}
+          <div className={styles.mobileTabSelector}>
+            <select
+              value={collectionTab}
+              onChange={(e) => setCollectionTab(e.target.value)}
+              className={styles.mobileTabDropdown}
+            >
+              <option value="my">My Collection ({ownedTotalCount || 0})</option>
+              <option value="others">Other Owners ({othersTotalCount || 0})</option>
+            </select>
+          </div>
           <div style={{ margin: '4px 0 18px', fontSize: 13, lineHeight: 1.4, color: 'var(--color-text-subtle)', maxWidth: 1100 }}>
             {collectionTab === 'my' ? (
               <span>Send go4me PFPs to the address above and they will show up here.</span>
-            ) : (
+            ) : collectionTab === 'others' ? (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                 <span style={{ flex: '1 1 auto' }}>These collectors own your PFP. Why not return the favor?</span>
                 <div style={{ flex: '0 0 auto' }}>
@@ -1121,9 +1136,10 @@ Claim on <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: '
                   </Button>
                 </div>
               </div>
-            )}
+            ) : null}
           </div>
           {(() => {
+            // Render collection tabs (my/others)
             const list = collectionTab === 'my' ? ownedList : othersList
             if (!list || list.length === 0) {
               return <div style={{ textAlign: 'center', opacity: 0.55, fontSize: 14 }}>{collectionTab === 'my' ? 'No owned PFPs to display yet.' : 'No other owner PFPs to display.'}</div>

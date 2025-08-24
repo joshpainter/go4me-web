@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { useJsonRpc } from '../../lib/wallet/JsonRpcContext'
 import { useWalletConnect } from '../../lib/wallet/WalletConnectContext'
 import { useGoby } from '../../lib/wallet/GobyContext'
 import { useToast } from '../ui/Toast'
+import { useViewport } from '../../hooks/useViewport'
 
 type Props = {
   offerId: string
@@ -17,32 +18,37 @@ type Props = {
 export function TakeOfferButton({ offerId, children, className, title, ariaLabel, labelDefault = 'Dexie', labelWhenSage = 'Take Offer' }: Props) {
   const { chiaTakeOffer } = useJsonRpc()
   const { session, connect, reset } = useWalletConnect()
-  const { isAvailable: gobyAvailable, isConnected: gobyConnected, connect: gobyConnect } = useGoby()
+  const { isAvailable: gobyAvailable, isConnected: gobyConnected, connect: gobyConnect, disconnect: gobyDisconnect } = useGoby()
   const { showToast } = useToast()
   const [busy, setBusy] = useState(false)
-  const [resultId, setResultId] = useState<string | null>(null)
-
-  // Mobile detection - hide Goby functionality on mobile
-  const [isMobile, setIsMobile] = useState(false)
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768)
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
-  }, [])
+  const [cooldown, setCooldown] = useState(false)
+  const { isMobile } = useViewport()
 
   // Consider the user "connected" if either Goby (desktop only) or WalletConnect is connected
   const isConnectedAny = (gobyConnected && !isMobile) || !!session
 
   async function handleClick() {
-    setBusy(true); setResultId(null)
+    if (cooldown) return
+    setBusy(true)
     try {
-      // Prefer connecting Goby if available and not on mobile
-      if (gobyAvailable && !gobyConnected && !isMobile) {
+      // Ensure only one wallet is connected at a time
+      // If WalletConnect is already connected, use it exclusively
+      if (session) {
+        // Disconnect Goby if it's connected while WalletConnect is active
+        if (gobyConnected) {
+          try { await gobyDisconnect() } catch {}
+        }
+      }
+      // If Goby is already connected, use it exclusively
+      else if (gobyConnected && !isMobile) {
+        // Goby is already connected, use it
+      }
+      // If neither is connected, prefer Goby on desktop, WalletConnect otherwise
+      else if (gobyAvailable && !isMobile) {
         try { await gobyConnect() } catch {}
       }
-      // Otherwise, ensure WalletConnect session exists
-      if (!(gobyConnected && !isMobile) && !session) {
+      // Fallback to WalletConnect if Goby connection failed or not available
+      if (!gobyConnected && !session) {
         await connect()
       }
 
@@ -66,13 +72,34 @@ export function TakeOfferButton({ offerId, children, className, title, ariaLabel
       const r = await chiaTakeOffer({ offer })
       // r may be null/undefined if rejected in some wallets; guard access
       if (r && (r as any).id) {
-        setResultId((r as any).id)
-        showToast('Offer accepted successfully! Transaction submitted to the blockchain.', 'success')
+        // Show transaction success toast
+        showToast('Offer accepted successfully!', 'success')
       }
     } catch (e: any) {
       const msg = (e?.message || String(e))
-      // If user rejected or closed the request, quietly reset UI back to normal
-      if (!/reject|denied|cancel|close/i.test(msg)) {
+      const isRejection = /reject|denied|cancel|close|user.?reject|user.?denied|user.?cancel/i.test(msg)
+      const isConnectionError = /session not found|pairing|no matching key|history:|please request after current approval resolve/i.test(msg)
+
+      // Only reset wallet connections for actual connection errors, not user rejections
+      if (isConnectionError) {
+        // Reset the specific wallet that had the connection error
+        if (msg.includes('session not found') || msg.includes('pairing') || msg.includes('no matching key')) {
+          // WalletConnect connection error
+          reset?.()
+        } else if (msg.includes('please request after current approval resolve') && gobyConnected) {
+          // Goby pending state error
+          try { gobyDisconnect?.() } catch {}
+        }
+      }
+
+      // Add a brief cooldown only for connection errors or pending state issues
+      if (isConnectionError || msg.includes('please request after current approval resolve')) {
+        setCooldown(true)
+        setTimeout(() => setCooldown(false), 2000) // 2 second cooldown
+      }
+
+      // If user rejected or closed the request, don't show error toast
+      if (!isRejection) {
         // Show user-friendly error messages via toast
         let userMessage = msg
         if (msg.includes('Coin selection error: no spendable coins')) {
@@ -81,13 +108,11 @@ export function TakeOfferButton({ offerId, children, className, title, ariaLabel
           userMessage = 'Insufficient funds: Unable to select coins for this transaction'
         } else if (msg.includes('session not found') || msg.includes('pairing') || msg.includes('no matching key')) {
           userMessage = 'Wallet connection lost. Please reconnect your wallet.'
+        } else if (msg.includes('please request after current approval resolve')) {
+          userMessage = 'Wallet is still processing previous request. Try disconnecting and reconnecting your wallet, then try again.'
         }
 
         showToast(userMessage, 'error')
-      }
-      // If session missing/expired, prompt user to reconnect next time
-      if (/session not found|pairing|no matching key|history:/i.test(msg)) {
-        reset?.()
       }
     } finally {
       setBusy(false)
@@ -119,12 +144,13 @@ export function TakeOfferButton({ offerId, children, className, title, ariaLabel
         type="button"
         className={className}
         onClick={handleClick}
-        disabled={busy}
-        title={title}
+        disabled={busy || cooldown}
+        title={cooldown ? 'Please wait...' : title}
         aria-label={ariaLabel}
-        style={{ cursor: busy ? 'default' : 'pointer' }}
+        style={{ cursor: (busy || cooldown) ? 'default' : 'pointer' }}
       >
         {busy ? 'Taking…'
+          : cooldown ? 'Wait...'
           : children
             ? <span style={{ display: 'inline-flex', alignItems: 'center' }}>
                 {children}
@@ -133,7 +159,6 @@ export function TakeOfferButton({ offerId, children, className, title, ariaLabel
             : (isConnectedAny ? labelWhenSage : labelDefault)
         }
       </button>
-      {resultId && <span style={{ fontSize: 12 }}>Tx: {resultId}</span>}
     </div>
   )
 }
