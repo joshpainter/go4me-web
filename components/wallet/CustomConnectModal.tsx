@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { Icon } from 'semantic-ui-react'
 import { useGoby } from '../../lib/wallet/GobyContext'
+import { useViewport } from '../../hooks/useViewport'
 
 function GobyButton({ onConnected }: { onConnected?: () => void }) {
   const { isAvailable, isConnected, connect } = useGoby()
@@ -12,13 +13,7 @@ function GobyButton({ onConnected }: { onConnected?: () => void }) {
   }, [isConnected, onConnected])
 
   // Detect mobile devices - hide Goby button on mobile
-  const [isMobile, setIsMobile] = useState(false)
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768)
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
-  }, [])
+  const { isMobile } = useViewport()
 
   // Detect theme changes to flip text colour: black in dark mode, white in light mode
   const [isDark, setIsDark] = useState(false)
