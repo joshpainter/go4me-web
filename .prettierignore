@@ -1,0 +1,18 @@
+# Build outputs
+.next/
+out/
+dist/
+build/
+
+# Node
+node_modules/
+
+# Tests artefacts
+coverage/
+tests/test-results/
+tests/reports/
+tests/screenshots/
+
+# Misc
+package-lock.json
+

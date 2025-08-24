@@ -1,11 +1,5 @@
 {
-  "extends": ["next/core-web-vitals"],
-  "rules": {
-    "@next/next/no-html-link-for-pages": "off"
-  },
-  "settings": {
-    "next": {
-      "rootDir": "."
-    }
-  }
+  "$schema": "https://json.schemastore.org/eslintrc",
+  "root": true,
+  "extends": []
 }

@@ -5,11 +5,19 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "postinstall": "simple-git-hooks",
+    "lint-staged": "lint-staged",
     "test:setup": "cd tests && npm install",
     "test:mobile": "cd tests && npm run test:mobile",
     "test:visual": "cd tests && npm run test:visual",
     "test:all": "cd tests && npm run test:all",
     "test": "npm run test:all"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "npm run lint-staged"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",
@@ -27,8 +35,17 @@
   },
   "devDependencies": {
     "@types/react": "19.1.11",
+    "@typescript-eslint/eslint-plugin": "^8.40.0",
+    "@typescript-eslint/parser": "^8.40.0",
     "eslint": "^9.33.0",
-    "eslint-config-next": "^15.4.6"
+    "eslint-config-next": "^15.4.6",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-unused-imports": "^4.2.0",
+    "lint-staged": "^16.1.5",
+    "prettier": "^3.6.2",
+    "simple-git-hooks": "^2.13.1",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.40.0"
   },
   "browserslist": [
     "Chrome >= 91",
