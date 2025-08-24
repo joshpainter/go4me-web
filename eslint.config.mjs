@@ -22,6 +22,7 @@ const config = [
       'tests/test-results/**',
       'tests/reports/**',
       'tests/screenshots/**',
+      'next-env.d.ts'
     ],
   },
 
