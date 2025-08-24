@@ -1,4 +1,5 @@
-import { getSupabaseClient } from '../lib/supabaseClient'
+import { fetchUsernamesPage } from '../lib/database/supabaseService'
+import { SITEMAP_PAGE_SIZE, SITEMAP_MAX_USERS } from '../lib/constants'
 import { SITE_CONFIG, SITEMAP_CONFIG } from '../lib/constants'
 
 function generateSiteMap(users) {
@@ -81,8 +82,6 @@ function generateSiteMap(users) {
 }
 
 export async function getServerSideProps({ res }) {
-  const supabase = getSupabaseClient()
-  
   try {
     // Page through users to include all profile pages without exceeding limits
     const { PAGE_SIZE, MAX_USERS } = SITEMAP_CONFIG
@@ -93,42 +92,32 @@ export async function getServerSideProps({ res }) {
       const from = page * PAGE_SIZE
       const to = from + PAGE_SIZE - 1
 
-      const { data, error } = await supabase
-        .from('get_leaderboard')
-        .select('username')
-        .not('username', 'is', null)
-        .order('username', { ascending: true }) // ensure deterministic paging
-        .range(from, to)
+      const { data, error } = await fetchUsernamesPage({ from, to })
+      if (error) throw new Error(error.message)
+      const rows = data || []
+      if (rows.length === 0) break
 
-      if (error) throw error
+      users.push(...rows)
 
-      if (!data || data.length === 0) break
-
-      users.push(...data)
-
-      // Break when the last page is smaller than PAGE_SIZE (no more data)
-      if (data.length < PAGE_SIZE) break
+      if (rows.length < PAGE_SIZE) break
       page += 1
     }
-    
-    // Generate the XML sitemap
+
     const sitemap = generateSiteMap(users || [])
-    
     res.setHeader('Content-Type', 'text/xml')
-    res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate') // Cache for 24 hours
+    res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate')
     res.write(sitemap)
     res.end()
-    
+
     return { props: {} }
   } catch (error) {
     console.error('Error generating sitemap:', error)
-    
-    // Fallback to basic sitemap
+
     const basicSitemap = generateSiteMap([])
     res.setHeader('Content-Type', 'text/xml')
     res.write(basicSitemap)
     res.end()
-    
+
     return { props: {} }
   }
 }

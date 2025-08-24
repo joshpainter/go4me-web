@@ -5,14 +5,15 @@ import styles from '../styles/Home.module.css'
 import GlobalWalletBar from '../components/wallet/GlobalWalletBar'
 import { TakeOfferButton } from '../components/wallet/TakeOfferButton'
 import { TakeMintgardenOfferButton } from '../components/wallet/TakeMintgardenOfferButton'
-import { getSupabaseClient } from '../lib/supabaseClient'
+import { fetchUserProfile, fetchUserPfps } from '../lib/database/supabaseService'
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Icon, Menu, Input, Button } from 'semantic-ui-react'
 import { useTheme } from './_app'
+import { USER_COLLECTION_PAGE_SIZE } from '../lib/constants'
 import { PersonSchema, BreadcrumbSchema } from '../components/SEO/StructuredData'
 import { SITE_CONFIG } from '../lib/constants'
 // Flip component for profile avatar (front: go4me PFP, back: X image)
-function DomainPfpFlip({ avatarUrl, xPfpUrl, username, linkHref, rankCopiesSold }) {
+function DomainPfpFlip({ avatarUrl, xPfpUrl, username, linkHref }) {
   const [isFlipped, setIsFlipped] = useState(false)
   const [isTouch, setIsTouch] = useState(false)
 
@@ -202,120 +203,88 @@ export async function getServerSideProps(ctx) {
   if (!username) return { notFound: true }
   if (!/^[a-zA-Z0-9_-]{1,32}$/.test(username)) return { notFound: true }
 
-  const PAGE_SIZE = 60
+  const PAGE_SIZE = USER_COLLECTION_PAGE_SIZE
   let user = null
   let ownedPfps = []
   let otherOwners = []
   let ownedHasMore = false
   let othersHasMore = false
   try {
-    const supabase = getSupabaseClient()
-    if (supabase) {
-      const { data, error } = await supabase
-        .from('get_user_page_info')
-        .select('*')
-        .ilike('username', username)
-        .limit(1)
-      if (error) throw error
-    if (data && data.length > 0) {
-        const row = data[0]
-        user = {
-          username: row.username,
-          fullName: row.name || '',
-          description: row.description || '',
-          avatarUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png',
-          xPfpUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png',
-          xchAddress: row.xch_address || '',
-          didAddress: row.did_address || null,
-          lastOfferId: row.last_offerid || '',
-      lastOfferStatus: row.last_offer_status ?? null,
-      totalBadgeScore: row.total_badge_score || 0,
-      rankCopiesSold: row.rank_copies_sold || null,
-      // Queue minutes for ETA under the profile Coming Soon badge
-      rankQueuePosition: row.rank_queue_position ?? null,
-        }
+    // Profile
+    const profileResp = await fetchUserProfile(username)
+    if (profileResp.error) throw new Error(profileResp.error.message)
+    const row = profileResp.data
+    if (row) {
+      user = {
+        username: row.username,
+        fullName: row.name || '',
+        description: row.description || '',
+        avatarUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png',
+        xPfpUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png',
+        xchAddress: row.xch_address || '',
+        didAddress: row.did_address || null,
+        lastOfferId: row.last_offerid || '',
+        lastOfferStatus: row.last_offer_status ?? null,
+        totalBadgeScore: row.total_badge_score || 0,
+        rankCopiesSold: row.rank_copies_sold || null,
+        rankQueuePosition: row.rank_queue_position ?? null,
       }
+    }
 
+    // Owned PFPs
+    try {
+      const ownedResp = await fetchUserPfps('owned', username, { from: 0, to: PAGE_SIZE - 1 }, searchQ)
+      if (ownedResp.error) throw new Error(ownedResp.error.message)
+      const ownedData = ownedResp.data || []
+      ownedPfps = ownedData.map((r, idx) => {
+        const pfpUsername = r.pfp_username || null
+        const cid = r.pfp_ipfs_cid || null
+        const dataUri = r.pfp_data_uri || ''
+        const frontUrl = dataUri || ((cid && pfpUsername) ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-go4me.png` : (r.image_url || r.generated_pfp_url || ''))
+        const backUrl = (cid && pfpUsername) ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-x.png` : (dataUri || r.image_url || r.generated_pfp_url || '')
+        return {
+          id: r.nft_id,
+          frontUrl,
+          backUrl,
+          pfpName: r.pfp_name,
+          pfpUsername,
+          lastOfferId: r.last_offerid || r.lastOfferId || null,
+          lastOfferStatus: (r.last_offer_status ?? r.lastOfferStatus ?? null),
+          rankQueuePosition: r.rank_queue_position ?? null,
+        }
+      })
+      ownedHasMore = ownedData.length === PAGE_SIZE
+      ownedPfps._totalCount = typeof ownedResp.count === 'number' ? ownedResp.count : ownedData.length
+    } catch (ownedErr) {
+      console.warn('Owned PFP fetch failed (non-fatal)', ownedErr)
+    }
 
-      // Attempt to load owned PFP NFTs (best-effort; swallow errors so profile still renders)
-      try {
-        let ownedQuery = supabase
-          .from('get_user_page_owned_pfps')
-          .select('*', { count: 'exact' })
-          .ilike('username', username)
-          .range(0, PAGE_SIZE - 1)
-        if (searchQ) {
-          // Filter by pfp username or name
-          ownedQuery = ownedQuery.or(`pfp_username.ilike.%${searchQ}%,pfp_name.ilike.%${searchQ}%`)
+    // Other Owners
+    try {
+      const othersResp = await fetchUserPfps('others', username, { from: 0, to: PAGE_SIZE - 1 }, searchQ)
+      if (othersResp.error) throw new Error(othersResp.error.message)
+      const othersData = othersResp.data || []
+      otherOwners = othersData.map((r, idx) => {
+        const pfpUsername = r.pfp_username || null
+        const cid = r.pfp_ipfs_cid || null
+        const dataUri = r.pfp_data_uri || ''
+        const frontUrl = dataUri || ((cid && pfpUsername) ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-go4me.png` : (r.image_url || r.generated_pfp_url || ''))
+        const backUrl = (cid && pfpUsername) ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-x.png` : (dataUri || r.image_url || r.generated_pfp_url || '')
+        return {
+          id: r.pfp_author_id,
+          frontUrl,
+          backUrl,
+          pfpName: r.pfp_name,
+          pfpUsername,
+          lastOfferId: r.last_offerid || null,
+          lastOfferStatus: (r.last_offer_status ?? null),
+          rankQueuePosition: r.rank_queue_position ?? null,
         }
-        const { data: ownedData, count: ownedCount, error: ownedError } = await ownedQuery
-        if (ownedError) throw ownedError
-        if (Array.isArray(ownedData)) {
-          ownedPfps = ownedData.map((r, idx) => {
-            const pfpUsername = r.pfp_username || r.username || null
-            const cid = r.pfp_ipfs_cid || r.pfpCid || r.cid || null
-            // Primary image from Supabase view
-            const dataUri = r.pfp_data_uri || ''
-            // Front prefers data URI; fallback to computed go4me image; last resort: any other provided url
-            const frontUrl = dataUri || ((cid && pfpUsername) ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-go4me.png` : (r.image_url || r.generated_pfp_url || ''))
-            // Back prefers computed original X image; fallback to data URI
-            const backUrl = (cid && pfpUsername) ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-x.png` : (dataUri || r.image_url || r.generated_pfp_url || '')
-            return {
-              id: r.nft_id || r.id || `owned-${idx}`,
-              frontUrl,
-              backUrl,
-              pfpName: r.pfp_name || r.name || `#${r.nft_id || idx + 1}`,
-        pfpUsername,
-        lastOfferId: r.last_offerid || r.lastOfferId || null,
-        lastOfferStatus: (r.last_offer_status ?? r.lastOfferStatus ?? null),
-        rankQueuePosition: r.rank_queue_position ?? null
-            }
-          })
-          ownedHasMore = ownedData.length === PAGE_SIZE
-          // Attach count
-          ownedPfps._totalCount = typeof ownedCount === 'number' ? ownedCount : ownedData.length
-        }
-      } catch (ownedErr) {
-        console.warn('Owned PFP fetch failed (non-fatal)', ownedErr)
-      }
-
-      // Attempt to load other owners collection (same shape)
-      try {
-        let othersQuery = supabase
-          .from('get_user_page_other_owners')
-          .select('*', { count: 'exact' })
-          .ilike('username', username)
-          .range(0, PAGE_SIZE - 1)
-        if (searchQ) {
-          othersQuery = othersQuery.or(`pfp_username.ilike.%${searchQ}%,pfp_name.ilike.%${searchQ}%`)
-        }
-        const { data: othersData, count: othersCount, error: othersError } = await othersQuery
-        if (othersError) throw othersError
-        if (Array.isArray(othersData)) {
-          otherOwners = othersData.map((r, idx) => {
-            const pfpUsername = r.pfp_username || r.username || null
-            const cid = r.pfp_ipfs_cid || r.pfpCid || r.cid || null
-            const dataUri = r.pfp_data_uri || ''
-            const frontUrl = dataUri || ((cid && pfpUsername) ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-go4me.png` : (r.image_url || r.generated_pfp_url || ''))
-            const backUrl = (cid && pfpUsername) ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-x.png` : (dataUri || r.image_url || r.generated_pfp_url || '')
-            return {
-              id: r.nft_id || r.id || `other-${idx}`,
-              frontUrl,
-              backUrl,
-              pfpName: r.pfp_name || r.name || `#${r.nft_id || idx + 1}`,
-        pfpUsername,
-        lastOfferId: r.last_offerid || r.lastOfferId || null,
-        lastOfferStatus: (r.last_offer_status ?? r.lastOfferStatus ?? null),
-        rankQueuePosition: r.rank_queue_position ?? null
-            }
-          })
-          othersHasMore = othersData.length === PAGE_SIZE
-          // Attach count
-          otherOwners._totalCount = typeof othersCount === 'number' ? othersCount : othersData.length
-        }
-      } catch (othersErr) {
-        console.warn('Other owners fetch failed (non-fatal)', othersErr)
-      }
+      })
+      othersHasMore = othersData.length === PAGE_SIZE
+      otherOwners._totalCount = typeof othersResp.count === 'number' ? othersResp.count : othersData.length
+    } catch (othersErr) {
+      console.warn('Other owners fetch failed (non-fatal)', othersErr)
     }
   } catch (e) {
     console.error('Failed to load user profile', e)
@@ -379,19 +348,19 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
   const mapRow = useCallback((r, idx, prefix='dyn') => {
     const dataUri = r.pfp_data_uri || ''
     const pfpUsername = r.pfp_username || r.username || null
-    const cid = r.pfp_ipfs_cid || r.pfpCid || r.cid || null
+    const cid = r.pfp_ipfs_cid || null
     const frontUrl = dataUri || ((cid && pfpUsername) ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-go4me.png` : (r.image_url || r.generated_pfp_url || ''))
     const backUrl = (cid && pfpUsername) ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-x.png` : (dataUri || r.image_url || r.generated_pfp_url || '')
     return {
-      id: r.nft_id || r.id || `${prefix}-${idx}`,
+      id: r.nft_id || r.pfp_author_id,
       frontUrl,
       backUrl,
-      pfpName: r.pfp_name || r.name || `#${r.nft_id || idx + 1}`,
-  pfpUsername,
-  lastOfferId: r.last_offerid || r.lastOfferId || null,
-  lastOfferStatus: (r.last_offer_status ?? r.lastOfferStatus ?? null),
-  // If the view supplies queue minutes for this PFP, keep it so we can show ETA.
-  rankQueuePosition: r.rank_queue_position ?? null
+      pfpName: r.pfp_name,
+      pfpUsername,
+      lastOfferId: r.last_offerid || null,
+      lastOfferStatus: r.last_offer_status ?? r.lastOfferStatus ?? null,
+      // If the view supplies queue minutes for this PFP, keep it so we can show ETA.
+      rankQueuePosition: r.rank_queue_position ?? null
     }
   }, [])
 
@@ -402,23 +371,13 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
     if (!isMy && !othersMore) return
     setIsLoadingMore(true)
     try {
-      const supabase = getSupabaseClient()
-      if (!supabase) return
       const currentPage = isMy ? ownedPage : othersPage
       const from = currentPage * pageSize
       const to = from + pageSize - 1
-      const viewName = isMy ? 'get_user_page_owned_pfps' : 'get_user_page_other_owners'
-      let qb = supabase
-        .from(viewName)
-        .select('*')
-        .ilike('username', username)
-        .range(from, to)
-      if (query) {
-        qb = qb.or(`pfp_username.ilike.%${query}%,pfp_name.ilike.%${query}%`)
-      }
-      const { data, error } = await qb
-      if (error) throw error
-      if (Array.isArray(data) && data.length > 0) {
+      const resp = await fetchUserPfps(isMy ? 'owned' : 'others', username, { from, to }, query)
+      if (resp.error) throw new Error(resp.error.message)
+      const data = resp.data || []
+      if (data.length > 0) {
         const mapped = data.map((r, i) => mapRow(r, currentPage * pageSize + i, isMy ? 'owned' : 'other'))
         if (isMy) {
           setOwnedList(prev => [...prev, ...mapped])
@@ -462,26 +421,12 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
 
   // When query changes: reset current tab list and fetch first page; also refresh counts
   useEffect(() => {
-    const supabase = getSupabaseClient()
-    if (!supabase) return
     let cancelled = false
     const fetchCounts = async () => {
       try {
-        // Owned count
-        let ownedCountQ = supabase
-          .from('get_user_page_owned_pfps')
-          .select('*', { count: 'exact', head: true })
-          .ilike('username', username)
-        if (query) ownedCountQ = ownedCountQ.or(`pfp_username.ilike.%${query}%,pfp_name.ilike.%${query}%`)
-        const ownedResp = await ownedCountQ
+        const ownedResp = await fetchUserPfps('owned', username, { from: 0, to: 0 }, query, true)
         if (!cancelled) setOwnedTotalCount(ownedResp.count || 0)
-        // Others count
-        let othersCountQ = supabase
-          .from('get_user_page_other_owners')
-          .select('*', { count: 'exact', head: true })
-          .ilike('username', username)
-        if (query) othersCountQ = othersCountQ.or(`pfp_username.ilike.%${query}%,pfp_name.ilike.%${query}%`)
-        const othersResp = await othersCountQ
+        const othersResp = await fetchUserPfps('others', username, { from: 0, to: 0 }, query, true)
         if (!cancelled) setOthersTotalCount(othersResp.count || 0)
       } catch (e) {
         console.error('Failed to refresh counts', e)
@@ -490,25 +435,19 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
     const fetchFirstPage = async () => {
       try {
         const isMy = collectionTab === 'my'
-        const viewName = isMy ? 'get_user_page_owned_pfps' : 'get_user_page_other_owners'
-        let qb = supabase
-          .from(viewName)
-          .select('*')
-          .ilike('username', username)
-          .range(0, pageSize - 1)
-        if (query) qb = qb.or(`pfp_username.ilike.%${query}%,pfp_name.ilike.%${query}%`)
-        const { data, error } = await qb
-        if (error) throw error
+        const pfpsResp = await fetchUserPfps(isMy ? 'owned' : 'others', username, { from: 0, to: pageSize - 1 }, query)
+        if (pfpsResp.error) throw new Error(pfpsResp.error.message)
+        const data = pfpsResp.data || []
         const mapped = Array.isArray(data) ? data.map((r, i) => mapRow(r, i, isMy ? 'owned' : 'other')) : []
         if (cancelled) return
         if (isMy) {
           setOwnedList(mapped)
           setOwnedPage(1)
-          setOwnedMore((data || []).length === pageSize)
+          setOwnedMore(data.length === pageSize)
         } else {
           setOthersList(mapped)
           setOthersPage(1)
-          setOthersMore((data || []).length === pageSize)
+          setOthersMore(data.length === pageSize)
         }
       } catch (e) {
         console.error('Failed to refresh first page', e)
@@ -633,28 +572,17 @@ export default function DomainPage({ user, ownedPfps = [], otherOwners = [], own
     if (isExporting) return
     setIsExporting(true)
     try {
-  const supabase = getSupabaseClient()
-
-    const PAGE = 1000
+      const PAGE = 1000
       let from = 0
       const rows = []
-      // Fetch in chunks to cover all filtered results
-      if (supabase) {
-        while (true) {
-          let qb = supabase
-            .from('get_user_page_other_owners')
-            .select('*')
-            .ilike('username', username)
-            .range(from, from + PAGE - 1)
-          if (query) qb = qb.or(`pfp_username.ilike.%${query}%,pfp_name.ilike.%${query}%`)
-
-          const { data, error } = await qb
-          if (error) throw error
-          if (!data || data.length === 0) break
-          rows.push(...data)
-          if (data.length < PAGE) break
-          from += PAGE
-        }
+      while (true) {
+        const resp = await fetchUserPfps('others', username, { from, to: from + PAGE - 1 }, query)
+        if (resp.error) throw new Error(resp.error.message)
+        const data = resp.data || []
+        if (data.length === 0) break
+        rows.push(...data)
+        if (data.length < PAGE) break
+        from += PAGE
       }
 
       const quote = (val) => {
