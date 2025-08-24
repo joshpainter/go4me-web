@@ -7,13 +7,10 @@ import { Header, Segment, Container, Menu, Input, Icon } from 'semantic-ui-react
 import { useTheme } from './_app'
 import { useMemo, useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/router'
-import { getSupabaseClient } from '../lib/supabaseClient'
+import { fetchLeaderboard } from '../lib/database/supabaseService'
 import { TakeOfferButton } from '../components/wallet/TakeOfferButton'
 import GlobalWalletBar from '../components/wallet/GlobalWalletBar'
-
-const MOJO_PER_XCH = 1e12
-// Special-case Marmot Recovery Fund XCH address
-const MARMOT_BADGE_XCH = 'xch120ywvwahucfptkeuzzdpdz5v0nnarq5vgw94g247jd5vswkn7rls35y2gc'
+import { LEADERBOARD_PAGE_SIZE, MOJO_PER_XCH } from '../lib/constants'
 // Simple formatting helpers
 const formatXCH = (n) => new Intl.NumberFormat(undefined, { maximumFractionDigits: 4 }).format(n);
 const formatInt = (n) => new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(n ?? 0);
@@ -205,81 +202,13 @@ export async function getServerSideProps(context) {
 
   let users = []
   try {
-    const supabase = getSupabaseClient()
-
-    // Prefer the materialized/SQL view get_leaderboard (new). Fallback to x_users if it errors.
-    let data = null
-    let error = null
-    const PAGE_SIZE = 100
+    const PAGE_SIZE = LEADERBOARD_PAGE_SIZE
     const { view: viewParam, q: qParam } = context.query || {}
     const currentView = viewParam || 'totalSold'
     const q = (qParam || '').toString().trim()
-    const orderMap = {
-      totalSold: { column: 'rank_copies_sold', ascending: true },
-      totalTraded: { column: 'rank_total_traded_value', ascending: true },
-      badgeScore: { column: 'rank_total_badge_score', ascending: true },
-      recentTrades: { column: 'rank_last_sale', ascending: true },
-      rarest: { column: 'rank_fewest_copies_sold', ascending: true },
-      marmotRecovery: { column: 'rank_copies_sold', ascending: true }
-    }
-    if (currentView === 'queue') {
-      let qb = supabase
-        .from('get_ungenerated_nfts')
-        .select('*')
-        .order('rank_queue_position', { ascending: true })
-        .range(0, PAGE_SIZE - 1)
-      if (q) {
-        qb = qb.or(`username.ilike.%${q}%,name.ilike.%${q}%`)
-      }
-      const resp = await qb
-      data = resp.data
-      error = resp.error
-    } else {
-      const orderSpec = orderMap[currentView] || orderMap.totalSold
-      if (currentView === 'marmotRecovery') {
-        // Resolve author_ids that have the Marmot XCH address, then filter leaderboard by those ids
-        const idsResp = await supabase
-          .from('x_users')
-          .select('author_id')
-          .eq('xch_address', MARMOT_BADGE_XCH)
-          .range(0, 9999)
-        if (idsResp.error) {
-          data = []
-          error = idsResp.error
-        } else {
-          const ids = (idsResp.data || []).map(r => r.author_id).filter(Boolean)
-          if (ids.length === 0) {
-            data = []
-            error = null
-          } else {
-            let qb = supabase
-              .from('get_leaderboard')
-              .select('*')
-              .in('author_id', ids)
-              .order(orderSpec.column, { ascending: orderSpec.ascending })
-              .range(0, PAGE_SIZE - 1)
-            if (q) qb = qb.or(`username.ilike.%${q}%,name.ilike.%${q}%`)
-            const resp = await qb
-            data = resp.data
-            error = resp.error
-          }
-        }
-      } else {
-        let qb = supabase
-          .from('get_leaderboard')
-          .select('*')
-          .order(orderSpec.column, { ascending: orderSpec.ascending })
-          .range(0, PAGE_SIZE - 1)
-        if (q) {
-          qb = qb.or(`username.ilike.%${q}%,name.ilike.%${q}%`)
-        }
-        const resp = await qb
-        data = resp.data
-        error = resp.error
-      }
-    }
 
-    if (error) throw error
+    const { data, error } = await fetchLeaderboard(currentView, q, { from: 0, to: PAGE_SIZE - 1 }, 'initial')
+    if (error) throw new Error(error.message)
 
 
     users = (data || []).map(row => {
@@ -348,7 +277,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
   const [page, setPage] = useState(1) // next page index (0 fetched server-side)
   const [hasMore, setHasMore] = useState(initialHasMore)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
-  const PAGE_SIZE = 100
+  const PAGE_SIZE = LEADERBOARD_PAGE_SIZE
   const sentinelRef = useRef(null)
   const [intersectionSupported, setIntersectionSupported] = useState(true)
 
@@ -386,66 +315,12 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
 
   // When view or debounced query changes: reset and fetch first page (client side to keep UX fast on tab switch)
   useEffect(() => {
-    // Skip if this matches SSR initial load and we already have users
-    const supabase = getSupabaseClient()
-    if (!supabase) return
     let isCancelled = false
     const fetchFirst = async () => {
       setIsLoadingMore(true)
       try {
-        const orderMap = {
-          totalSold: { column: 'rank_copies_sold', ascending: true },
-          totalTraded: { column: 'rank_total_traded_value', ascending: true },
-          badgeScore: { column: 'rank_total_badge_score', ascending: true },
-          recentTrades: { column: 'rank_last_sale', ascending: true },
-          rarest: { column: 'rank_fewest_copies_sold', ascending: true },
-          marmotRecovery: { column: 'rank_copies_sold', ascending: true }
-        }
-        let data, error
-        if (view === 'queue') {
-          let qb = supabase
-            .from('get_ungenerated_nfts')
-            .select('*')
-            .order('rank_queue_position', { ascending: true })
-            .range(0, PAGE_SIZE - 1)
-          if (query) qb = qb.or(`username.ilike.%${query}%,name.ilike.%${query}%`)
-          const resp = await qb
-          data = resp.data; error = resp.error
-        } else if (view === 'marmotRecovery') {
-          const idsResp = await supabase
-            .from('x_users')
-            .select('author_id')
-            .eq('xch_address', MARMOT_BADGE_XCH)
-            .range(0, 9999)
-          if (idsResp.error) { data = []; error = idsResp.error }
-          else {
-            const ids = (idsResp.data || []).map(r => r.author_id).filter(Boolean)
-            if (ids.length === 0) { data = []; error = null }
-            else {
-              const orderSpec = orderMap[view] || orderMap.totalSold
-              let qb = supabase
-                .from('get_leaderboard')
-                .select('*')
-                .in('author_id', ids)
-                .order(orderSpec.column, { ascending: orderSpec.ascending })
-                .range(0, PAGE_SIZE - 1)
-              if (query) qb = qb.or(`username.ilike.%${query}%,name.ilike.%${query}%`)
-              const resp = await qb
-              data = resp.data; error = resp.error
-            }
-          }
-        } else {
-          const orderSpec = orderMap[view] || orderMap.totalSold
-          let qb = supabase
-            .from('get_leaderboard')
-            .select('*')
-            .order(orderSpec.column, { ascending: orderSpec.ascending })
-            .range(0, PAGE_SIZE - 1)
-          if (query) qb = qb.or(`username.ilike.%${query}%,name.ilike.%${query}%`)
-          const resp = await qb
-          data = resp.data; error = resp.error
-        }
-        if (error) throw error
+        const { data, error } = await fetchLeaderboard(view, query, { from: 0, to: PAGE_SIZE - 1 }, 'initial')
+        if (error) throw new Error(error.message)
         if (isCancelled) return
         const mapped = (data || []).map(row => {
           if (view === 'queue') {
@@ -506,69 +381,17 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
     }
     fetchFirst()
     return () => { isCancelled = true }
-  }, [view, query])
+  }, [view, query, PAGE_SIZE])
 
   const loadMore = useCallback(async () => {
     if (!hasMore || isLoadingMore) return
     setIsLoadingMore(true)
     try {
-      const supabase = getSupabaseClient()
-      if (!supabase) return
       const from = page * PAGE_SIZE
       const to = from + PAGE_SIZE - 1
-      const orderMap = {
-        totalSold: { column: 'total_sold', ascending: false },
-        totalTraded: { column: 'total_traded_value', ascending: false },
-        badgeScore: { column: 'rank_total_badge_score', ascending: true },
-        recentTrades: { column: 'rank_last_sale', ascending: true },
-        rarest: { column: 'rank_fewest_copies_sold', ascending: true },
-        marmotRecovery: { column: 'total_sold', ascending: false }
-      }
-      let data, error
-      if (view === 'queue') {
-        let qb = supabase
-          .from('get_ungenerated_nfts')
-          .select('*')
-          .order('rank_queue_position', { ascending: true })
-          .range(from, to)
-  if (query) qb = qb.or(`username.ilike.%${query}%,name.ilike.%${query}%`)
-        const resp = await qb
-        data = resp.data; error = resp.error
-      } else if (view === 'marmotRecovery') {
-        const idsResp = await supabase
-          .from('x_users')
-          .select('author_id')
-          .eq('xch_address', MARMOT_BADGE_XCH)
-          .range(0, 9999)
-        if (idsResp.error) { data = []; error = idsResp.error }
-        else {
-          const ids = (idsResp.data || []).map(r => r.author_id).filter(Boolean)
-          if (ids.length === 0) { data = []; error = null }
-          else {
-            const orderSpec = orderMap[view] || orderMap.totalSold
-            let qb = supabase
-              .from('get_leaderboard')
-              .select('*')
-              .in('author_id', ids)
-              .order(orderSpec.column, { ascending: orderSpec.ascending })
-              .range(from, to)
-            if (query) qb = qb.or(`username.ilike.%${query}%,name.ilike.%${query}%`)
-            const resp = await qb
-            data = resp.data; error = resp.error
-          }
-        }
-      } else {
-        const orderSpec = orderMap[view] || orderMap.totalSold
-        let qb = supabase
-          .from('get_leaderboard')
-          .select('*')
-          .order(orderSpec.column, { ascending: orderSpec.ascending })
-          .range(from, to)
-  if (query) qb = qb.or(`username.ilike.%${query}%,name.ilike.%${query}%`)
-        const resp = await qb
-        data = resp.data; error = resp.error
-      }
-      if (error) throw error
+      const { data, error } = await fetchLeaderboard(view, query, { from, to }, 'page')
+      if (error) throw new Error(error.message)
+
       const mapped = (data || []).map(row => {
         if (view === 'queue') {
           return {
@@ -586,7 +409,6 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
         const avgSalesAmount = row.xch_average_sale_amount ?? row.xch_average_sales_amount ?? 0
         const avgTimeToSell = row.average_time_to_sell ?? 0
         const user = {
-          // Maintain identical id derivation logic as SSR to prevent duplicate entries when merging pages
           id: row.author_id,
           username: row.username,
           fullName: row.name,
@@ -625,7 +447,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
     } finally {
       setIsLoadingMore(false)
     }
-  }, [hasMore, isLoadingMore, page, query, appendUsers, view])
+  }, [hasMore, isLoadingMore, page, query, appendUsers, view, PAGE_SIZE])
 
   // Determine feature support
   useEffect(() => {
