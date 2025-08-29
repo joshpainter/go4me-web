@@ -2,7 +2,7 @@
  * Provides reusable, typed functions for all database operations.
  * Follows existing project patterns and consolidates error handling.
  */
-import { getSupabaseClient } from '../supabaseClient'
+import { getSupabaseClient } from './supabaseClient'
 import type { DatabaseResponse, LeaderboardView, PaginationOptions, UserProfile } from './types'
 import { SUPABASE_MAX_ROWS, MARMOT_BADGE_XCH } from '../constants'
 
@@ -50,11 +50,10 @@ function buildOrSearch(fields: string[], q?: string): string | null {
 
 function normaliseError(err: any): { message: string; code?: string } {
   if (!err) return { message: '' }
-    const message = err.message || err.toString?.() || 'Unknown error'
+  const message = err.message || err.toString?.() || 'Unknown error'
   const code = err.code
   return { message, code }
 }
-
 
 // Leaderboard + queue (ungenerated) unified fetcher
 export async function fetchLeaderboard(
@@ -87,7 +86,8 @@ export async function fetchLeaderboard(
       return { data: (data || []) as any, error: null }
     }
 
-    const orderSpec = (phase === 'initial' ? ORDER_MAP_INITIAL : ORDER_MAP_PAGE)[view as string] || ORDER_MAP_INITIAL.totalSold
+    const orderSpec =
+      (phase === 'initial' ? ORDER_MAP_INITIAL : ORDER_MAP_PAGE)[view as string] || ORDER_MAP_INITIAL.totalSold
 
     // Marmot Recovery: resolve author ids first, then filter leaderboard by that set
     if (view === 'marmotRecovery') {
@@ -172,10 +172,7 @@ export async function fetchUserPfps(
       headOpts = { count: 'exact', head: true }
     }
 
-    let qb: any = supabase
-      .from(viewName)
-      .select(selectOpts, headOpts)
-      .ilike('username', username)
+    let qb: any = supabase.from(viewName).select(selectOpts, headOpts).ilike('username', username)
 
     if (!countOnly) {
       qb = qb.range(pagination.from, pagination.to)
@@ -194,9 +191,7 @@ export async function fetchUserPfps(
 }
 
 // Sitemap: paginated usernames from leaderboard ordered by username asc
-export async function fetchUsernamesPage(
-  pagination: PaginationOptions,
-): Promise<DatabaseResponse<any[]>> {
+export async function fetchUsernamesPage(pagination: PaginationOptions): Promise<DatabaseResponse<any[]>> {
   const supabase = getSupabaseClient()
   if (!supabase) return { data: [], error: { message: 'Supabase not initialised' } }
   try {
@@ -214,4 +209,3 @@ export async function fetchUsernamesPage(
     return { data: [], error: normaliseError(e) }
   }
 }
-
