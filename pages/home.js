@@ -3,7 +3,7 @@ import Link from 'next/link'
 import Script from 'next/script'
 import Image from 'next/image'
 import styles from '../styles/Home.module.css'
-import { Header, Segment, Container, Menu, Input, Icon } from 'semantic-ui-react'
+import { Segment, Container, Menu, Input, Icon } from 'semantic-ui-react'
 import { useTheme } from './_app'
 import { useMemo, useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/router'
@@ -12,10 +12,10 @@ import { TakeOfferButton } from '../components/wallet/TakeOfferButton'
 import GlobalWalletBar from '../components/wallet/GlobalWalletBar'
 import { OrganizationSchema, WebSiteSchema } from '../components/SEO/StructuredData'
 import { SITE_CONFIG } from '../lib/constants'
-import { LEADERBOARD_PAGE_SIZE, MOJO_PER_XCH } from '../lib/constants'
+import { LEADERBOARD_PAGE_SIZE, MOJO_PER_XCH, QUEUE_SECONDS_PER_POSITION } from '../lib/constants'
 // Simple formatting helpers
-const formatXCH = (n) => new Intl.NumberFormat(undefined, { maximumFractionDigits: 4 }).format(n);
-const formatInt = (n) => new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(n ?? 0);
+const formatXCH = (n) => new Intl.NumberFormat(undefined, { maximumFractionDigits: 4 }).format(n)
+const formatInt = (n) => new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(n ?? 0)
 const formatRelativeAgo = (ms) => {
   if (!ms) return '—'
   const diff = Date.now() - ms
@@ -47,22 +47,25 @@ const formatDuration = (ms) => {
   return `${s}s`
 }
 
-// Format minutes as minutes, or hours + minutes if >= 60
-const formatEtaMinutes = (mins) => {
-  const m = Math.max(0, Math.round(mins || 0))
-  if (m >= 60) {
-    const h = Math.floor(m / 60)
-    const r = m % 60
-    return r ? `${h}h ${r}m` : `${h}h`
-  }
-  return `${m} minute${m === 1 ? '' : 's'}`
+// Format queue ETA where each queue position = 10 seconds
+// Returns compact strings like "3m 20s", "1h 5m", or "25s"
+const formatEtaFromQueue = (positions) => {
+  const totalSeconds = Math.max(0, Math.round((positions || 0) * QUEUE_SECONDS_PER_POSITION))
+  const d = Math.floor(totalSeconds / 86400)
+  const h = Math.floor((totalSeconds % 86400) / 3600)
+  const m = Math.floor((totalSeconds % 3600) / 60)
+  const s = totalSeconds % 60
+  if (d > 0) return `${d}d ${h}h`
+  if (h > 0) return `${h}h ${m}m`
+  if (m > 0) return `${m}m ${s}s`
+  return `${s}s`
 }
 
 // Card image with flip interaction: front = new PFP (avatarUrl), back = original (xPfpUrl) in a circle mask
 function PfpFlipCard({ user, rootHostForLinks, idx }) {
   const [isFlipped, setIsFlipped] = useState(false)
   const [isTouch, setIsTouch] = useState(false)
-  const profileHref = user.username ? `//${user.username}.${(rootHostForLinks || 'go4.me')}/` : undefined
+  const profileHref = user.username ? `//${user.username}.${rootHostForLinks || 'go4.me'}/` : undefined
   const commonAlt = `${user.username || 'user'} avatar`
 
   const flipInnerStyle = {
@@ -70,7 +73,7 @@ function PfpFlipCard({ user, rootHostForLinks, idx }) {
     inset: 0,
     transformStyle: 'preserve-3d',
     transition: 'transform 360ms cubic-bezier(0.2, 0.7, 0.2, 1)',
-    transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)'
+    transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
   }
   const faceStyle = {
     position: 'absolute',
@@ -78,14 +81,14 @@ function PfpFlipCard({ user, rootHostForLinks, idx }) {
     backfaceVisibility: 'hidden',
     WebkitBackfaceVisibility: 'hidden',
     borderRadius: 8,
-    overflow: 'hidden'
+    overflow: 'hidden',
   }
   const backStyle = {
     ...faceStyle,
     transform: 'rotateY(180deg)',
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
   }
 
   useEffect(() => {
@@ -98,18 +101,41 @@ function PfpFlipCard({ user, rootHostForLinks, idx }) {
     <div
       className={styles.cardImgWrap}
       style={{ position: 'relative' }}
-  onMouseEnter={() => { if (!isTouch) setIsFlipped(true) }}
-  onMouseLeave={() => { if (!isTouch) setIsFlipped(false) }}
+      onMouseEnter={() => {
+        if (!isTouch) setIsFlipped(true)
+      }}
+      onMouseLeave={() => {
+        if (!isTouch) setIsFlipped(false)
+      }}
     >
       {/* Flip toggle button in upper-left, matching rank badge spacing/size */}
 
       <div
         title={isFlipped ? 'Show new PFP' : 'Show original PFP'}
-        onClick={(e) => { e.stopPropagation(); e.preventDefault(); setIsFlipped(v => !v) }}
+        onClick={(e) => {
+          e.stopPropagation()
+          e.preventDefault()
+          setIsFlipped((v) => !v)
+        }}
         className={styles.rankBadge}
-        style={{ bottom: 8, right: 8, zIndex: 5, border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', letterSpacing: 0, lineHeight: 1, backgroundColor: 'var(--badge-bg-solid)', color: 'var(--badge-fg-solid)', top: 'auto', left: 'auto' }}
+        style={{
+          bottom: 8,
+          right: 8,
+          zIndex: 5,
+          border: 'none',
+          cursor: 'pointer',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          letterSpacing: 0,
+          lineHeight: 1,
+          backgroundColor: 'var(--badge-bg-solid)',
+          color: 'var(--badge-fg-solid)',
+          top: 'auto',
+          left: 'auto',
+        }}
       >
-        <Icon name='refresh' style={{ margin: 0 }} />
+        <Icon name="refresh" style={{ margin: 0 }} />
       </div>
 
       {/* Flip container */}
@@ -153,14 +179,56 @@ function PfpFlipCard({ user, rootHostForLinks, idx }) {
           {/* Back: Original PFP in a circle mask */}
           <div style={backStyle}>
             {profileHref ? (
-              <a href={profileHref} aria-label={`Open ${user.username}.go4.me`} style={{ position: 'absolute', inset: 0 }}>
-                <div style={{ position: 'absolute', top: '50%', left: '50%', width: '80%', height: '80%', transform: 'translate(-50%, -50%)', borderRadius: '50%', overflow: 'hidden', boxShadow: '0 8px 20px rgba(0,0,0,0.25)' }}>
-                  <Image src={user.xPfpUrl || user.avatarUrl} alt={commonAlt} fill sizes="180px" style={{ objectFit: 'cover' }} priority={idx < 4} />
+              <a
+                href={profileHref}
+                aria-label={`Open ${user.username}.go4.me`}
+                style={{ position: 'absolute', inset: 0 }}
+              >
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    width: '80%',
+                    height: '80%',
+                    transform: 'translate(-50%, -50%)',
+                    borderRadius: '50%',
+                    overflow: 'hidden',
+                    boxShadow: '0 8px 20px rgba(0,0,0,0.25)',
+                  }}
+                >
+                  <Image
+                    src={user.xPfpUrl || user.avatarUrl}
+                    alt={commonAlt}
+                    fill
+                    sizes="180px"
+                    style={{ objectFit: 'cover' }}
+                    priority={idx < 4}
+                  />
                 </div>
               </a>
             ) : (
-              <div style={{ position: 'absolute', top: '50%', left: '50%', width: '80%', height: '80%', transform: 'translate(-50%, -50%)', borderRadius: '50%', overflow: 'hidden', boxShadow: '0 8px 20px rgba(0,0,0,0.25)' }}>
-                <Image src={user.xPfpUrl || user.avatarUrl} alt={commonAlt} fill sizes="180px" style={{ objectFit: 'cover' }} priority={idx < 4} />
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  width: '80%',
+                  height: '80%',
+                  transform: 'translate(-50%, -50%)',
+                  borderRadius: '50%',
+                  overflow: 'hidden',
+                  boxShadow: '0 8px 20px rgba(0,0,0,0.25)',
+                }}
+              >
+                <Image
+                  src={user.xPfpUrl || user.avatarUrl}
+                  alt={commonAlt}
+                  fill
+                  sizes="180px"
+                  style={{ objectFit: 'cover' }}
+                  priority={idx < 4}
+                />
               </div>
             )}
           </div>
@@ -173,20 +241,20 @@ function PfpFlipCard({ user, rootHostForLinks, idx }) {
 export async function getServerSideProps(context) {
   const startTime = Date.now()
 
-  context.res.setHeader(
-    'Cache-Control',
-    'public, s-maxage=60, stale-while-revalidate=600'
-  );
+  context.res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=600')
 
   // Add performance headers
-  context.res.setHeader('Server-Timing', `ssr;dur=${Date.now() - startTime}`);
+  context.res.setHeader('Server-Timing', `ssr;dur=${Date.now() - startTime}`)
 
   // Add resource hints for LCP optimization
-  context.res.setHeader('Link', [
-    '</fonts/Inter-VariableFont_slnt,wght.ttf>; rel=preload; as=font; type=font/ttf; crossorigin',
-    '<https://wsrdqcvzoshyjvtfsjjp.supabase.co>; rel=preconnect',
-    '<https://can.seedsn.app>; rel=preconnect'
-  ].join(', '));
+  context.res.setHeader(
+    'Link',
+    [
+      '</fonts/Inter-VariableFont_slnt,wght.ttf>; rel=preload; as=font; type=font/ttf; crossorigin',
+      '<https://wsrdqcvzoshyjvtfsjjp.supabase.co>; rel=preconnect',
+      '<https://can.seedsn.app>; rel=preconnect',
+    ].join(', '),
+  )
 
   // Derive root host (without subdomain) + preserve port so we can build username.<server> links dynamically
   const hostHeader = context.req?.headers?.host || ''
@@ -212,8 +280,7 @@ export async function getServerSideProps(context) {
     const { data, error } = await fetchLeaderboard(currentView, q, { from: 0, to: PAGE_SIZE - 1 }, 'initial')
     if (error) throw new Error(error.message)
 
-
-    users = (data || []).map(row => {
+    users = (data || []).map((row) => {
       if (currentView === 'queue') {
         return {
           id: row.author_id,
@@ -238,7 +305,7 @@ export async function getServerSideProps(context) {
         xPfpUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png',
         totalSold: row.total_sold ?? 0,
         totalTradedXCH: totalSalesAmount / MOJO_PER_XCH,
-        totalRoyaltiesXCH: (totalSalesAmount / MOJO_PER_XCH) * 0.10,
+        totalRoyaltiesXCH: (totalSalesAmount / MOJO_PER_XCH) * 0.1,
         averageSaleXCH: avgSalesAmount / MOJO_PER_XCH,
         avgTimeToSellMs: avgTimeToSell,
         lastOfferId: row.last_offerid,
@@ -252,7 +319,7 @@ export async function getServerSideProps(context) {
         // Expose queue minutes if present on this view so we can show ETA on Coming Soon badges
         rankQueuePosition: row.rank_queue_position ?? null,
         totalBadgeScore: row.total_badge_score || 0,
-        _search: ((row.username) + ' ' + (row.name)).toLowerCase(),
+        _search: (row.username + ' ' + row.name).toLowerCase(),
       }
       user.displayTotalTradedXCH = formatXCH(user.totalTradedXCH)
       user.displayTotalRoyaltiesXCH = formatXCH(user.totalRoyaltiesXCH)
@@ -269,18 +336,24 @@ export async function getServerSideProps(context) {
     props: {
       users,
       hasMore,
-      initialView: Array.isArray(context.query.view) ? context.query.view[0] : (context.query.view || null),
-      initialQuery: Array.isArray(context.query.q) ? context.query.q[0] : (context.query.q || ''),
-      rootHostForLinks
-    }
+      initialView: Array.isArray(context.query.view) ? context.query.view[0] : context.query.view || null,
+      initialQuery: Array.isArray(context.query.q) ? context.query.q[0] : context.query.q || '',
+      rootHostForLinks,
+    },
   }
 }
 
-export default function Home({ users = [], hasMore: initialHasMore = false, initialView, initialQuery, rootHostForLinks }) {
+export default function Home({
+  users = [],
+  hasMore: initialHasMore = false,
+  initialView,
+  initialQuery,
+  rootHostForLinks,
+}) {
   const router = useRouter()
-  const [view, setView] = useState(initialView || 'totalSold');
-  const [rawSearch, setRawSearch] = useState(initialQuery || '');
-  const [query, setQuery] = useState(initialQuery || ''); // debounced value used for server filtering
+  const [view, setView] = useState(initialView || 'totalSold')
+  const [rawSearch, setRawSearch] = useState(initialQuery || '')
+  const [query, setQuery] = useState(initialQuery || '') // debounced value used for server filtering
   const [loadedUsers, setLoadedUsers] = useState(() => users)
   const [page, setPage] = useState(1) // next page index (0 fetched server-side)
   const [hasMore, setHasMore] = useState(initialHasMore)
@@ -294,20 +367,19 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
     if (view !== 'totalSold') desiredQuery.view = view
     if (query) desiredQuery.q = query
     const current = router.query || {}
-    const same = (
-      (desiredQuery.view || '') === (current.view || '') &&
-      (desiredQuery.q || '') === (current.q || '')
-    )
+    const same = (desiredQuery.view || '') === (current.view || '') && (desiredQuery.q || '') === (current.q || '')
     if (!same) {
       router.replace({ pathname: router.pathname, query: desiredQuery }, undefined, { shallow: true })
     }
   }, [view, query, router])
 
   const appendUsers = useCallback((more) => {
-    setLoadedUsers(prev => {
-      const existing = new Set(prev.map(u => u.id))
+    setLoadedUsers((prev) => {
+      const existing = new Set(prev.map((u) => u.id))
       const merged = [...prev]
-      more.forEach(u => { if (!existing.has(u.id)) merged.push(u) })
+      more.forEach((u) => {
+        if (!existing.has(u.id)) merged.push(u)
+      })
       return merged
     })
   }, [])
@@ -330,7 +402,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
         const { data, error } = await fetchLeaderboard(view, query, { from: 0, to: PAGE_SIZE - 1 }, 'initial')
         if (error) throw new Error(error.message)
         if (isCancelled) return
-        const mapped = (data || []).map(row => {
+        const mapped = (data || []).map((row) => {
           if (view === 'queue') {
             return {
               id: row.author_id,
@@ -354,7 +426,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
             xPfpUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png',
             totalSold: row.total_sold ?? 0,
             totalTradedXCH: totalSalesAmount / MOJO_PER_XCH,
-            totalRoyaltiesXCH: (totalSalesAmount / MOJO_PER_XCH) * 0.10,
+            totalRoyaltiesXCH: (totalSalesAmount / MOJO_PER_XCH) * 0.1,
             averageSaleXCH: avgSalesAmount / MOJO_PER_XCH,
             avgTimeToSellMs: avgTimeToSell,
             latestPrice: row.latest_price_xch ?? row.last_price ?? 0,
@@ -368,7 +440,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
             rankTotalBadgeScore: row.rank_total_badge_score,
             rankQueuePosition: row.rank_queue_position ?? null,
             totalBadgeScore: row.total_badge_score || 0,
-            _search: ((row.username) + ' ' + (row.name)).toLowerCase(),
+            _search: (row.username + ' ' + row.name).toLowerCase(),
           }
           user.displayTotalTradedXCH = formatXCH(user.totalTradedXCH)
           user.displayTotalRoyaltiesXCH = formatXCH(user.totalRoyaltiesXCH)
@@ -388,7 +460,9 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
       }
     }
     fetchFirst()
-    return () => { isCancelled = true }
+    return () => {
+      isCancelled = true
+    }
   }, [view, query, PAGE_SIZE])
 
   const loadMore = useCallback(async () => {
@@ -400,7 +474,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
       const { data, error } = await fetchLeaderboard(view, query, { from, to }, 'page')
       if (error) throw new Error(error.message)
 
-      const mapped = (data || []).map(row => {
+      const mapped = (data || []).map((row) => {
         if (view === 'queue') {
           return {
             id: row.author_id,
@@ -424,7 +498,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
           xPfpUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png',
           totalSold: row.total_sold ?? 0,
           totalTradedXCH: totalSalesAmount / MOJO_PER_XCH,
-          totalRoyaltiesXCH: (totalSalesAmount / MOJO_PER_XCH) * 0.10,
+          totalRoyaltiesXCH: (totalSalesAmount / MOJO_PER_XCH) * 0.1,
           averageSaleXCH: avgSalesAmount / MOJO_PER_XCH,
           avgTimeToSellMs: avgTimeToSell,
           latestPrice: row.latest_price_xch ?? row.last_price ?? 0,
@@ -438,7 +512,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
           rankTotalBadgeScore: row.rank_total_badge_score,
           rankQueuePosition: row.rank_queue_position ?? null,
           totalBadgeScore: row.total_badge_score || 0,
-          _search: ((row.username) + ' ' + (row.name)).toLowerCase(),
+          _search: (row.username + ' ' + row.name).toLowerCase(),
         }
         user.displayTotalTradedXCH = formatXCH(user.totalTradedXCH)
         user.displayTotalRoyaltiesXCH = formatXCH(user.totalRoyaltiesXCH)
@@ -447,7 +521,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
         return user
       })
       appendUsers(mapped)
-      setPage(p => p + 1)
+      setPage((p) => p + 1)
       setHasMore((data || []).length === PAGE_SIZE)
     } catch (e) {
       console.error('Failed to load more leaderboard rows', e)
@@ -469,13 +543,16 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
     if (!intersectionSupported) return
     const el = sentinelRef.current
     if (!el) return
-    const observer = new IntersectionObserver(entries => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          loadMore()
-        }
-      })
-    }, { rootMargin: '300px' })
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            loadMore()
+          }
+        })
+      },
+      { rootMargin: '300px' },
+    )
     observer.observe(el)
     return () => observer.disconnect()
   }, [hasMore, loadMore, intersectionSupported])
@@ -484,18 +561,16 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
   const renderList = useMemo(() => {
     // Data already server-ordered; fallback sort if needed
     const arr = [...loadedUsers]
-  if (view === 'queue') arr.sort((a, b) => (a.rankQueuePosition || 0) - (b.rankQueuePosition || 0))
-  else if (view === 'totalTraded') arr.sort((a, b) => (a.rankTotalTradedValue || 0) - (b.rankTotalTradedValue || 0))
-  else if (view === 'rarest') arr.sort((a, b) => (a.rankFewestCopiesSold || 0) - (b.rankFewestCopiesSold || 0))
-  else if (view === 'badgeScore') arr.sort((a, b) => (a.rankTotalBadgeScore || 0) - (b.rankTotalBadgeScore || 0))
-  else if (view === 'recentTrades') arr.sort((a, b) => (a.rankLastSale || 0) - (b.rankLastSale || 0))
-  else arr.sort((a, b) => (a.rankCopiesSold || 0) - (b.rankCopiesSold || 0))
+    if (view === 'queue') arr.sort((a, b) => (a.rankQueuePosition || 0) - (b.rankQueuePosition || 0))
+    else if (view === 'totalTraded') arr.sort((a, b) => (a.rankTotalTradedValue || 0) - (b.rankTotalTradedValue || 0))
+    else if (view === 'rarest') arr.sort((a, b) => (a.rankFewestCopiesSold || 0) - (b.rankFewestCopiesSold || 0))
+    else if (view === 'badgeScore') arr.sort((a, b) => (a.rankTotalBadgeScore || 0) - (b.rankTotalBadgeScore || 0))
+    else if (view === 'recentTrades') arr.sort((a, b) => (a.rankLastSale || 0) - (b.rankLastSale || 0))
+    else arr.sort((a, b) => (a.rankCopiesSold || 0) - (b.rankCopiesSold || 0))
     return arr
   }, [loadedUsers, view])
 
-
   const { theme, toggleTheme } = useTheme()
-
 
   return (
     <div className={styles.container}>
@@ -524,15 +599,10 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
         <link rel="preload" href="/fonts/Inter-VariableFont_slnt,wght.ttf" as="font" type="font/ttf" crossOrigin="" />
         <link rel="preconnect" href="https://wsrdqcvzoshyjvtfsjjp.supabase.co" />
         <link rel="preconnect" href="https://can.seedsn.app" />
-
       </Head>
       <OrganizationSchema />
       <WebSiteSchema />
-      <Script
-        id="x-widgets"
-        strategy="lazyOnload"
-        src="https://platform.twitter.com/widgets.js"
-      />
+      <Script id="x-widgets" strategy="lazyOnload" src="https://platform.twitter.com/widgets.js" />
 
       {/* Sticky top bar (matches domain page style) */}
       <div className={styles.stickyTopbar}>
@@ -541,11 +611,11 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
           <Image src="/collection-icon.png" alt="go4.me" width={40} height={40} />
         </div>
         {/* Middle: search input */}
-  <div style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <div style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <Input
-            icon='search'
-            size='large'
-            placeholder='Search for go4s…'
+            icon="search"
+            size="large"
+            placeholder="Search for go4s…"
             value={rawSearch}
             onChange={(_, { value }) => setRawSearch(value)}
             style={{ width: '100%', maxWidth: 'min(95vw, 2100px)' }}
@@ -555,9 +625,9 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
         <div className={styles.topNavActions}>
           <GlobalWalletBar inline />
           <button
-            type='button'
+            type="button"
             onClick={toggleTheme}
-            aria-label='Toggle dark mode'
+            aria-label="Toggle dark mode"
             title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
             className={styles.desktopThemeButton}
             style={{
@@ -571,7 +641,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
               alignItems: 'center',
               justifyContent: 'center',
               padding: '6px 8px',
-              transition: 'all 0.2s ease'
+              transition: 'all 0.2s ease',
             }}
           >
             <Icon name={theme === 'dark' ? 'sun' : 'moon'} />
@@ -579,8 +649,17 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
         </div>
       </div>
 
-  <Container textAlign='center' style={{ paddingTop: 84, paddingBottom: 10 }}>
-        <div style={{ width: '100%', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+      <Container textAlign="center" style={{ paddingTop: 84, paddingBottom: 10 }}>
+        <div
+          style={{
+            width: '100%',
+            margin: '0 auto',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: 12,
+          }}
+        >
           <Image
             src="/collection-icon.png"
             alt="go4.me collection icon"
@@ -590,67 +669,75 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
             priority
           />
         </div>
-  <div id='how-it-works' className={styles.claimText} style={{ marginTop: 14, color: '#666' }}>
-          Claim your free, custom go4.me PFP and earn royalties whenever others purchase it!<br /> Simply share your XCH address and tag <a href='https://x.com/go4mebot' target='_blank' rel='noreferrer'>@go4mebot</a> on X to kick things off!
+        <div id="how-it-works" className={styles.claimText} style={{ marginTop: 14, color: '#666' }}>
+          Claim your free, custom go4.me PFP and earn royalties whenever others purchase it!
+          <br /> Simply share your XCH address and tag{' '}
+          <a href="https://x.com/go4mebot" target="_blank" rel="noreferrer">
+            @go4mebot
+          </a>{' '}
+          on X to kick things off!
         </div>
-        <div className={styles.desktopCtaButtons} style={{ marginTop: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, flexWrap: 'wrap' }}>
+        <div
+          className={styles.desktopCtaButtons}
+          style={{
+            marginTop: 22,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 12,
+            flexWrap: 'wrap',
+          }}
+        >
           <a
             href={`https://x.com/intent/tweet?text=Hi @go4mebot! My XCH address is: `}
-            target='_blank'
-            rel='noreferrer'
+            target="_blank"
+            rel="noreferrer"
             className={styles.ctaButton}
-            aria-label='Claim your go4me PFP on X'
-            title='Claim your go4me PFP on X'
+            aria-label="Claim your go4me PFP on X"
+            title="Claim your go4me PFP on X"
           >
-            Claim your free #1 go4me PFP on <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 20, height: 20, fontSize: 18, fontWeight: 800}}>𝕏</span>
+            Claim your free #1 go4me PFP on{' '}
+            <span
+              aria-hidden="true"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 20,
+                height: 20,
+                fontSize: 18,
+                fontWeight: 800,
+              }}
+            >
+              𝕏
+            </span>
           </a>
           <Link
             href="/how-it-works"
             className={`${styles.ctaButton} ${styles.ctaButtonLight}`}
-            aria-label='How does it work?'
-            title='How does it work?'
+            aria-label="How does it work?"
+            title="How does it work?"
           >
             How does it work?
           </Link>
         </div>
       </Container>
 
-  {/* Search input moved to sticky top bar */}
+      {/* Search input moved to sticky top bar */}
 
       <Container style={{ marginTop: 30 }}>
         {/* Desktop Menu */}
         <Menu secondary pointing className={styles.desktopTabMenu}>
+          <Menu.Item name="Total Editions Sold" active={view === 'totalSold'} onClick={() => setView('totalSold')} />
+          <Menu.Item name="Total Traded Value" active={view === 'totalTraded'} onClick={() => setView('totalTraded')} />
+          <Menu.Item name="Badge Score" active={view === 'badgeScore'} onClick={() => setView('badgeScore')} />
+          <Menu.Item name="rarest" content="Rarest go4s" active={view === 'rarest'} onClick={() => setView('rarest')} />
+          <Menu.Item name="Recent Trades" active={view === 'recentTrades'} onClick={() => setView('recentTrades')} />
           <Menu.Item
-            name='Total Editions Sold'
-            active={view === 'totalSold'}
-            onClick={() => setView('totalSold')}
-          />
-          <Menu.Item
-            name='Total Traded Value'
-            active={view === 'totalTraded'}
-            onClick={() => setView('totalTraded')}
-          />
-          <Menu.Item
-            name='Badge Score'
-            active={view === 'badgeScore'}
-            onClick={() => setView('badgeScore')}
-          />
-          <Menu.Item
-            name='rarest'
-            content='Rarest go4s'
-            active={view === 'rarest'}
-            onClick={() => setView('rarest')}
-          />
-          <Menu.Item
-            name='Recent Trades'
-            active={view === 'recentTrades'}
-            onClick={() => setView('recentTrades')}
-          />
-          <Menu.Item
-            name='Marmot Recovery Fund'
+            name="Marmot Recovery Fund"
             active={view === 'marmotRecovery'}
             onClick={() => setView('marmotRecovery')}
-            as='div'
+            as="div"
           >
             <span>Marmot Recovery Fund</span>
             <Link
@@ -674,27 +761,19 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                   lineHeight: '18px',
                   backgroundColor: 'var(--badge-bg-solid)',
                   color: 'var(--badge-fg-solid)',
-                  border: '1px solid var(--color-border)'
+                  border: '1px solid var(--color-border)',
                 }}
               >
                 ?
               </span>
             </Link>
           </Menu.Item>
-          <Menu.Item
-            name='Queue'
-            active={view === 'queue'}
-            onClick={() => setView('queue')}
-          />
+          <Menu.Item name="Queue" active={view === 'queue'} onClick={() => setView('queue')} />
         </Menu>
 
         {/* Mobile Dropdown */}
         <div className={styles.mobileTabSelector}>
-          <select
-            value={view}
-            onChange={(e) => setView(e.target.value)}
-            className={styles.mobileTabDropdown}
-          >
+          <select value={view} onChange={(e) => setView(e.target.value)} className={styles.mobileTabDropdown}>
             <option value="totalSold">Total Editions Sold</option>
             <option value="totalTraded">Total Traded Value</option>
             <option value="badgeScore">Badge Score</option>
@@ -709,22 +788,31 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
           <div className={styles.lbGrid}>
             {renderList.map((u, idx) => (
               <div key={u.id} className={styles.lbCard}>
-                <div className={styles.rankBadge} style={{ backgroundColor: 'var(--badge-bg-solid)', color: 'var(--badge-fg-solid)' }}>#{
-                  view === 'queue' ? (u.rankQueuePosition || idx + 1)
-                    : view === 'totalTraded' ? (u.rankTotalTradedValue || u.rankCopiesSold || idx + 1)
-                    : view === 'badgeScore' ? (u.rankTotalBadgeScore || idx + 1)
-                    : view === 'recentTrades' ? (u.rankLastSale || idx + 1)
-                    : view === 'rarest' ? (u.rankFewestCopiesSold || idx + 1)
-                    : (u.rankCopiesSold || idx + 1)
-                }</div>
+                <div
+                  className={styles.rankBadge}
+                  style={{ backgroundColor: 'var(--badge-bg-solid)', color: 'var(--badge-fg-solid)' }}
+                >
+                  #
+                  {view === 'queue'
+                    ? u.rankQueuePosition || idx + 1
+                    : view === 'totalTraded'
+                      ? u.rankTotalTradedValue || u.rankCopiesSold || idx + 1
+                      : view === 'badgeScore'
+                        ? u.rankTotalBadgeScore || idx + 1
+                        : view === 'recentTrades'
+                          ? u.rankLastSale || idx + 1
+                          : view === 'rarest'
+                            ? u.rankFewestCopiesSold || idx + 1
+                            : u.rankCopiesSold || idx + 1}
+                </div>
                 <PfpFlipCard user={u} rootHostForLinks={rootHostForLinks} idx={idx} />
                 <div className={styles.cardBody}>
-      {u.username ? (
+                  {u.username ? (
                     <div className={styles.username}>
                       <a
-        href={`//${u.username}.${(rootHostForLinks || 'go4.me')}/`}
-        style={{ color: 'inherit', textDecoration: 'none' }}
-    aria-label={`Open ${u.username}.${(rootHostForLinks || 'go4.me')}`}
+                        href={`//${u.username}.${rootHostForLinks || 'go4.me'}/`}
+                        style={{ color: 'inherit', textDecoration: 'none' }}
+                        aria-label={`Open ${u.username}.${rootHostForLinks || 'go4.me'}`}
                       >
                         @{u.username}
                       </a>
@@ -736,11 +824,17 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                   {(view === 'totalSold' || view === 'rarest' || view === 'marmotRecovery') && (
                     <>
                       <div className={styles.badgeRow}>
-                        <span className={styles.miniBadge} title='Total sold'>Sold {u.totalSold}</span>
-                        <span className={styles.miniBadge} title='XCH total sold'>{formatXCH(u.totalTradedXCH)} XCH</span>
+                        <span className={styles.miniBadge} title="Total sold">
+                          Sold {u.totalSold}
+                        </span>
+                        <span className={styles.miniBadge} title="XCH total sold">
+                          {formatXCH(u.totalTradedXCH)} XCH
+                        </span>
                       </div>
                       <div className={styles.badgeRow}>
-                        <span className={styles.miniBadge} title='Royalties'>Royalties {formatXCH(u.totalRoyaltiesXCH ?? (u.totalTradedXCH * 0.10))} XCH</span>
+                        <span className={styles.miniBadge} title="Royalties">
+                          Royalties {formatXCH(u.totalRoyaltiesXCH ?? u.totalTradedXCH * 0.1)} XCH
+                        </span>
                       </div>
                       <div className={styles.badgeRow}>
                         {u.lastOfferId && u.lastOfferStatus === 0 ? (
@@ -748,8 +842,8 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                             <TakeOfferButton
                               offerId={u.lastOfferId}
                               className={styles.miniBadge}
-                              ariaLabel='Take offer via WalletConnect'
-                              title='Buy with WalletConnect'
+                              ariaLabel="Take offer via WalletConnect"
+                              title="Buy with WalletConnect"
                               labelDefault="Dexie"
                               labelWhenSage="Take Offer"
                             >
@@ -762,11 +856,11 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                             </TakeOfferButton>
                             <a
                               href={`https://mintgarden.io/offers/${u.lastOfferId}`}
-                              target='_blank'
-                              rel='noreferrer noopener'
+                              target="_blank"
+                              rel="noreferrer noopener"
                               className={styles.miniBadge}
-                              aria-label='View latest offer on Mintgarden'
-                              title='Mintgarden'
+                              aria-label="View latest offer on Mintgarden"
+                              title="Mintgarden"
                             >
                               <Image
                                 src="https://mintgarden.io/mint-logo-round.svg"
@@ -780,7 +874,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                         ) : (
                           <span className={`${styles.miniBadge} ${styles.warningBadge}`}>
                             {Number.isFinite(u?.rankQueuePosition) && (u.rankQueuePosition ?? 0) > 0
-                              ? `Next mint in ~${formatEtaMinutes(u.rankQueuePosition)}`
+                              ? `Next mint in ~${formatEtaFromQueue(u.rankQueuePosition)}`
                               : 'Next Copy Coming Soon!'}
                           </span>
                         )}
@@ -790,11 +884,17 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                   {view === 'totalTraded' && (
                     <>
                       <div className={styles.badgeRow}>
-                        <span className={styles.miniBadge} title='XCH total sold'>{formatXCH(u.totalTradedXCH)} XCH</span>
-                        <span className={styles.miniBadge} title='Total sold'>Sold {u.totalSold}</span>
+                        <span className={styles.miniBadge} title="XCH total sold">
+                          {formatXCH(u.totalTradedXCH)} XCH
+                        </span>
+                        <span className={styles.miniBadge} title="Total sold">
+                          Sold {u.totalSold}
+                        </span>
                       </div>
                       <div className={styles.badgeRow}>
-                        <span className={styles.miniBadge} title='Royalties'>Royalties {formatXCH(u.totalRoyaltiesXCH ?? (u.totalTradedXCH * 0.10))} XCH</span>
+                        <span className={styles.miniBadge} title="Royalties">
+                          Royalties {formatXCH(u.totalRoyaltiesXCH ?? u.totalTradedXCH * 0.1)} XCH
+                        </span>
                       </div>
                       <div className={styles.badgeRow}>
                         {u.lastOfferId && u.lastOfferStatus === 0 ? (
@@ -802,8 +902,8 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                             <TakeOfferButton
                               offerId={u.lastOfferId}
                               className={styles.miniBadge}
-                              ariaLabel='Take offer via WalletConnect'
-                              title='Buy with WalletConnect'
+                              ariaLabel="Take offer via WalletConnect"
+                              title="Buy with WalletConnect"
                               labelDefault="Dexie"
                               labelWhenSage="Take Offer"
                             >
@@ -816,11 +916,11 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                             </TakeOfferButton>
                             <a
                               href={`https://mintgarden.io/offers/${u.lastOfferId}`}
-                              target='_blank'
-                              rel='noreferrer noopener'
+                              target="_blank"
+                              rel="noreferrer noopener"
                               className={styles.miniBadge}
-                              aria-label='View latest offer on Mintgarden'
-                              title='Mintgarden'
+                              aria-label="View latest offer on Mintgarden"
+                              title="Mintgarden"
                             >
                               <Image
                                 src="https://mintgarden.io/mint-logo-round.svg"
@@ -834,7 +934,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                         ) : (
                           <span className={`${styles.miniBadge} ${styles.warningBadge}`}>
                             {Number.isFinite(u?.rankQueuePosition) && (u.rankQueuePosition ?? 0) > 0
-                              ? `Next mint in ~${formatEtaMinutes(u.rankQueuePosition)}`
+                              ? `Next mint in ~${formatEtaFromQueue(u.rankQueuePosition)}`
                               : 'Next Copy Coming Soon!'}
                           </span>
                         )}
@@ -844,88 +944,97 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                   {view === 'badgeScore' && (
                     <>
                       <div className={styles.badgeRow}>
-                        <span className={styles.miniBadge} title='Score'>Score {formatInt(u.totalBadgeScore)}</span>
+                        <span className={styles.miniBadge} title="Score">
+                          Score {formatInt(u.totalBadgeScore)}
+                        </span>
                       </div>
                     </>
                   )}
                   {view === 'queue' && (
                     <>
                       <div className={styles.badgeRow}>
-                        <span className={styles.miniBadge} title='Next edition number'>
+                        <span className={styles.miniBadge} title="Next edition number">
                           Next Edition #{(u.lastNftSeriesNumber ?? 0) + 1}
                         </span>
-                        <span className={`${styles.miniBadge} ${styles.warningBadge}`} title='Estimated time to mint'>
-                          Next mint in ~{formatEtaMinutes(u.rankQueuePosition ?? 0)}
+                        <span className={`${styles.miniBadge} ${styles.warningBadge}`} title="Estimated time to mint">
+                          Next mint in ~{formatEtaFromQueue(u.rankQueuePosition ?? 0)}
                         </span>
                       </div>
                     </>
                   )}
                   {view === 'recentTrades' && u.lastSaleAtMs && (
                     <div className={styles.badgeRow}>
-                      <span suppressHydrationWarning className={styles.miniBadge} title={new Date(u.lastSaleAtMs).toLocaleString()}>
+                      <span
+                        suppressHydrationWarning
+                        className={styles.miniBadge}
+                        title={new Date(u.lastSaleAtMs).toLocaleString()}
+                      >
                         Last sale {formatRelativeAgo(u.lastSaleAtMs)}
                       </span>
                     </div>
                   )}
-                  {(view !== 'totalSold' && view !== 'totalTraded' && view !== 'rarest' && view !== 'queue' && view !== 'marmotRecovery') && (
-                    <>
-                      {u.lastOfferId && u.lastOfferStatus === 0 && (
-                        <div className={styles.badgeRow}>
-                          <TakeOfferButton
-                            offerId={u.lastOfferId}
-                            className={styles.miniBadge}
-                            ariaLabel='Take offer via WalletConnect or view on Dexie'
-                            title='Dexie'
-                            labelDefault="Dexie"
-                            labelWhenSage="Take Offer"
-                          >
-                            <Image
-                              src="https://raw.githubusercontent.com/dexie-space/dexie-kit/main/svg/duck.svg"
-                              alt="Dexie"
-                              width={16}
-                              height={16}
-                            />
-                          </TakeOfferButton>
-                          <a
-                            href={`https://mintgarden.io/offers/${u.lastOfferId}`}
-                            target='_blank'
-                            rel='noreferrer noopener'
-                            className={styles.miniBadge}
-                            aria-label='View latest offer on Mintgarden'
-                            title='Mintgarden'
-                          >
-                            <Image
-                              src="https://mintgarden.io/mint-logo-round.svg"
-                              alt="MintGarden"
-                              width={16}
-                              height={16}
-                            />
-                            Mintgarden
-                          </a>
-                        </div>
-                      )}
-                      {(!u.lastOfferId || u.lastOfferStatus !== 0) && (
-                        <div className={styles.badgeRow}>
-                          <span className={`${styles.miniBadge} ${styles.warningBadge}`}>
-                            {Number.isFinite(u?.rankQueuePosition) && (u.rankQueuePosition ?? 0) > 0
-                              ? `Next mint in ~${formatEtaMinutes(u.rankQueuePosition)}`
-                              : 'Next Copy Coming Soon!'}
-                          </span>
-                        </div>
-                      )}
-                    </>
-                  )}
+                  {view !== 'totalSold' &&
+                    view !== 'totalTraded' &&
+                    view !== 'rarest' &&
+                    view !== 'queue' &&
+                    view !== 'marmotRecovery' && (
+                      <>
+                        {u.lastOfferId && u.lastOfferStatus === 0 && (
+                          <div className={styles.badgeRow}>
+                            <TakeOfferButton
+                              offerId={u.lastOfferId}
+                              className={styles.miniBadge}
+                              ariaLabel="Take offer via WalletConnect or view on Dexie"
+                              title="Dexie"
+                              labelDefault="Dexie"
+                              labelWhenSage="Take Offer"
+                            >
+                              <Image
+                                src="https://raw.githubusercontent.com/dexie-space/dexie-kit/main/svg/duck.svg"
+                                alt="Dexie"
+                                width={16}
+                                height={16}
+                              />
+                            </TakeOfferButton>
+                            <a
+                              href={`https://mintgarden.io/offers/${u.lastOfferId}`}
+                              target="_blank"
+                              rel="noreferrer noopener"
+                              className={styles.miniBadge}
+                              aria-label="View latest offer on Mintgarden"
+                              title="Mintgarden"
+                            >
+                              <Image
+                                src="https://mintgarden.io/mint-logo-round.svg"
+                                alt="MintGarden"
+                                width={16}
+                                height={16}
+                              />
+                              Mintgarden
+                            </a>
+                          </div>
+                        )}
+                        {(!u.lastOfferId || u.lastOfferStatus !== 0) && (
+                          <div className={styles.badgeRow}>
+                            <span className={`${styles.miniBadge} ${styles.warningBadge}`}>
+                              {Number.isFinite(u?.rankQueuePosition) && (u.rankQueuePosition ?? 0) > 0
+                                ? `Next mint in ~${formatEtaFromQueue(u.rankQueuePosition)}`
+                                : 'Next Copy Coming Soon!'}
+                            </span>
+                          </div>
+                        )}
+                      </>
+                    )}
                 </div>
               </div>
             ))}
             {renderList.length === 0 && !isLoadingMore && (
               <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2rem 0', color: '#666' }}>
-                {view === 'queue'
-                  ? '🎉 Queue is empty! All NFTs have been generated.'
-                  : 'No results.'}
+                {view === 'queue' ? '🎉 Queue is empty! All NFTs have been generated.' : 'No results.'}
               </div>
             )}
-            {isLoadingMore && !query && (
+            {isLoadingMore &&
+              !query &&
               [...Array(6)].map((_, i) => (
                 <div key={`sk-${i}`} className={styles.lbSkeletonCard}>
                   <div className={`${styles.skeleton} ${styles.lbSkeletonImg}`} />
@@ -933,8 +1042,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                   <div className={`${styles.skeleton} ${styles.lbSkeletonLine}`} style={{ width: '40%' }} />
                   <div className={`${styles.skeleton} ${styles.lbSkeletonLine}`} style={{ width: '70%' }} />
                 </div>
-              ))
-            )}
+              ))}
           </div>
         </Segment>
         <div ref={sentinelRef} />
@@ -952,7 +1060,7 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                 fontSize: '14px',
                 cursor: isLoadingMore ? 'not-allowed' : 'pointer',
                 transition: 'all 0.2s ease',
-                opacity: isLoadingMore ? 0.6 : 1
+                opacity: isLoadingMore ? 0.6 : 1,
               }}
             >
               {isLoadingMore ? 'Loading...' : 'Load more'}
@@ -969,8 +1077,8 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
                 window.scrollTo({ top: 0, behavior: 'smooth' })
               }
             }}
-            aria-label='Back to top'
-            title='Back to top'
+            aria-label="Back to top"
+            title="Back to top"
             style={{
               background: 'transparent',
               border: '1px solid var(--color-border)',
@@ -983,10 +1091,10 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
               padding: '6px 12px',
               fontSize: '14px',
               gap: '6px',
-              transition: 'all 0.2s ease'
+              transition: 'all 0.2s ease',
             }}
           >
-            <Icon name='arrow up' />
+            <Icon name="arrow up" />
             Back to Top
           </button>
         </div>
@@ -1000,11 +1108,11 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
             {/* Claim button */}
             <a
               href={`https://x.com/intent/tweet?text=Hi @go4mebot! My XCH address is: `}
-              target='_blank'
-              rel='noreferrer'
+              target="_blank"
+              rel="noreferrer"
               className={styles.mobileBottomClaimButton}
-              aria-label='Claim your go4me PFP on X'
-              title='Claim your go4me PFP on X'
+              aria-label="Claim your go4me PFP on X"
+              title="Claim your go4me PFP on X"
             >
               Claim your Free PFP
             </a>
@@ -1013,13 +1121,11 @@ export default function Home({ users = [], hasMore: initialHasMore = false, init
             <Link
               href="/how-it-works"
               className={styles.mobileBottomHowButton}
-              aria-label='How does it work?'
-              title='How does it work?'
+              aria-label="How does it work?"
+              title="How does it work?"
             >
               How it works
             </Link>
-
-
           </div>
         </div>
       </div>
