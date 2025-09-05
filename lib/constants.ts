@@ -46,7 +46,7 @@ export const SUPABASE_MAX_ROWS = 1000
 export const MARMOT_BADGE_XCH = 'xch120ywvwahucfptkeuzzdpdz5v0nnarq5vgw94g247jd5vswkn7rls35y2gc'
 
 // Queue processing rate: each queue position represents this many seconds of wait time
-export const QUEUE_SECONDS_PER_POSITION = 10
+export const QUEUE_SECONDS_PER_POSITION = 30
 
 // Leaderboard view identifiers
 export const LEADERBOARD_VIEWS = {
