@@ -185,16 +185,16 @@ export default function HowItWorks({ rootHostForLinks }) {
               Badge (lower‑left of each PFP) is worth:
             </p>
             <ul>
-              <li>Crown: 100 $G4M</li>
-              <li>Diamond: 90 $G4M</li>
-              <li>Lucky Hat: 80 $G4M</li>
-              <li>Rocket: 70 $G4M</li>
-              <li>Snorkel: 60 $G4M</li>
-              <li>Fireball: 50 $G4M</li>
-              <li>Moon: 40 $G4M</li>
-              <li>Basketball: 30 $G4M</li>
-              <li>Tractor: 20 $G4M</li>
-              <li>Seedling: 10 $G4M</li>
+              <li>Crown: 100</li>
+              <li>Diamond: 90</li>
+              <li>Lucky Hat: 80</li>
+              <li>Rocket: 70</li>
+              <li>Snorkel: 60</li>
+              <li>Fireball: 50</li>
+              <li>Moon: 40</li>
+              <li>Basketball: 30</li>
+              <li>Tractor: 20</li>
+              <li>Seedling: 10</li>
             </ul>
             <p>
               Your airdrop amount of G4M tokens will be determined based on your badge score and sent to your XCH
@@ -271,21 +271,12 @@ export default function HowItWorks({ rootHostForLinks }) {
           </section>
 
           <section style={{ marginTop: 24 }}>
-            <h3>Maintaining the $G4M Target Price</h3>
-            <p>
-              The target price for $G4M is 10,000 per 1 XCH. If the price of $G4M is 11,000 per 1 XCH or higher, the
-              system will automatically generate all new offers in $G4M tokens until the target price is below 11,000
-              per 1 XCH again.
-            </p>
-          </section>
-
-          <section style={{ marginTop: 24 }}>
             <h3>Expiring Offers and Decreasing Prices</h3>
             <p>
               If a PFP offer for XCH expires, it will be regenerated as a $G4M offer. If that offer also expires, it
               will be regenerated as a slightly cheaper $G4M offer. It will continue decreasing in price until sold or
               until it reaches 200 $G4M, at which point it will not go lower. The price of the $G4M offer will be
-              calculated based on the current market price according to TibetSwap.
+              calculated based on the current market price of XCH-G4M according to TibetSwap.
             </p>
             <p>
               Once sold, the next edition will be generated and offered for the normal XCH price again, and the cycle
