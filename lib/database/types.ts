@@ -43,6 +43,7 @@ export interface UserProfile {
   did_address?: string | null
   last_offerid?: string
   last_offer_status?: number | null
+  pfp_update_requested_at?: string | null
   total_badge_score?: number
   rank_copies_sold?: number | null
   rank_queue_position?: number | null
@@ -128,7 +129,7 @@ export const LEADERBOARD_VIEWS = {
   recentTrades: 'recentTrades',
   rarest: 'rarest',
   marmotRecovery: 'marmotRecovery',
-  queue: 'queue'
+  queue: 'queue',
 } as const
 
 export type LeaderboardView = keyof typeof LEADERBOARD_VIEWS

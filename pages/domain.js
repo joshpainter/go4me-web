@@ -313,6 +313,7 @@ export async function getServerSideProps(ctx) {
         didAddress: row.did_address || null,
         lastOfferId: row.last_offerid || '',
         lastOfferStatus: row.last_offer_status ?? null,
+        pfpUpdateRequestedAt: row.pfp_update_requested_at || null,
         totalBadgeScore: row.total_badge_score || 0,
         rankCopiesSold: row.rank_copies_sold || null,
         rankQueuePosition: row.rank_queue_position ?? null,
@@ -1180,6 +1181,16 @@ export default function DomainPage({
                       <div className={styles.offerLabel}>
                         <Icon name="handshake" size="small" />
                         <span>Latest Offer</span>
+                        {user?.pfpUpdateRequestedAt ? (
+                          <span
+                            className={`${styles.miniBadge} ${styles.warningBadge}`}
+                            title="PFP Update Requested"
+                            aria-label="PFP Update Requested"
+                            style={{ marginLeft: 8 }}
+                          >
+                            Last one!
+                          </span>
+                        ) : null}
                       </div>
                       <div className={styles.offerButtons}>
                         <TakeOfferButton
