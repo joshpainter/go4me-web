@@ -315,6 +315,7 @@ export async function getServerSideProps(ctx) {
         lastOfferStatus: row.last_offer_status ?? null,
         pfpUpdateRequestedAt: row.pfp_update_requested_at || null,
         totalBadgeScore: row.total_badge_score || 0,
+        totalShadowScore: row.total_shadow_score || 0,
         rankCopiesSold: row.rank_copies_sold || null,
         rankQueuePosition: row.rank_queue_position ?? null,
       }
@@ -439,11 +440,16 @@ export default function DomainPage({
     didAddress,
     lastOfferId,
     totalBadgeScore = 0,
+    totalShadowScore = 0,
   } = user
   const formattedBadgeScore = useMemo(() => {
     const n = Number(totalBadgeScore)
     return Number.isFinite(n) ? new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(n) : '0'
   }, [totalBadgeScore])
+  const formattedShadowScore = useMemo(() => {
+    const n = Number(totalShadowScore)
+    return Number.isFinite(n) ? new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(n) : '0'
+  }, [totalShadowScore])
 
   // Special-case badge for Marmot Recovery Fund address
   const MARMOT_BADGE_XCH = 'xch120ywvwahucfptkeuzzdpdz5v0nnarq5vgw94g247jd5vswkn7rls35y2gc'
@@ -940,6 +946,29 @@ export default function DomainPage({
                     aria-label="Learn about $G4M airdrops and scoring"
                   >
                     Badge Score {formattedBadgeScore}
+                  </a>
+                </Link>
+              )}
+            </div>
+            {/* Shadow Score under Badge Score */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: 6 }}>
+              {rootHostForLinks ? (
+                <a
+                  href={`//${rootHostForLinks}/how-it-works`}
+                  className={`${styles.miniBadge} ${styles.largeBadge} ${styles.dangerBadge}`}
+                  title="Learn about Shadow Score"
+                  aria-label="Learn about Shadow Score"
+                >
+                  Shadow Score {formattedShadowScore}
+                </a>
+              ) : (
+                <Link href="/how-it-works" passHref>
+                  <a
+                    className={`${styles.miniBadge} ${styles.largeBadge} ${styles.dangerBadge}`}
+                    title="Learn about Shadow Score"
+                    aria-label="Learn about Shadow Score"
+                  >
+                    Shadow Score {formattedShadowScore}
                   </a>
                 </Link>
               )}

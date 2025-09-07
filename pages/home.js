@@ -316,9 +316,11 @@ export async function getServerSideProps(context) {
         rankTotalTradedValue: row.rank_total_traded_value,
         rankLastSale: row.rank_last_sale,
         rankTotalBadgeScore: row.rank_total_badge_score,
+        rankTotalShadowScore: row.rank_total_shadow_score,
         // Expose queue minutes if present on this view so we can show ETA on Coming Soon badges
         rankQueuePosition: row.rank_queue_position ?? null,
         totalBadgeScore: row.total_badge_score || 0,
+        totalShadowScore: row.total_shadow_score || 0,
         _search: (row.username + ' ' + row.name).toLowerCase(),
       }
       user.displayTotalTradedXCH = formatXCH(user.totalTradedXCH)
@@ -438,8 +440,10 @@ export default function Home({
             rankTotalTradedValue: row.rank_total_traded_value,
             rankLastSale: row.rank_last_sale,
             rankTotalBadgeScore: row.rank_total_badge_score,
+            rankTotalShadowScore: row.rank_total_shadow_score,
             rankQueuePosition: row.rank_queue_position ?? null,
             totalBadgeScore: row.total_badge_score || 0,
+            totalShadowScore: row.total_shadow_score || 0,
             _search: (row.username + ' ' + row.name).toLowerCase(),
           }
           user.displayTotalTradedXCH = formatXCH(user.totalTradedXCH)
@@ -510,8 +514,10 @@ export default function Home({
           rankFewestCopiesSold: row.rank_fewest_copies_sold,
           rankLastSale: row.rank_last_sale,
           rankTotalBadgeScore: row.rank_total_badge_score,
+          rankTotalShadowScore: row.rank_total_shadow_score,
           rankQueuePosition: row.rank_queue_position ?? null,
           totalBadgeScore: row.total_badge_score || 0,
+          totalShadowScore: row.total_shadow_score || 0,
           _search: (row.username + ' ' + row.name).toLowerCase(),
         }
         user.displayTotalTradedXCH = formatXCH(user.totalTradedXCH)
@@ -565,6 +571,7 @@ export default function Home({
     else if (view === 'totalTraded') arr.sort((a, b) => (a.rankTotalTradedValue || 0) - (b.rankTotalTradedValue || 0))
     else if (view === 'rarest') arr.sort((a, b) => (a.rankFewestCopiesSold || 0) - (b.rankFewestCopiesSold || 0))
     else if (view === 'badgeScore') arr.sort((a, b) => (a.rankTotalBadgeScore || 0) - (b.rankTotalBadgeScore || 0))
+    else if (view === 'shadowScore') arr.sort((a, b) => (a.rankTotalShadowScore || 0) - (b.rankTotalShadowScore || 0))
     else if (view === 'recentTrades') arr.sort((a, b) => (a.rankLastSale || 0) - (b.rankLastSale || 0))
     else arr.sort((a, b) => (a.rankCopiesSold || 0) - (b.rankCopiesSold || 0))
     return arr
@@ -731,6 +738,7 @@ export default function Home({
           <Menu.Item name="Total Editions Sold" active={view === 'totalSold'} onClick={() => setView('totalSold')} />
           <Menu.Item name="Total Traded Value" active={view === 'totalTraded'} onClick={() => setView('totalTraded')} />
           <Menu.Item name="Badge Score" active={view === 'badgeScore'} onClick={() => setView('badgeScore')} />
+          <Menu.Item name="Shadow Score" active={view === 'shadowScore'} onClick={() => setView('shadowScore')} />
           <Menu.Item name="rarest" content="Rarest go4s" active={view === 'rarest'} onClick={() => setView('rarest')} />
           <Menu.Item name="Recent Trades" active={view === 'recentTrades'} onClick={() => setView('recentTrades')} />
           <Menu.Item
@@ -777,6 +785,7 @@ export default function Home({
             <option value="totalSold">Total Editions Sold</option>
             <option value="totalTraded">Total Traded Value</option>
             <option value="badgeScore">Badge Score</option>
+            <option value="shadowScore">Shadow Score</option>
             <option value="rarest">Rarest go4s</option>
             <option value="recentTrades">Recent Trades</option>
             <option value="marmotRecovery">Marmot Recovery Fund</option>
@@ -799,11 +808,13 @@ export default function Home({
                       ? u.rankTotalTradedValue || u.rankCopiesSold || idx + 1
                       : view === 'badgeScore'
                         ? u.rankTotalBadgeScore || idx + 1
-                        : view === 'recentTrades'
-                          ? u.rankLastSale || idx + 1
-                          : view === 'rarest'
-                            ? u.rankFewestCopiesSold || idx + 1
-                            : u.rankCopiesSold || idx + 1}
+                        : view === 'shadowScore'
+                          ? u.rankTotalShadowScore || idx + 1
+                          : view === 'recentTrades'
+                            ? u.rankLastSale || idx + 1
+                            : view === 'rarest'
+                              ? u.rankFewestCopiesSold || idx + 1
+                              : u.rankCopiesSold || idx + 1}
                 </div>
                 <PfpFlipCard user={u} rootHostForLinks={rootHostForLinks} idx={idx} />
                 <div className={styles.cardBody}>
@@ -944,8 +955,17 @@ export default function Home({
                   {view === 'badgeScore' && (
                     <>
                       <div className={styles.badgeRow}>
-                        <span className={styles.miniBadge} title="Score">
-                          Score {formatInt(u.totalBadgeScore)}
+                        <span className={`${styles.miniBadge} ${styles.primaryBadge}`} title="Badge Score">
+                          Badge {formatInt(u.totalBadgeScore)}
+                        </span>
+                      </div>
+                    </>
+                  )}
+                  {view === 'shadowScore' && (
+                    <>
+                      <div className={styles.badgeRow}>
+                        <span className={`${styles.miniBadge} ${styles.dangerBadge}`} title="Shadow Score">
+                          Shadow {formatInt(u.totalShadowScore)}
                         </span>
                       </div>
                     </>

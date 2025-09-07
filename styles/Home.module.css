@@ -43,7 +43,9 @@
   align-items: center;
   z-index: 1000;
 }
-.stickyFooter a { flex-grow: 0; }
+.stickyFooter a {
+  flex-grow: 0;
+}
 
 /* Sticky top navbar for domain page */
 .stickyTopbar {
@@ -64,8 +66,12 @@
 }
 
 /* Ensure right actions hug the right edge and middle stays perfectly centred */
-.stickyTopbar > .topNavActions { justify-self: end; }
-.stickyTopbar > :nth-child(2) { justify-self: center; }
+.stickyTopbar > .topNavActions {
+  justify-self: end;
+}
+.stickyTopbar > :nth-child(2) {
+  justify-self: center;
+}
 [data-theme='dark'] .stickyTopbar {
   background: rgba(15, 17, 21, 0.6);
 }
@@ -77,7 +83,11 @@
   align-items: center;
   gap: 8px;
 }
-.topNavActions { display: flex; align-items: center; gap: 8px; }
+.topNavActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
 .title a {
   color: #0070f3;
@@ -112,8 +122,15 @@
   border-radius: 5px;
   padding: 0.75rem;
   font-size: 1.1rem;
-  font-family: Menlo, Monaco, Lucida Console, Liberation Mono, DejaVu Sans Mono,
-    Bitstream Vera Sans Mono, Courier New, monospace;
+  font-family:
+    Menlo,
+    Monaco,
+    Lucida Console,
+    Liberation Mono,
+    DejaVu Sans Mono,
+    Bitstream Vera Sans Mono,
+    Courier New,
+    monospace;
 }
 
 .grid {
@@ -132,7 +149,10 @@
   text-decoration: none;
   border: 1px solid var(--color-border);
   border-radius: 10px;
-  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease,
+    background 0.15s ease;
   max-width: 300px;
   background: var(--color-card-bg);
 }
@@ -162,12 +182,16 @@
 
 .skeleton {
   position: relative;
-  background: linear-gradient(90deg, var(--skeleton-stop-1) 25%, var(--skeleton-stop-2) 37%, var(--skeleton-stop-1) 63%);
+  background: linear-gradient(
+    90deg,
+    var(--skeleton-stop-1) 25%,
+    var(--skeleton-stop-2) 37%,
+    var(--skeleton-stop-1) 63%
+  );
   background-size: 400% 100%;
   animation: skeleton-loading 1.2s ease-in-out infinite;
   border-radius: 4px;
 }
-
 
 /* Leaderboard card grid */
 .lbGrid {
@@ -185,7 +209,11 @@
   display: flex;
   flex-direction: column;
   box-shadow: var(--shadow-elev-1);
-  transition: box-shadow 0.15s ease, transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+  transition:
+    box-shadow 0.15s ease,
+    transform 0.15s ease,
+    background 0.15s ease,
+    border-color 0.15s ease;
   min-height: 280px;
 }
 
@@ -193,7 +221,9 @@
   /* remove hover lift; add subtle border glow */
   transform: none;
   border-color: var(--color-link);
-  box-shadow: var(--shadow-elev-2), 0 0 0 2px rgba(66, 124, 255, 0.22);
+  box-shadow:
+    var(--shadow-elev-2),
+    0 0 0 2px rgba(66, 124, 255, 0.22);
 }
 
 .rankBadge {
@@ -208,8 +238,8 @@
   padding: 6px 8px; /* slight horizontal increase to match scale */
   border-radius: 999px;
   z-index: 2;
-  letter-spacing: .5px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.25);
+  letter-spacing: 0.5px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
 }
 
 .cardImgWrap {
@@ -222,15 +252,50 @@
   background: var(--color-card-bg); /* transparent images blend */
 }
 
-.cardBody { flex: 1; display: flex; flex-direction: column; }
-.username { font-weight: 600; font-size: 14px; line-height: 1.1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.fullName { font-size: 12px; color: var(--color-text-subtle); margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.statsRow, .statsRowSmall { display: flex; flex-wrap: wrap; gap: 6px; font-size: 11px; line-height: 1.2; }
-.statsRow { margin-top: 4px; }
-.statsRowSmall { margin-top: 2px; color: var(--color-text-subtle); }
+.cardBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.username {
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fullName {
+  font-size: 12px;
+  color: var(--color-text-subtle);
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.statsRow,
+.statsRowSmall {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 11px;
+  line-height: 1.2;
+}
+.statsRow {
+  margin-top: 4px;
+}
+.statsRowSmall {
+  margin-top: 2px;
+  color: var(--color-text-subtle);
+}
 
 /* Compact badges shown under cards on Total Sold tab */
-.badgeRow { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.badgeRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
 .miniBadge {
   display: inline-flex;
   align-items: center;
@@ -239,7 +304,7 @@
   line-height: 1;
   padding: 6px 8px;
   border-radius: 999px;
-  background: var(--color-chip-bg, rgba(127,127,127,0.15));
+  background: var(--color-chip-bg, rgba(127, 127, 127, 0.15));
   color: var(--color-text);
   border: 1px solid var(--color-border);
   text-decoration: none;
@@ -247,9 +312,18 @@
 
 /* Desktop: optimize badge layout */
 @media (min-width: 641px) {
-  .badgeRow { gap: 6px; }
-  .miniBadge { font-size: 11px; padding: 5px 7px; gap: 4px; }
-  .miniBadge img { width: 16px !important; height: 16px !important; }
+  .badgeRow {
+    gap: 6px;
+  }
+  .miniBadge {
+    font-size: 11px;
+    padding: 5px 7px;
+    gap: 4px;
+  }
+  .miniBadge img {
+    width: 16px !important;
+    height: 16px !important;
+  }
 }
 
 /* Mobile optimizations for badges */
@@ -260,7 +334,10 @@
 
   /* Mobile Claim Banner - more subtle and pushed below sticky header */
   .mobileClaimBanner {
-  .domainPage .avatarWrap { width: 225px !important; height: 225px !important; }
+    .domainPage .avatarWrap {
+      width: 225px !important;
+      height: 225px !important;
+    }
     display: block !important;
     margin: 60px auto 8px !important;
     max-width: 1100px !important;
@@ -298,12 +375,20 @@
   box-shadow:
     0 6px 14px rgba(47, 109, 255, 0.18),
     0 2px 6px rgba(47, 109, 255, 0.12),
-    inset 0 1px 0 rgba(255,255,255,0.25),
-    inset 0 -1px 0 rgba(0,0,0,0.08);
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.08);
 }
-[data-theme='dark'] .primaryBadge { color: #fff !important; }
-.miniBadge.primaryBadge:hover { color: #fff !important; text-decoration: none; }
-.primaryBadge:hover { color: #fff !important; text-decoration: none; }
+[data-theme='dark'] .primaryBadge {
+  color: #fff !important;
+}
+.miniBadge.primaryBadge:hover {
+  color: #fff !important;
+  text-decoration: none;
+}
+.primaryBadge:hover {
+  color: #fff !important;
+  text-decoration: none;
+}
 [data-theme='dark'] .primaryBadge {
   background: linear-gradient(180deg, #4a86ff 0%, #1f5fe6 100%);
   border-color: #2b64e8;
@@ -311,11 +396,38 @@
   box-shadow:
     0 6px 14px rgba(16, 36, 94, 0.6),
     0 2px 6px rgba(16, 36, 94, 0.45),
-    inset 0 1px 0 rgba(255,255,255,0.18),
-    inset 0 -1px 0 rgba(0,0,0,0.22);
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.22);
 }
-[data-theme='dark'] .miniBadge.primaryBadge:hover { color: #fff !important; }
-[data-theme='dark'] .primaryBadge:hover { color: #fff !important; }
+[data-theme='dark'] .miniBadge.primaryBadge:hover {
+  color: #fff !important;
+}
+[data-theme='dark'] .primaryBadge:hover {
+  color: #fff !important;
+}
+
+/* Danger red variant for Shadow Score */
+.dangerBadge {
+  background: linear-gradient(180deg, #ffd1d1 0%, #ff9d9d 100%);
+  color: #7a1212;
+  border-color: #ff8a8a;
+  box-shadow:
+    0 6px 14px rgba(214, 76, 76, 0.22),
+    0 2px 6px rgba(214, 76, 76, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.06);
+  font-weight: 600;
+}
+[data-theme='dark'] .dangerBadge {
+  background: linear-gradient(180deg, rgba(255, 77, 77, 0.18) 0%, rgba(255, 77, 77, 0.12) 100%);
+  color: #ffb3b3;
+  border-color: rgba(255, 128, 128, 0.32);
+  box-shadow:
+    0 6px 14px rgba(0, 0, 0, 0.45),
+    0 2px 6px rgba(0, 0, 0, 0.36),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.22);
+}
 
 /* Warning badge (yellow) */
 .warningBadge {
@@ -325,8 +437,8 @@
   box-shadow:
     0 6px 14px rgba(255, 214, 102, 0.25),
     0 2px 6px rgba(255, 214, 102, 0.18),
-    inset 0 1px 0 rgba(255,255,255,0.4),
-    inset 0 -1px 0 rgba(0,0,0,0.06);
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.06);
   font-weight: 600;
 }
 [data-theme='dark'] .warningBadge {
@@ -336,13 +448,27 @@
   box-shadow:
     0 6px 14px rgba(0, 0, 0, 0.45),
     0 2px 6px rgba(0, 0, 0, 0.36),
-    inset 0 1px 0 rgba(255,255,255,0.16),
-    inset 0 -1px 0 rgba(0,0,0,0.22);
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.22);
 }
 
-.lbSkeletonCard { position: relative; border: 1px solid var(--color-border); border-radius: 12px; padding: 8px; min-height: 280px; background: var(--color-card-bg); }
-.lbSkeletonImg { width: 100%; padding-top: 100%; border-radius: 8px; }
-.lbSkeletonLine { height: 12px; margin-top: 8px; }
+.lbSkeletonCard {
+  position: relative;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 8px;
+  min-height: 280px;
+  background: var(--color-card-bg);
+}
+.lbSkeletonImg {
+  width: 100%;
+  padding-top: 100%;
+  border-radius: 8px;
+}
+.lbSkeletonLine {
+  height: 12px;
+  margin-top: 8px;
+}
 
 /* Primary CTA: rounded 3D button */
 .ctaButton {
@@ -357,21 +483,24 @@
   border: 1px solid #2f6dff;
   text-decoration: none !important;
   font-weight: 700;
-  letter-spacing: .25px;
+  letter-spacing: 0.25px;
   box-shadow:
-    0 10px 22px rgba(47, 109, 255, 0.38),  /* drop */
-    0 2px 6px rgba(47, 109, 255, 0.25),
-    inset 0 1px 0 rgba(255,255,255,0.25),   /* top highlight */
-    inset 0 -1px 0 rgba(0,0,0,0.08);       /* bottom shade */
-  transition: transform 80ms ease, box-shadow 140ms ease, filter 140ms ease;
+    0 10px 22px rgba(47, 109, 255, 0.38),
+    /* drop */ 0 2px 6px rgba(47, 109, 255, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    /* top highlight */ inset 0 -1px 0 rgba(0, 0, 0, 0.08); /* bottom shade */
+  transition:
+    transform 80ms ease,
+    box-shadow 140ms ease,
+    filter 140ms ease;
 }
 .ctaButton:hover {
   transform: translateY(-1px);
   box-shadow:
     0 12px 26px rgba(47, 109, 255, 0.46),
     0 4px 10px rgba(47, 109, 255, 0.28),
-    inset 0 1px 0 rgba(255,255,255,0.3),
-    inset 0 -1px 0 rgba(0,0,0,0.1);
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
   filter: brightness(1.04);
 }
 .ctaButton:active {
@@ -379,18 +508,18 @@
   box-shadow:
     0 8px 16px rgba(47, 109, 255, 0.34),
     0 2px 6px rgba(47, 109, 255, 0.22),
-    inset 0 0 0 rgba(255,255,255,0),
-    inset 0 -1px 0 rgba(0,0,0,0.12);
+    inset 0 0 0 rgba(255, 255, 255, 0),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.12);
   filter: brightness(0.99);
 }
 .ctaButton:focus-visible {
   outline: none;
   box-shadow:
-    0 0 0 2px rgba(255,255,255,0.9),
+    0 0 0 2px rgba(255, 255, 255, 0.9),
     0 0 0 4px rgba(47, 109, 255, 0.85),
     0 10px 22px rgba(47, 109, 255, 0.38),
-    inset 0 1px 0 rgba(255,255,255,0.25),
-    inset 0 -1px 0 rgba(0,0,0,0.08);
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.08);
 }
 [data-theme='dark'] .ctaButton {
   background: linear-gradient(180deg, #4a86ff 0%, #1f5fe6 100%);
@@ -398,30 +527,30 @@
   box-shadow:
     0 10px 22px rgba(16, 36, 94, 0.6),
     0 2px 6px rgba(16, 36, 94, 0.45),
-    inset 0 1px 0 rgba(255,255,255,0.18),
-    inset 0 -1px 0 rgba(0,0,0,0.22);
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.22);
 }
 [data-theme='dark'] .ctaButton:hover {
   box-shadow:
     0 12px 26px rgba(16, 36, 94, 0.7),
     0 4px 10px rgba(16, 36, 94, 0.52),
-    inset 0 1px 0 rgba(255,255,255,0.22),
-    inset 0 -1px 0 rgba(0,0,0,0.24);
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.24);
   filter: brightness(1.02);
 }
 [data-theme='dark'] .ctaButton:active {
   box-shadow:
     0 8px 16px rgba(16, 36, 94, 0.55),
     0 2px 6px rgba(16, 36, 94, 0.42),
-    inset 0 -1px 0 rgba(0,0,0,0.28);
+    inset 0 -1px 0 rgba(0, 0, 0, 0.28);
 }
 [data-theme='dark'] .ctaButton:focus-visible {
   box-shadow:
-    0 0 0 2px rgba(15,17,21,0.85),
+    0 0 0 2px rgba(15, 17, 21, 0.85),
     0 0 0 4px rgba(66, 124, 255, 0.9),
     0 10px 22px rgba(16, 36, 94, 0.6),
-    inset 0 1px 0 rgba(255,255,255,0.18),
-    inset 0 -1px 0 rgba(0,0,0,0.22);
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.22);
 }
 
 /* Lighter shade variant for secondary CTA */
@@ -433,16 +562,16 @@
   box-shadow:
     0 8px 18px rgba(47, 109, 255, 0.18),
     0 2px 6px rgba(47, 109, 255, 0.12),
-    inset 0 1px 0 rgba(255,255,255,0.4),
-    inset 0 -1px 0 rgba(0,0,0,0.04);
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.04);
   font-weight: 600; /* slightly less bold than primary */
 }
 .ctaButtonLight:hover {
   box-shadow:
     0 10px 20px rgba(47, 109, 255, 0.22),
     0 3px 8px rgba(47, 109, 255, 0.14),
-    inset 0 1px 0 rgba(255,255,255,0.45),
-    inset 0 -1px 0 rgba(0,0,0,0.05);
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.05);
   filter: none; /* keep subtle */
   transform: none; /* cancel base hover lift */
 }
@@ -450,26 +579,26 @@
   box-shadow:
     0 6px 14px rgba(47, 109, 255, 0.16),
     0 2px 6px rgba(47, 109, 255, 0.12),
-    inset 0 -1px 0 rgba(0,0,0,0.06);
+    inset 0 -1px 0 rgba(0, 0, 0, 0.06);
 }
 [data-theme='dark'] .ctaButtonLight {
   /* make it very subtle in dark mode */
-  background: linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.06) 100%);
-  border-color: rgba(255,255,255,0.18);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.06) 100%);
+  border-color: rgba(255, 255, 255, 0.18);
   color: #e6eeff !important;
   box-shadow:
     0 6px 14px rgba(0, 0, 0, 0.4),
     0 2px 6px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255,255,255,0.16),
-    inset 0 -1px 0 rgba(0,0,0,0.22);
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.22);
   font-weight: 600;
 }
 [data-theme='dark'] .ctaButtonLight:hover {
   box-shadow:
     0 8px 16px rgba(0, 0, 0, 0.46),
     0 3px 8px rgba(0, 0, 0, 0.34),
-    inset 0 1px 0 rgba(255,255,255,0.18),
-    inset 0 -1px 0 rgba(0,0,0,0.24);
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.24);
   transform: none;
   filter: none;
 }
@@ -477,7 +606,7 @@
   box-shadow:
     0 6px 14px rgba(0, 0, 0, 0.5),
     0 2px 6px rgba(0, 0, 0, 0.38),
-    inset 0 -1px 0 rgba(0,0,0,0.26);
+    inset 0 -1px 0 rgba(0, 0, 0, 0.26);
 }
 
 /* CRITICAL MOBILE FIXES */
@@ -488,9 +617,16 @@
 }
 
 @media (max-width: 640px) {
-  .lbGrid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
-  .lbCard { padding: 6px 6px 8px; }
-  .username { font-size: 14px; } /* Increased from 13px for better readability */
+  .lbGrid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+  }
+  .lbCard {
+    padding: 6px 6px 8px;
+  }
+  .username {
+    font-size: 14px;
+  } /* Increased from 13px for better readability */
 
   /* Optimize sticky top bar for mobile - more compact */
   .stickyTopbar {
@@ -529,41 +665,45 @@
   }
 
   /* Reduce hero section spacing significantly */
-  .container .ui.container[style*="paddingTop: 84"] {
+  .container .ui.container[style*='paddingTop: 84'] {
     padding-top: 20px !important; /* Much less top padding */
     padding-bottom: 4px !important; /* Much less bottom padding */
   }
 
   /* Make logo smaller on mobile and reduce margins */
-  .container .ui.container img[alt="go4.me collection icon"] {
+  .container .ui.container img[alt='go4.me collection icon'] {
     width: 80px !important;
     height: 80px !important;
   }
 
   /* Reduce logo container margin and padding */
-  .container .ui.container div[style*="marginBottom: 12"] {
+  .container .ui.container div[style*='marginBottom: 12'] {
     margin-bottom: 2px !important;
     margin-top: 0px !important;
     padding: 0px !important;
   }
 
   /* Reduce text spacing */
-  .container .ui.container div[style*="marginTop: 14"] {
+  .container .ui.container div[style*='marginTop: 14'] {
     margin-top: 8px !important;
     font-size: 14px !important;
     line-height: 1.4 !important;
   }
 
   /* Make CTA buttons more compact */
-  .container .ui.container div[style*="marginTop: 22"] {
+  .container .ui.container div[style*='marginTop: 22'] {
     margin-top: 16px !important;
     gap: 8px !important;
   }
 }
 
 @keyframes skeleton-loading {
-  0% { background-position: 100% 50%; }
-  100% { background-position: 0 50%; }
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
 }
 
 @media (max-width: 600px) {
@@ -624,16 +764,35 @@
   /* Keep domain page key rows centered at this breakpoint */
   .domainPage .addressContainer,
   .domainPage .desktopOfferSection,
-  .domainPage .offerButtons { justify-content: center !important; }
-  .domainPage .profileRight .badgeRow { justify-content: center !important; }
+  .domainPage .offerButtons {
+    justify-content: center !important;
+  }
+  .domainPage .profileRight .badgeRow {
+    justify-content: center !important;
+  }
 }
 
 /* intentionally left empty: removed .leftWrap utility to allow centered containers */
 
 /* Profile header responsive layout */
-.profileHeader { display: flex; flex-direction: row; gap: 40px; align-items: flex-start; flex-wrap: wrap; }
-.profileLeft { flex: 0 0 auto; display: flex; flex-direction: column; align-items: stretch; }
-.avatarWrap { position: relative; width: 225px; height: 225px; }
+.profileHeader {
+  display: flex;
+  flex-direction: row;
+  gap: 40px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+.profileLeft {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.avatarWrap {
+  position: relative;
+  width: 225px;
+  height: 225px;
+}
 .domainPage .avatarWrap {
   width: 225px !important;
   height: 225px !important;
@@ -643,19 +802,46 @@
   max-height: 225px !important;
   flex: 0 0 225px !important; /* prevent flex shrink */
 }
-.avatarBox { position: absolute; inset: 0; display: block; }
-.profileRight { flex: 1 1; min-width: 320px; text-align: left; display: flex; flex-direction: column; justify-content: flex-start; }
+.avatarBox {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+.profileRight {
+  flex: 1 1;
+  min-width: 320px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
 
 /* Wrapper for the action stack (addresses + offer/mint + next mint badge) */
-.actionColumn { display: flex; flex-direction: column; align-items: flex-start; }
+.actionColumn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
 
 /* Desktop: Show mobile action buttons inline, hide bottom bar and mobile banner */
-.mobileActionButtons { display: block; }
-.mobileBottomBar { display: none; }
-.mobileClaimBanner { display: none; }
-.desktopClaimButton { display: inline-flex !important; }
-.desktopThemeButton { display: inline-flex !important; }
-.desktopCtaButtons { display: flex !important; }
+.mobileActionButtons {
+  display: block;
+}
+.mobileBottomBar {
+  display: none;
+}
+.mobileClaimBanner {
+  display: none;
+}
+.desktopClaimButton {
+  display: inline-flex !important;
+}
+.desktopThemeButton {
+  display: inline-flex !important;
+}
+.desktopCtaButtons {
+  display: flex !important;
+}
 /* Desktop: Show horizontal tab menu, hide mobile dropdown */
 .desktopTabMenu {
   display: flex !important;
@@ -673,7 +859,9 @@
   flex: 0 0 auto !important;
 }
 
-.mobileTabSelector { display: none !important; }
+.mobileTabSelector {
+  display: none !important;
+}
 
 /* Desktop offer section styling */
 .desktopOfferSection {
@@ -715,7 +903,7 @@
   font-size: 13px !important;
   font-weight: 500 !important;
   transition: all 0.2s ease !important;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
 }
 
 .offerButton:hover {
@@ -724,7 +912,7 @@
   color: var(--color-text) !important;
   text-decoration: none !important;
   transform: translateY(-1px) !important;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
 }
 
 .offerButtonGreen:hover {
@@ -732,12 +920,29 @@
 }
 
 @media (max-width: 1100px) {
-  .profileHeader { flex-direction: column; gap: 12px; align-items: center; }
-  .profileLeft { width: auto; align-items: center; }
-  .avatarWrap { width: 180px; height: 180px; } /* Reduce from 225px */
+  .profileHeader {
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+  }
+  .profileLeft {
+    width: auto;
+    align-items: center;
+  }
+  .avatarWrap {
+    width: 180px;
+    height: 180px;
+  } /* Reduce from 225px */
   /* Domain page: keep avatar full-size at this breakpoint and below */
-  .domainPage .avatarWrap { width: 225px !important; height: 225px !important; }
-  .profileRight { min-width: 0; width: 100%; text-align: center; }
+  .domainPage .avatarWrap {
+    width: 225px !important;
+    height: 225px !important;
+  }
+  .profileRight {
+    min-width: 0;
+    width: 100%;
+    text-align: center;
+  }
   .profileTitle {
     margin-top: 4px;
     margin-bottom: 4px;
@@ -749,21 +954,36 @@
     text-align: center;
     margin-top: 4px;
   }
-  .profileRight p { margin-top: 6px; margin-bottom: 4px; }
+  .profileRight p {
+    margin-top: 6px;
+    margin-bottom: 4px;
+  }
   /* Center the action column and its rows at tablet widths */
-  .domainPage .actionColumn { align-items: center !important; text-align: center !important; }
-  .domainPage .actionColumn > * { align-self: center !important; }
+  .domainPage .actionColumn {
+    align-items: center !important;
+    text-align: center !important;
+  }
+  .domainPage .actionColumn > * {
+    align-self: center !important;
+  }
   .domainPage .actionColumn .addressContainer,
   .domainPage .actionColumn .desktopOfferSection,
   .domainPage .actionColumn .offerButtons,
-  .domainPage .actionColumn .badgeRow { justify-content: center !important; }
+  .domainPage .actionColumn .badgeRow {
+    justify-content: center !important;
+  }
   /* Make rows span the column so centering is obvious */
   .domainPage .actionColumn .addressContainer,
   .domainPage .actionColumn .desktopOfferSection,
-  .domainPage .actionColumn .badgeRow { width: 100% !important; }
+  .domainPage .actionColumn .badgeRow {
+    width: 100% !important;
+  }
   .domainPage .actionColumn .addressContainer,
   .domainPage .actionColumn .desktopOfferSection,
-  .domainPage .actionColumn .badgeRow { margin-left: auto !important; margin-right: auto !important; }
+  .domainPage .actionColumn .badgeRow {
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
 }
 
 /* Profile title and username styling */
@@ -810,8 +1030,12 @@
 @media (max-width: 1100px) {
   .domainPage .addressContainer,
   .domainPage .desktopOfferSection,
-  .domainPage .offerButtons { justify-content: center !important; }
-  .domainPage .profileRight .badgeRow { justify-content: center !important; }
+  .domainPage .offerButtons {
+    justify-content: center !important;
+  }
+  .domainPage .profileRight .badgeRow {
+    justify-content: center !important;
+  }
 }
 
 /* Medium mobile - adjust title and username size */
@@ -843,8 +1067,6 @@
     font-size: 14px;
     text-align: center;
   }
-
-
 }
 
 /* Additional mobile optimizations for profile pages */
@@ -860,8 +1082,14 @@
     align-items: center !important;
   }
 
-  .avatarWrap { width: 100px; height: 100px; }
-  .domainPage .avatarWrap { width: 225px !important; height: 225px !important; }
+  .avatarWrap {
+    width: 100px;
+    height: 100px;
+  }
+  .domainPage .avatarWrap {
+    width: 225px !important;
+    height: 225px !important;
+  }
 
   .profileRight {
     text-align: center !important;
@@ -869,12 +1097,16 @@
   }
 
   /* Center bio description on mobile to match other elements */
-  .profileDescription { text-align: center !important; margin-left: 0 !important; margin-right: 0 !important; }
+  .profileDescription {
+    text-align: center !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
 
   /* Optimize profile info section - handled by .profileTitle class */
 
   /* Make @username text much smaller on mobile */
-  .profileRight div[style*="fontSize: 24px"] {
+  .profileRight div[style*='fontSize: 24px'] {
     font-size: 14px !important; /* Much smaller: 24px → 14px */
     margin-top: 1px !important;
     margin-bottom: 4px !important;
@@ -905,7 +1137,7 @@
   }
 
   /* Compact the "Back to Leaderboard" link */
-  .profileRight a[href*="leaderboard"] {
+  .profileRight a[href*='leaderboard'] {
     font-size: 13px !important;
     padding: 4px 0 !important;
     margin-bottom: 6px !important;
@@ -952,14 +1184,12 @@
     height: 100px !important;
   }
 
-
-
-  .profileRight div[style*="fontSize: 24px"] {
+  .profileRight div[style*='fontSize: 24px'] {
     font-size: 12px !important; /* Even smaller @username */
   }
 
   .profileRight .description,
-  .profileRight p[style*="font-size: 18px"] {
+  .profileRight p[style*='font-size: 18px'] {
     font-size: 10px !important; /* Even smaller description */
     max-width: 280px !important;
     padding: 0 4px !important;
@@ -995,8 +1225,12 @@
   /* Ensure centering persists on ultra-small devices */
   .domainPage .addressContainer,
   .domainPage .desktopOfferSection,
-  .domainPage .offerButtons { justify-content: center !important; }
-  .domainPage .profileRight .badgeRow { justify-content: center !important; }
+  .domainPage .offerButtons {
+    justify-content: center !important;
+  }
+  .domainPage .profileRight .badgeRow {
+    justify-content: center !important;
+  }
 
   /* Make home page claim text even smaller on very small screens */
   .claimText {
@@ -1008,19 +1242,21 @@
   }
 
   /* Reduce logo even more on very small screens */
-  .container .ui.container img[alt="go4.me collection icon"] {
+  .container .ui.container img[alt='go4.me collection icon'] {
     width: 80px !important;
     height: 80px !important;
   }
 
   /* Reduce hero section padding even more */
-  .container .ui.container[style*="paddingTop: 84"] {
+  .container .ui.container[style*='paddingTop: 84'] {
     padding-top: 30px !important;
     padding-bottom: 4px !important;
   }
 
   /* Hide sticky-nav claim button on ultra-small devices */
-  .desktopClaimButton { display: none !important; }
+  .desktopClaimButton {
+    display: none !important;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1040,12 +1276,12 @@
   }
 
   /* Domain page collection grid mobile optimization */
-  .lbGrid[style*="alignItems: stretch"] {
+  .lbGrid[style*='alignItems: stretch'] {
     grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important;
     gap: 8px !important;
   }
 
-  .lbCard[style*="minHeight: 230"] {
+  .lbCard[style*='minHeight: 230'] {
     min-height: 200px !important;
     padding: 6px !important;
   }
@@ -1057,11 +1293,11 @@
   }
 
   /* Search input in domain page */
-  .ui.large.input[placeholder*="Search"] {
+  .ui.large.input[placeholder*='Search'] {
     height: 36px !important;
   }
 
-  .ui.large.input[placeholder*="Search"] input {
+  .ui.large.input[placeholder*='Search'] input {
     font-size: 14px !important;
     padding: 8px 10px !important;
   }
@@ -1069,8 +1305,12 @@
   /* Centering for domain page at this size too */
   .domainPage .addressContainer,
   .domainPage .desktopOfferSection,
-  .domainPage .offerButtons { justify-content: center !important; }
-  .domainPage .profileRight .badgeRow { justify-content: center !important; }
+  .domainPage .offerButtons {
+    justify-content: center !important;
+  }
+  .domainPage .profileRight .badgeRow {
+    justify-content: center !important;
+  }
 }
 
 /* Improve touch targets */
@@ -1093,7 +1333,11 @@
   }
 
   /* Make dismiss buttons more accessible */
-  .ui.message button { min-height: 32px !important; min-width: 32px !important; padding: 4px !important; }
+  .ui.message button {
+    min-height: 32px !important;
+    min-width: 32px !important;
+    padding: 4px !important;
+  }
 
   /* Optimize spacing between elements */
   .ui.container > * + * {
@@ -1108,12 +1352,12 @@
 
   /* Domain page specific mobile fixes - now handled by .profileTitle class */
 
-  .profileRight div[style*="font-size: 24px"] {
+  .profileRight div[style*='font-size: 24px'] {
     font-size: 14px !important; /* Much smaller */
     text-align: center !important;
   }
 
-  .profileRight p[style*="font-size: 18px"] {
+  .profileRight p[style*='font-size: 18px'] {
     font-size: 11px !important; /* Much smaller */
     margin: 6px auto 8px !important;
     text-align: center !important;
@@ -1123,7 +1367,7 @@
   }
 
   /* Fix address and button containers */
-  .profileRight div[style*="gap: 12px"] {
+  .profileRight div[style*='gap: 12px'] {
     gap: 6px !important;
     flex-direction: column !important;
     align-items: center !important; /* center the stacked items */
@@ -1142,13 +1386,11 @@
   }
 
   /* Make copy buttons more mobile-friendly */
-  .profileRight button[style*="padding"] {
+  .profileRight button[style*='padding'] {
     padding: 6px 10px !important;
     font-size: 11px !important;
     min-height: 32px !important;
   }
-
-
 
   .mobileThemeButton {
     background: transparent !important;
@@ -1189,12 +1431,12 @@
     padding-right: 40px !important;
     cursor: pointer !important;
     transition: all 0.2s ease !important;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
   }
 
   .mobileTabDropdown:hover {
     border-color: var(--color-link) !important;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
     transform: translateY(-1px) !important;
   }
 
@@ -1223,38 +1465,72 @@
     margin-bottom: 16px !important;
   }
   /* Center "Latest Offer" row on mobile */
-  .desktopOfferSection { justify-content: center !important; }
+  .desktopOfferSection {
+    justify-content: center !important;
+  }
 
   /* Also center any badge rows within profile right column */
-  .profileRight .badgeRow { justify-content: center !important; }
+  .profileRight .badgeRow {
+    justify-content: center !important;
+  }
 }
 
 /* Domain page specific mobile overrides: move XCH/DID/Offer links back to top and remove bottom sticky nav */
 @media (max-width: 640px) {
-  .domainPage .mobileActionButtons { display: block !important; }
-  .domainPage .mobileBottomBar { display: none !important; }
+  .domainPage .mobileActionButtons {
+    display: block !important;
+  }
+  .domainPage .mobileBottomBar {
+    display: none !important;
+  }
   /* Remove extra padding since bottom bar is hidden */
-  .domainPage .main { padding-bottom: 24px !important; }
+  .domainPage .main {
+    padding-bottom: 24px !important;
+  }
   /* Keep avatar full size on domain page, even on mobile */
-  .domainPage .avatarWrap { width: 225px !important; height: 225px !important; }
+  .domainPage .avatarWrap {
+    width: 225px !important;
+    height: 225px !important;
+  }
   /* Center the Next mint in badge row fully */
-  .domainPage .mobileActionButtons .badgeRow { justify-content: center !important; width: 100% !important; }
-  .domainPage .mobileActionButtons .badgeRow .miniBadge { margin-left: auto !important; margin-right: auto !important; }
+  .domainPage .mobileActionButtons .badgeRow {
+    justify-content: center !important;
+    width: 100% !important;
+  }
+  .domainPage .mobileActionButtons .badgeRow .miniBadge {
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
   /* Center address chips and offer buttons on small screens */
   .domainPage .addressContainer,
   .domainPage .desktopOfferSection,
-  .domainPage .offerButtons { justify-content: center !important; }
+  .domainPage .offerButtons {
+    justify-content: center !important;
+  }
 }
 
 /* Also ensure avatar remains full size for tablet widths on domain page */
 @media (max-width: 900px) {
-  .domainPage .avatarWrap { width: 225px !important; height: 225px !important; }
+  .domainPage .avatarWrap {
+    width: 225px !important;
+    height: 225px !important;
+  }
   /* Center address and offer/mint sections across tablet/smaller widths */
   .domainPage .addressContainer,
   .domainPage .desktopOfferSection,
-  .domainPage .offerButtons { justify-content: center !important; }
+  .domainPage .offerButtons {
+    justify-content: center !important;
+  }
   /* Ensure badge rows (e.g., Next mint in) are centered as layout stacks */
-  .domainPage .profileRight .badgeRow { justify-content: center !important; }
-  .domainPage .mobileActionButtons .badgeRow { justify-content: center !important; width: 100% !important; }
-  .domainPage .mobileActionButtons .badgeRow .miniBadge { margin-left: auto !important; margin-right: auto !important; }
+  .domainPage .profileRight .badgeRow {
+    justify-content: center !important;
+  }
+  .domainPage .mobileActionButtons .badgeRow {
+    justify-content: center !important;
+    width: 100% !important;
+  }
+  .domainPage .mobileActionButtons .badgeRow .miniBadge {
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
 }

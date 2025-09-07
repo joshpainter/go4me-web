@@ -104,7 +104,15 @@ export interface ServiceResponse<T> {
 
 // Query parameter types
 export interface LeaderboardQuery {
-  view: 'totalSold' | 'totalTraded' | 'badgeScore' | 'recentTrades' | 'rarest' | 'marmotRecovery' | 'queue'
+  view:
+    | 'totalSold'
+    | 'totalTraded'
+    | 'badgeScore'
+    | 'shadowScore'
+    | 'recentTrades'
+    | 'rarest'
+    | 'marmotRecovery'
+    | 'queue'
   query?: string
   pagination: PaginationOptions
 }
@@ -126,6 +134,7 @@ export const LEADERBOARD_VIEWS = {
   totalSold: 'totalSold',
   totalTraded: 'totalTraded',
   badgeScore: 'badgeScore',
+  shadowScore: 'shadowScore',
   recentTrades: 'recentTrades',
   rarest: 'rarest',
   marmotRecovery: 'marmotRecovery',
