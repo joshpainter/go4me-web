@@ -329,15 +329,8 @@ export async function getServerSideProps(ctx) {
         const pfpUsername = r.pfp_username || null
         const cid = r.pfp_ipfs_cid || null
         const dataUri = r.pfp_data_uri || ''
-        const frontUrl =
-          dataUri ||
-          (cid && pfpUsername
-            ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-go4me.png`
-            : r.image_url || r.generated_pfp_url || '')
-        const backUrl =
-          cid && pfpUsername
-            ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-x.png`
-            : dataUri || r.image_url || r.generated_pfp_url || ''
+        const frontUrl = dataUri
+        const backUrl = cid && pfpUsername ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-x.png` : dataUri
         return {
           id: r.nft_id,
           frontUrl,
@@ -364,15 +357,8 @@ export async function getServerSideProps(ctx) {
         const pfpUsername = r.pfp_username || null
         const cid = r.pfp_ipfs_cid || null
         const dataUri = r.pfp_data_uri || ''
-        const frontUrl =
-          dataUri ||
-          (cid && pfpUsername
-            ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-go4me.png`
-            : r.image_url || r.generated_pfp_url || '')
-        const backUrl =
-          cid && pfpUsername
-            ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-x.png`
-            : dataUri || r.image_url || r.generated_pfp_url || ''
+        const frontUrl = dataUri
+        const backUrl = cid && pfpUsername ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-x.png` : dataUri
         return {
           id: r.pfp_author_id,
           frontUrl,
