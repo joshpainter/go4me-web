@@ -4,59 +4,21 @@
  */
 import { getSupabaseClient } from './supabaseClient'
 import type { DatabaseResponse, LeaderboardView, PaginationOptions } from './types'
-import { SUPABASE_MAX_ROWS, MARMOT_BADGE_XCH } from '../constants'
+import { MARMOT_BADGE_XCH } from '../constants'
 import type { Tables } from './database.types'
+import { clampRange } from './core/pagination'
+import { buildOrSearch } from './core/filters'
+import { normaliseError } from './core/errors'
+import { ORDER_MAP_INITIAL, ORDER_MAP_PAGE } from './core/ordering'
+import {
+  LEADERBOARD_COLUMNS,
+  QUEUE_COLUMNS,
+  USER_PROFILE_COLUMNS,
+  OWNED_PFPS_COLUMNS,
+  OTHER_OWNERS_COLUMNS,
+} from './core/columns'
 
-// Ordering specifications mirror existing UI logic
-const ORDER_MAP_INITIAL: Record<string, { column: string; ascending: boolean }> = {
-  totalSold: { column: 'rank_copies_sold', ascending: true },
-  totalTraded: { column: 'rank_total_traded_value', ascending: true },
-  badgeScore: { column: 'rank_total_badge_score', ascending: true },
-  shadowScore: { column: 'rank_total_shadow_score', ascending: true },
-  recentTrades: { column: 'rank_last_sale', ascending: true },
-  rarest: { column: 'rank_fewest_copies_sold', ascending: true },
-  marmotRecovery: { column: 'rank_copies_sold', ascending: true },
-}
-
-const ORDER_MAP_PAGE: Record<string, { column: string; ascending: boolean }> = {
-  totalSold: { column: 'total_sold', ascending: false },
-  totalTraded: { column: 'total_traded_value', ascending: false },
-  badgeScore: { column: 'rank_total_badge_score', ascending: true },
-  shadowScore: { column: 'rank_total_shadow_score', ascending: true },
-  recentTrades: { column: 'rank_last_sale', ascending: true },
-  rarest: { column: 'rank_fewest_copies_sold', ascending: true },
-  marmotRecovery: { column: 'total_sold', ascending: false },
-}
-// Supabase and service performance helpers0
-
-function clampRange(p: PaginationOptions): PaginationOptions {
-  const from = Math.max(0, Number(p.from) || 0)
-  const to = Math.max(from, Math.min(Number(p.to) || from, from + SUPABASE_MAX_ROWS - 1))
-  return { from, to }
-}
-
-function sanitiseQuery(q?: string): string | null {
-  if (!q) return null
-  const s = String(q).trim().slice(0, 200)
-  if (!s) return null
-  // Remove characters that break PostgREST or() syntax
-  return s.replace(/[(),]/g, ' ')
-}
-
-function buildOrSearch(fields: string[], q?: string): string | null {
-  const s = sanitiseQuery(q)
-  if (!s) return null
-  // Construct Supabase "or" ilike filter across fields
-  const parts = fields.map((f) => `${f}.ilike.%${s}%`)
-  return parts.join(',')
-}
-
-function normaliseError(err: any): { message: string; code?: string } {
-  if (!err) return { message: '' }
-  const message = err.message || err.toString?.() || 'Unknown error'
-  const code = err.code
-  return { message, code }
-}
+// (Legacy note) Ordering + helpers have been extracted to /core. Keep this file focused on orchestration.
 
 // Leaderboard + queue (ungenerated) unified fetcher
 // Row type helpers derived from generated Supabase types
@@ -92,7 +54,7 @@ export async function fetchLeaderboard(
       const run = async () => {
         let qb = supabase
           .from('get_ungenerated_nfts')
-          .select('*')
+          .select(QUEUE_COLUMNS)
           .order('rank_queue_position', { ascending: true })
           .range(from, to)
 
@@ -103,7 +65,7 @@ export async function fetchLeaderboard(
       }
       const { data, error } = await run()
       if (error) return { data: [], error: normaliseError(error) }
-      return { data: (data || []) as QueueRow[], error: null }
+      return { data: (data || []) as unknown as QueueRow[], error: null }
     }
 
     const orderSpec =
@@ -123,7 +85,7 @@ export async function fetchLeaderboard(
 
       let qb = supabase
         .from('get_leaderboard')
-        .select('*')
+        .select(LEADERBOARD_COLUMNS)
         .in('author_id', ids)
         .order(orderSpec.column, { ascending: orderSpec.ascending })
         .range(from, to)
@@ -133,13 +95,13 @@ export async function fetchLeaderboard(
 
       const { data, error } = await qb
       if (error) return { data: [], error: normaliseError(error) }
-      return { data: (data || []) as LeaderboardRow[], error: null }
+      return { data: (data || []) as unknown as LeaderboardRow[], error: null }
     }
 
     // Default leaderboard
     let qb = supabase
       .from('get_leaderboard')
-      .select('*')
+      .select(LEADERBOARD_COLUMNS)
       .order(orderSpec.column, { ascending: orderSpec.ascending })
       .range(from, to)
 
@@ -148,7 +110,7 @@ export async function fetchLeaderboard(
 
     const { data, error } = await qb
     if (error) return { data: [], error: normaliseError(error) }
-    return { data: (data || []) as LeaderboardRow[], error: null }
+    return { data: (data || []) as unknown as LeaderboardRow[], error: null }
   } catch (e: any) {
     return { data: [], error: normaliseError(e) }
   }
@@ -162,12 +124,12 @@ export async function fetchUserProfile(username: string): Promise<DatabaseRespon
   try {
     const { data, error } = await supabase
       .from('get_user_page_info')
-      .select('*')
+      .select(USER_PROFILE_COLUMNS)
       .ilike('username', username)
       .maybeSingle()
 
     if (error) return { data: null, error: normaliseError(error) }
-    return { data: (data as UserProfileRow) ?? null, error: null }
+    return { data: (data as unknown as UserProfileRow) ?? null, error: null }
   } catch (e: any) {
     return { data: null, error: normaliseError(e) }
   }
@@ -203,10 +165,11 @@ export async function fetchUserPfps(
   try {
     const viewName = view === 'owned' ? 'get_user_page_owned_pfps' : 'get_user_page_other_owners'
 
-    let selectOpts: any = '*'
+    let selectOpts: any = view === 'owned' ? OWNED_PFPS_COLUMNS : OTHER_OWNERS_COLUMNS
     let headOpts: any = undefined
     if (countOnly) {
-      selectOpts = '*'
+      // For count-only, still select a minimal column (username) so PostgREST processes count.
+      selectOpts = view === 'owned' ? 'username' : 'username'
       headOpts = { count: 'exact', head: true }
     }
 
