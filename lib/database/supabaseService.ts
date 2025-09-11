@@ -3,8 +3,9 @@
  * Follows existing project patterns and consolidates error handling.
  */
 import { getSupabaseClient } from './supabaseClient'
-import type { DatabaseResponse, LeaderboardView, PaginationOptions, UserProfile } from './types'
+import type { DatabaseResponse, LeaderboardView, PaginationOptions } from './types'
 import { SUPABASE_MAX_ROWS, MARMOT_BADGE_XCH } from '../constants'
+import type { Tables } from './database.types'
 
 // Ordering specifications mirror existing UI logic
 const ORDER_MAP_INITIAL: Record<string, { column: string; ascending: boolean }> = {
@@ -58,12 +59,29 @@ function normaliseError(err: any): { message: string; code?: string } {
 }
 
 // Leaderboard + queue (ungenerated) unified fetcher
+// Row type helpers derived from generated Supabase types
+type LeaderboardRow = Tables<'get_leaderboard'>
+type QueueRow = Tables<'get_ungenerated_nfts'>
+
+// Function overloads for stronger typing based on "view" parameter
+export async function fetchLeaderboard(
+  view: 'queue',
+  query: string | undefined,
+  pagination: PaginationOptions,
+  phase?: 'initial' | 'page',
+): Promise<DatabaseResponse<QueueRow[]>>
+export async function fetchLeaderboard(
+  view: Exclude<LeaderboardView, 'queue'> | string,
+  query: string | undefined,
+  pagination: PaginationOptions,
+  phase?: 'initial' | 'page',
+): Promise<DatabaseResponse<LeaderboardRow[]>>
 export async function fetchLeaderboard(
   view: LeaderboardView | string,
   query: string | undefined,
   pagination: PaginationOptions,
   phase: 'initial' | 'page' = 'initial',
-): Promise<DatabaseResponse<any[]>> {
+): Promise<DatabaseResponse<(LeaderboardRow | QueueRow)[]>> {
   const supabase = getSupabaseClient()
   if (!supabase) return { data: [], error: { message: 'Supabase not initialised' } }
 
@@ -85,7 +103,7 @@ export async function fetchLeaderboard(
       }
       const { data, error } = await run()
       if (error) return { data: [], error: normaliseError(error) }
-      return { data: (data || []) as any, error: null }
+      return { data: (data || []) as QueueRow[], error: null }
     }
 
     const orderSpec =
@@ -115,7 +133,7 @@ export async function fetchLeaderboard(
 
       const { data, error } = await qb
       if (error) return { data: [], error: normaliseError(error) }
-      return { data: (data || []) as any, error: null }
+      return { data: (data || []) as LeaderboardRow[], error: null }
     }
 
     // Default leaderboard
@@ -130,14 +148,15 @@ export async function fetchLeaderboard(
 
     const { data, error } = await qb
     if (error) return { data: [], error: normaliseError(error) }
-    return { data: (data || []) as any, error: null }
+    return { data: (data || []) as LeaderboardRow[], error: null }
   } catch (e: any) {
     return { data: [], error: normaliseError(e) }
   }
 }
 
 // User profile info (single row)
-export async function fetchUserProfile(username: string): Promise<DatabaseResponse<UserProfile | null>> {
+type UserProfileRow = Tables<'get_user_page_info'>
+export async function fetchUserProfile(username: string): Promise<DatabaseResponse<UserProfileRow | null>> {
   const supabase = getSupabaseClient()
   if (!supabase) return { data: null, error: { message: 'Supabase not initialised' } }
   try {
@@ -148,20 +167,37 @@ export async function fetchUserProfile(username: string): Promise<DatabaseRespon
       .maybeSingle()
 
     if (error) return { data: null, error: normaliseError(error) }
-    return { data: (data as UserProfile) ?? null, error: null }
+    return { data: (data as UserProfileRow) ?? null, error: null }
   } catch (e: any) {
     return { data: null, error: normaliseError(e) }
   }
 }
 
 // User PFP collections
+type OwnedPfpRow = Tables<'get_user_page_owned_pfps'>
+type OtherOwnerRow = Tables<'get_user_page_other_owners'>
+
+export async function fetchUserPfps(
+  view: 'owned',
+  username: string,
+  pagination: PaginationOptions,
+  query?: string,
+  countOnly?: boolean,
+): Promise<DatabaseResponse<OwnedPfpRow[]>>
+export async function fetchUserPfps(
+  view: 'others',
+  username: string,
+  pagination: PaginationOptions,
+  query?: string,
+  countOnly?: boolean,
+): Promise<DatabaseResponse<OtherOwnerRow[]>>
 export async function fetchUserPfps(
   view: 'owned' | 'others',
   username: string,
   pagination: PaginationOptions,
   query?: string,
   countOnly = false,
-): Promise<DatabaseResponse<any[]>> {
+): Promise<DatabaseResponse<(OwnedPfpRow | OtherOwnerRow)[]>> {
   const supabase = getSupabaseClient()
   if (!supabase) return { data: [], error: { message: 'Supabase not initialised' }, count: 0 }
   try {
@@ -186,14 +222,15 @@ export async function fetchUserPfps(
     const resp = await qb
     if (resp.error) return { data: [], error: normaliseError(resp.error), count: resp.count }
 
-    return { data: (resp.data || []) as any[], error: null, count: resp.count }
+    return { data: (resp.data || []) as (OwnedPfpRow | OtherOwnerRow)[], error: null, count: resp.count }
   } catch (e: any) {
     return { data: [], error: normaliseError(e) }
   }
 }
 
 // Sitemap: paginated usernames from leaderboard ordered by username asc
-export async function fetchUsernamesPage(pagination: PaginationOptions): Promise<DatabaseResponse<any[]>> {
+type UsernameRow = Pick<Tables<'get_leaderboard'>, 'username'>
+export async function fetchUsernamesPage(pagination: PaginationOptions): Promise<DatabaseResponse<UsernameRow[]>> {
   const supabase = getSupabaseClient()
   if (!supabase) return { data: [], error: { message: 'Supabase not initialised' } }
   try {
@@ -206,7 +243,7 @@ export async function fetchUsernamesPage(pagination: PaginationOptions): Promise
       .range(from, to)
 
     if (error) return { data: [], error: normaliseError(error) }
-    return { data: data || [], error: null }
+    return { data: (data || []) as UsernameRow[], error: null }
   } catch (e: any) {
     return { data: [], error: normaliseError(e) }
   }
