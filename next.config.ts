@@ -1,9 +1,11 @@
-/** @type {import('next').NextConfig} */
+import type { NextConfig } from 'next'
 
+// Use TypeScript for better IntelliSense and safety. Extra custom fields are preserved.
 const nextConfig = {
   reactStrictMode: true,
   // Only treat TypeScript files as pages to avoid duplicate routes during migration
   pageExtensions: ['ts', 'tsx'],
+
   // Production optimizations
   compress: true,
   productionBrowserSourceMaps: false,
@@ -29,7 +31,7 @@ const nextConfig = {
   }),
 
   // Webpack optimizations
-  webpack: (config, { dev, isServer }) => {
+  webpack: (config: any, { dev, isServer }: { dev: boolean; isServer: boolean }) => {
     // Development optimizations
     if (dev) {
       config.optimization.removeAvailableModules = false
@@ -62,6 +64,7 @@ const nextConfig = {
     }
     return config
   },
+
   // Allow cross-origin requests from subdomains during development
   allowedDevOrigins: [
     'localhost',
@@ -73,6 +76,7 @@ const nextConfig = {
     'go4.fail',
     '*.go4.fail',
   ],
+
   async headers() {
     return [
       {
@@ -97,11 +101,12 @@ const nextConfig = {
       },
     ]
   },
+
   images: {
     // Cache optimized images on the CDN for a long time (in seconds)
     // These avatars and PFP thumbnails are immutable, so a 1-year TTL is safe
     minimumCacheTTL: 31536000,
-    // Modern remotePatterns configuration for Next.js 14
+    // Modern remotePatterns configuration for Next.js 14+
     remotePatterns: [
       { protocol: 'https', hostname: 'go4me-pfps.s3.amazonaws.com', pathname: '/**' },
       { protocol: 'https', hostname: 'go4me-domains.s3.amazonaws.com', pathname: '/**' },
@@ -113,6 +118,6 @@ const nextConfig = {
       { protocol: 'https', hostname: 'assets.mainnet.mintgarden.io', pathname: '/**' },
     ],
   },
-}
+} satisfies NextConfig & { allowedDevOrigins: string[] }
 
-module.exports = nextConfig
+export default nextConfig
