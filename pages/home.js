@@ -7,7 +7,7 @@ import { Segment, Container, Menu, Input, Icon } from 'semantic-ui-react'
 import { useTheme } from './_app'
 import { useMemo, useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/router'
-import { fetchLeaderboard } from '../lib/database/supabaseService'
+import { fetchLeaderboardPage } from '../lib/database/services/leaderboard'
 import { TakeOfferButton } from '../components/wallet/TakeOfferButton'
 import GlobalWalletBar from '../components/wallet/GlobalWalletBar'
 import { OrganizationSchema, WebSiteSchema } from '../components/SEO/StructuredData'
@@ -277,7 +277,7 @@ export async function getServerSideProps(context) {
     const currentView = viewParam || 'totalSold'
     const q = (qParam || '').toString().trim()
 
-    const { data, error } = await fetchLeaderboard(currentView, q, { from: 0, to: PAGE_SIZE - 1 }, 'initial')
+    const { data, error } = await fetchLeaderboardPage(currentView, q, { from: 0, to: PAGE_SIZE - 1 }, 'initial')
     if (error) throw new Error(error.message)
 
     users = (data || []).map((row) => {
@@ -401,7 +401,7 @@ export default function Home({
     const fetchFirst = async () => {
       setIsLoadingMore(true)
       try {
-        const { data, error } = await fetchLeaderboard(view, query, { from: 0, to: PAGE_SIZE - 1 }, 'initial')
+        const { data, error } = await fetchLeaderboardPage(view, query, { from: 0, to: PAGE_SIZE - 1 }, 'initial')
         if (error) throw new Error(error.message)
         if (isCancelled) return
         const mapped = (data || []).map((row) => {
@@ -409,7 +409,7 @@ export default function Home({
             return {
               id: row.author_id,
               username: row.username,
-              fullName: row.full_name,
+              fullName: row.full_name || row.name,
               avatarUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png',
               xPfpUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png',
               lastNftSeriesNumber: row.last_nft_series_number ?? 0,
@@ -475,7 +475,7 @@ export default function Home({
     try {
       const from = page * PAGE_SIZE
       const to = from + PAGE_SIZE - 1
-      const { data, error } = await fetchLeaderboard(view, query, { from, to }, 'page')
+      const { data, error } = await fetchLeaderboardPage(view, query, { from, to }, 'page')
       if (error) throw new Error(error.message)
 
       const mapped = (data || []).map((row) => {
@@ -483,7 +483,7 @@ export default function Home({
           return {
             id: row.author_id,
             username: row.username,
-            fullName: row.full_name,
+            fullName: row.full_name || row.name,
             avatarUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png',
             xPfpUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png',
             lastNftSeriesNumber: row.last_nft_series_number ?? 0,

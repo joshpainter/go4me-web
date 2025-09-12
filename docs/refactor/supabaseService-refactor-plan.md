@@ -73,12 +73,16 @@ Phase 3 (Enhanced Typing & API)
 - Provide `fetchLeaderboardPage({ view, query, pagination, phase })` wrapper.
 - Add generic `runViewQuery<RowType>(...)` util to centralize error normalization.
 
+Status:
+
+- [x] `ServiceMeta`/`ServiceResult` added to types.
+- [x] `runViewQuery` implemented.
+- [x] `fetchLeaderboardPage` implemented in `services/leaderboard.ts`.
+- [x] `ViewMap` and `LeaderboardViewRow` added for typing.
+
 Phase 4 (Performance Optimizations)
 
-- Column Narrowing: define `LEADERBOARD_COLUMNS_BASE`, `LEADERBOARD_COLUMNS_EXTENDED` (for future expansions).
 - Only apply `.or()` when query length >= 2 chars to reduce executor overhead.
-- Use `.abortSignal` (if migrating to Edge runtime / fetch-based) for request cancellation.
-- Evaluate if marmotRecovery can be served via a dedicated materialized view.
 
 Phase 5 (Caching & Observability)
 
@@ -153,16 +157,22 @@ Leaderboard:
 - [x] Extract helpers into `core/`.
 - [x] Define per-view column sets & ordering config with types.
 - [x] Replace `select('*')` with explicit lists.
-- [ ] Introduce `ViewMap` + generic row resolver.
-- [ ] Add meta timing wrapper.
+- [x] Introduce `ViewMap` + generic row resolver.
+- [x] Add meta timing wrapper.
 - [ ] Implement basic LRU for first-page caching.
 
 ### Phase 2 Progress
 
 - [x] Created `services/leaderboard.ts` with `resolveLeaderboardQuery`, `applySearch`, `executeLeaderboardQuery`, and `fetchLeaderboardDecomposed`.
 - [x] Simplified `marmotRecovery` to filter directly on `xch_address`.
-- [ ] Migrate existing page imports to use decomposed service (next step).
-- [ ] Remove legacy logic from `supabaseService.ts` after migration.
+- [x] Migrate home page to use `fetchLeaderboardPage`.
+- [x] Migrate domain page to decomposed services (profile/collections).
+- [x] Migrate sitemap to decomposed service (sitemap usernames).
+- [x] Remove legacy `fetchLeaderboard` from `supabaseService.ts` (deprecated and now removed).
+
+### Deprecations
+
+- supabaseService.ts removed. All consumers migrated to services/\*.
 
 ---
 

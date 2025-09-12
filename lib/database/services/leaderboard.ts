@@ -5,7 +5,7 @@ import { normaliseError } from '../core/errors'
 import { ORDER_MAP_INITIAL, ORDER_MAP_PAGE } from '../core/ordering'
 import { LEADERBOARD_COLUMNS, QUEUE_COLUMNS } from '../core/columns'
 import type { Tables } from '../database.types'
-import type { DatabaseResponse, LeaderboardView, PaginationOptions } from '../types'
+import type { DatabaseResponse, LeaderboardView, PaginationOptions, ServiceResult } from '../types'
 
 // Row types
 export type LeaderboardRow = Tables<'get_leaderboard'>
@@ -78,4 +78,69 @@ export async function fetchLeaderboardDecomposed(
   qb = applySearch(qb, view === 'queue' ? ['username', 'name'] : ['username', 'name'], query)
 
   return executeLeaderboardQuery(qb)
+}
+
+// Map view to row type for stronger typing
+export type ViewMap = {
+  totalSold: LeaderboardRow
+  totalTraded: LeaderboardRow
+  badgeScore: LeaderboardRow
+  shadowScore: LeaderboardRow
+  recentTrades: LeaderboardRow
+  rarest: LeaderboardRow
+  marmotRecovery: LeaderboardRow
+  queue: QueueRow
+}
+
+export type LeaderboardViewRow<V extends LeaderboardView | string> = V extends keyof ViewMap
+  ? ViewMap[V]
+  : LeaderboardRow | QueueRow
+
+export async function runViewQuery<RowT>(
+  build: () => { qb: any; from: number; to: number } | { error: { message: string } },
+  view: string,
+): Promise<ServiceResult<RowT[]>> {
+  const t0 = Date.now()
+  const resolved = build()
+  if ('error' in resolved) {
+    return {
+      data: [],
+      error: { message: resolved.error.message },
+      meta: { rowCount: 0, durationMs: Date.now() - t0, from: 0, to: 0, view },
+    }
+  }
+  const { qb, from, to } = resolved
+  try {
+    const { data, error, count } = await qb
+    if (error) {
+      return {
+        data: [],
+        error: normaliseError(error),
+        meta: { rowCount: 0, durationMs: Date.now() - t0, from, to, view },
+      }
+    }
+    const rows = (data || []) as RowT[]
+    return { data: rows, error: null, meta: { rowCount: rows.length, durationMs: Date.now() - t0, from, to, view } }
+  } catch (e: any) {
+    return {
+      data: [],
+      error: normaliseError(e),
+      meta: { rowCount: 0, durationMs: Date.now() - t0, from, to, view },
+    }
+  }
+}
+
+export async function fetchLeaderboardPage<V extends LeaderboardView | string>(
+  view: V,
+  query: string | undefined,
+  pagination: PaginationOptions,
+  phase: 'initial' | 'page' = 'initial',
+): Promise<ServiceResult<LeaderboardViewRow<V>[]>> {
+  return runViewQuery<LeaderboardViewRow<V>>(() => {
+    const resolved = resolveLeaderboardQuery({ view, pagination, phase })
+    if ('error' in resolved) return resolved as any
+    let { qb } = resolved as any
+    qb = applySearch(qb, view === 'queue' ? ['username', 'name'] : ['username', 'name'], query)
+    return { qb, from: (resolved as any).from, to: (resolved as any).to }
+  }, String(view))
 }

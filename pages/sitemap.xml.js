@@ -1,10 +1,9 @@
-import { fetchUsernamesPage } from '../lib/database/supabaseService'
-import { SITEMAP_PAGE_SIZE, SITEMAP_MAX_USERS } from '../lib/constants'
+import { fetchUsernamesPage } from '../lib/database/services/sitemap'
 import { SITE_CONFIG, SITEMAP_CONFIG } from '../lib/constants'
 
 function generateSiteMap(users) {
   const baseUrl = SITE_CONFIG.url
-  
+
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <!-- Main pages -->
