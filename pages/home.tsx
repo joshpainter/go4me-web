@@ -5,15 +5,15 @@ import Image from 'next/image'
 import styles from '../styles/Home.module.css'
 import { Segment, Container, Menu, Input, Icon, type InputOnChangeData } from 'semantic-ui-react'
 import { useTheme } from './_app'
-import { useMemo, useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/router'
 import type { GetServerSideProps } from 'next'
 import { fetchLeaderboardPage } from '../lib/database/services/leaderboard'
-import { TakeOfferButton } from '../components/wallet/TakeOfferButton'
+// import { TakeOfferButton } from '../components/wallet/TakeOfferButton'
 import GlobalWalletBar from '../components/wallet/GlobalWalletBar'
 import { OrganizationSchema, WebSiteSchema } from '../components/SEO/StructuredData'
 import { SITE_CONFIG } from '../lib/constants'
-import { LEADERBOARD_PAGE_SIZE, MOJO_PER_XCH, QUEUE_SECONDS_PER_POSITION } from '../lib/constants'
+import { LEADERBOARD_PAGE_SIZE } from '../lib/constants'
 import type { Tables } from '../lib/database/database.types'
 // Use Supabase-generated row shape for get_leaderboard
 type LeaderboardRow = Tables<'get_leaderboard'>
@@ -29,38 +29,9 @@ type LeaderboardView =
   | 'marmotRecovery'
   | 'queue'
 
-type Nullable<T> = T | null | undefined
-
-export interface User {
-  id: string
-  username: string
-  fullName?: string | null
-  avatarUrl: string
-  xPfpUrl?: string | null
-  totalSold: number
-  totalTradedXCH?: number
-  totalRoyaltiesXCH?: number
-  averageSaleXCH?: number
-  avgTimeToSellMs?: Nullable<number>
-  latestPrice?: number
-  lastOfferId?: string | null
-  lastOfferStatus?: number | null
-  lastSaleAtMs?: Nullable<number>
-  rankCopiesSold?: Nullable<number>
-  rankFewestCopiesSold?: Nullable<number>
-  rankTotalTradedValue?: Nullable<number>
-  rankLastSale?: Nullable<number>
-  rankTotalBadgeScore?: Nullable<number>
-  rankTotalShadowScore?: Nullable<number>
-  rankQueuePosition?: Nullable<number>
-  totalBadgeScore?: number
-  totalShadowScore?: number
-  displayTotalTradedXCH?: string
-  displayTotalRoyaltiesXCH?: string
-  displayAverageSaleXCH?: string
-  displayAvgTime?: string
-  _search?: string
-}
+import { mapLeaderboardRowToHomeUser, type HomeUser } from '../lib/database/services/mappers'
+// Formatting moved into PfpCard; no direct usage here
+import PfpCard from '../components/PfpCard'
 
 const ALL_VIEWS: LeaderboardView[] = [
   'totalSold',
@@ -75,245 +46,14 @@ const ALL_VIEWS: LeaderboardView[] = [
 const isValidView = (v: unknown): v is LeaderboardView => typeof v === 'string' && (ALL_VIEWS as string[]).includes(v)
 
 interface HomeProps {
-  users: User[]
+  users: HomeUser[]
   hasMore: boolean
   initialView?: LeaderboardView | null
   initialQuery?: string
   rootHostForLinks?: string
 }
 
-// Simple formatting helpers
-const formatXCH = (n: number) => new Intl.NumberFormat(undefined, { maximumFractionDigits: 4 }).format(n)
-const formatInt = (n: number | null | undefined) =>
-  new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(n ?? 0)
-const formatRelativeAgo = (ms: number | null | undefined) => {
-  if (!ms) return '—'
-  const diff = Date.now() - ms
-  if (diff < 0) return 'just now'
-  const s = Math.floor(diff / 1000)
-  if (s < 5) return 'just now'
-  if (s < 60) return `${s} second${s === 1 ? '' : 's'} ago`
-  const m = Math.floor(s / 60)
-  if (m < 60) return `${m} minute${m === 1 ? '' : 's'} ago`
-  const h = Math.floor(m / 60)
-  if (h < 24) return `${h} hour${h === 1 ? '' : 's'} ago`
-  const d = Math.floor(h / 24)
-  if (d < 30) return `${d} day${d === 1 ? '' : 's'} ago`
-  const mo = Math.floor(d / 30)
-  if (mo < 12) return `${mo} month${mo === 1 ? '' : 's'} ago`
-  const y = Math.floor(mo / 12)
-  return `${y} year${y === 1 ? '' : 's'} ago`
-}
-const formatDuration = (ms: number | null | undefined) => {
-  if (!ms) return '—'
-  const seconds = Math.floor(ms / 1000)
-  const d = Math.floor(seconds / 86400)
-  const h = Math.floor((seconds % 86400) / 3600)
-  const m = Math.floor((seconds % 3600) / 60)
-  const s = seconds % 60
-  if (d > 0) return `${d}d ${h}h`
-  if (h > 0) return `${h}h ${m}m`
-  if (m > 0) return `${m}m ${s}s`
-  return `${s}s`
-}
-
-// Format queue ETA where each queue position = 10 seconds
-// Returns compact strings like "3m 20s", "1h 5m", or "25s"
-const formatEtaFromQueue = (positions: number | null | undefined) => {
-  const totalSeconds = Math.max(0, Math.round((positions || 0) * QUEUE_SECONDS_PER_POSITION))
-  const d = Math.floor(totalSeconds / 86400)
-  const h = Math.floor((totalSeconds % 86400) / 3600)
-  const m = Math.floor((totalSeconds % 3600) / 60)
-  const s = totalSeconds % 60
-  if (d > 0) return `${d}d ${h}h`
-  if (h > 0) return `${h}h ${m}m`
-  if (m > 0) return `${m}m ${s}s`
-  return `${s}s`
-}
-
-// Card image with flip interaction: front = new PFP (avatarUrl), back = original (xPfpUrl) in a circle mask
-function PfpFlipCard({ user, rootHostForLinks, idx }: { user: User; rootHostForLinks?: string; idx: number }) {
-  const [isFlipped, setIsFlipped] = useState(false)
-  const [isTouch, setIsTouch] = useState(false)
-  const profileHref = user.username ? `//${user.username}.${rootHostForLinks || 'go4.me'}/` : undefined
-  const commonAlt = `${user.username || 'user'} avatar`
-
-  const flipInnerStyle = {
-    position: 'absolute' as const,
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    transformStyle: 'preserve-3d' as const,
-    transition: 'transform 360ms cubic-bezier(0.2, 0.7, 0.2, 1)',
-    transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
-  }
-  const faceStyle = {
-    position: 'absolute' as const,
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    backfaceVisibility: 'hidden' as const,
-    WebkitBackfaceVisibility: 'hidden' as const,
-    borderRadius: 8,
-    overflow: 'hidden' as const,
-  }
-  const backStyle = {
-    ...faceStyle,
-    transform: 'rotateY(180deg)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  }
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    const msPoints = (navigator as Navigator & { msMaxTouchPoints?: number }).msMaxTouchPoints || 0
-    const touchCapable = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || msPoints > 0
-    setIsTouch(!!touchCapable)
-  }, [])
-
-  return (
-    <div
-      className={styles.cardImgWrap}
-      style={{ position: 'relative' }}
-      onMouseEnter={() => {
-        if (!isTouch) setIsFlipped(true)
-      }}
-      onMouseLeave={() => {
-        if (!isTouch) setIsFlipped(false)
-      }}
-    >
-      {/* Flip toggle button in upper-left, matching rank badge spacing/size */}
-
-      <div
-        title={isFlipped ? 'Show new PFP' : 'Show original PFP'}
-        onClick={(e) => {
-          e.stopPropagation()
-          e.preventDefault()
-          setIsFlipped((v) => !v)
-        }}
-        className={styles.rankBadge}
-        style={{
-          bottom: 8,
-          right: 8,
-          zIndex: 5,
-          border: 'none',
-          cursor: 'pointer',
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          letterSpacing: 0,
-          lineHeight: 1,
-          backgroundColor: 'var(--badge-bg-solid)',
-          color: 'var(--badge-fg-solid)',
-          top: 'auto',
-          left: 'auto',
-        }}
-      >
-        <Icon name="refresh" style={{ margin: 0 }} />
-      </div>
-
-      {/* Flip container */}
-      <div style={{ position: 'absolute', inset: 0, perspective: 900 }}>
-        <div style={flipInnerStyle}>
-          {/* Front: New PFP */}
-          <div style={faceStyle}>
-            {profileHref ? (
-              <a href={profileHref} aria-label={`Open ${user.username}.go4.me`}>
-                <div style={{ position: 'absolute', inset: 0 }}>
-                  <Image
-                    src={user.avatarUrl}
-                    alt={commonAlt}
-                    fill
-                    sizes="(max-width: 640px) 150px, 200px"
-                    style={{ objectFit: 'cover' }}
-                    priority={idx < 4}
-                    fetchPriority={idx < 4 ? 'high' : 'auto'}
-                    placeholder="blur"
-                    blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
-                  />
-                </div>
-              </a>
-            ) : (
-              <div style={{ position: 'absolute', inset: 0 }}>
-                <Image
-                  src={user.avatarUrl}
-                  alt={commonAlt}
-                  fill
-                  sizes="(max-width: 640px) 150px, 200px"
-                  style={{ objectFit: 'cover' }}
-                  priority={idx < 4}
-                  fetchPriority={idx < 4 ? 'high' : 'auto'}
-                  placeholder="blur"
-                  blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Back: Original PFP in a circle mask */}
-          <div style={backStyle}>
-            {profileHref ? (
-              <a
-                href={profileHref}
-                aria-label={`Open ${user.username}.go4.me`}
-                style={{ position: 'absolute', inset: 0 }}
-              >
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    width: '80%',
-                    height: '80%',
-                    transform: 'translate(-50%, -50%)',
-                    borderRadius: '50%',
-                    overflow: 'hidden',
-                    boxShadow: '0 8px 20px rgba(0,0,0,0.25)',
-                  }}
-                >
-                  <Image
-                    src={user.xPfpUrl || user.avatarUrl}
-                    alt={commonAlt}
-                    fill
-                    sizes="180px"
-                    style={{ objectFit: 'cover' }}
-                    priority={idx < 4}
-                  />
-                </div>
-              </a>
-            ) : (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  width: '80%',
-                  height: '80%',
-                  transform: 'translate(-50%, -50%)',
-                  borderRadius: '50%',
-                  overflow: 'hidden',
-                  boxShadow: '0 8px 20px rgba(0,0,0,0.25)',
-                }}
-              >
-                <Image
-                  src={user.xPfpUrl || user.avatarUrl}
-                  alt={commonAlt}
-                  fill
-                  sizes="180px"
-                  style={{ objectFit: 'cover' }}
-                  priority={idx < 4}
-                />
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
+// Card UI is now handled by components/PfpCard
 
 export const getServerSideProps: GetServerSideProps<HomeProps> = async (context) => {
   const startTime = Date.now()
@@ -348,7 +88,7 @@ export const getServerSideProps: GetServerSideProps<HomeProps> = async (context)
   const rootHostForLinks = portPart ? `${rootDomain}:${portPart}` : rootDomain
 
   const PAGE_SIZE = LEADERBOARD_PAGE_SIZE
-  let users: User[] = []
+  let users: HomeUser[] = []
   try {
     const { view: viewParam, q: qParam } = context.query || {}
     const rawView = Array.isArray(viewParam) ? viewParam[0] : viewParam
@@ -358,74 +98,7 @@ export const getServerSideProps: GetServerSideProps<HomeProps> = async (context)
     const { data, error } = await fetchLeaderboardPage(currentView as string, q, { from: 0, to: PAGE_SIZE - 1 })
     if (error) throw new Error(error.message)
 
-    users = (data || []).map((row: LeaderboardRow) => {
-      if (currentView === 'queue') {
-        return {
-          id: row.author_id || row.username || '',
-          username: row.username || '',
-          fullName: row.name,
-          avatarUrl:
-            row.pfp_ipfs_cid && row.username
-              ? 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png'
-              : '/collection-icon.png',
-          xPfpUrl:
-            row.pfp_ipfs_cid && row.username
-              ? 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png'
-              : '/collection-icon.png',
-          totalSold: row.total_sold ?? 0,
-          rankQueuePosition: row.rank_queue_position ?? 0,
-          _search: ((row.username || '') + ' ' + (row.name || '')).toLowerCase(),
-        }
-      }
-      const totalSalesAmount = row.xch_total_sales_amount ?? 0
-      const avgSalesAmount = row.xch_average_sales_amount ?? 0
-      // Important: Next.js cannot serialize `undefined` in getServerSideProps.
-      // Use `null` for unknown values to keep SSR JSON-safe.
-      const avgTimeToSell: number | null = null
-      const user: User & {
-        displayTotalTradedXCH?: string
-        displayTotalRoyaltiesXCH?: string
-        displayAverageSaleXCH?: string
-        displayAvgTime?: string
-      } = {
-        // Use a stable unique id consistently across SSR + client pagination to avoid duplicates
-        id: row.author_id || row.username || '',
-        username: row.username || '',
-        fullName: row.name,
-        avatarUrl:
-          row.pfp_ipfs_cid && row.username
-            ? 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png'
-            : '/collection-icon.png',
-        xPfpUrl:
-          row.pfp_ipfs_cid && row.username
-            ? 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png'
-            : '/collection-icon.png',
-        totalSold: row.total_sold ?? 0,
-        totalTradedXCH: totalSalesAmount / MOJO_PER_XCH,
-        totalRoyaltiesXCH: (totalSalesAmount / MOJO_PER_XCH) * 0.1,
-        averageSaleXCH: avgSalesAmount / MOJO_PER_XCH,
-        avgTimeToSellMs: avgTimeToSell,
-        lastOfferId: row.last_offerid,
-        lastOfferStatus: row.last_offer_status,
-        lastSaleAtMs: row.last_sale_at ? new Date(row.last_sale_at).getTime() : null,
-        rankCopiesSold: row.rank_copies_sold,
-        rankFewestCopiesSold: row.rank_fewest_copies_sold,
-        rankTotalTradedValue: row.rank_total_traded_value,
-        rankLastSale: row.rank_last_sale,
-        rankTotalBadgeScore: row.rank_total_badge_score,
-        rankTotalShadowScore: row.rank_total_shadow_score,
-        // Expose queue minutes if present on this view so we can show ETA on Coming Soon badges
-        rankQueuePosition: row.rank_queue_position ?? null,
-        totalBadgeScore: row.total_badge_score || 0,
-        totalShadowScore: row.total_shadow_score || 0,
-        _search: ((row.username || '') + ' ' + (row.name || '')).toLowerCase(),
-      }
-      user.displayTotalTradedXCH = formatXCH(user.totalTradedXCH ?? 0)
-      user.displayTotalRoyaltiesXCH = formatXCH(user.totalRoyaltiesXCH ?? 0)
-      user.displayAverageSaleXCH = formatXCH(user.averageSaleXCH ?? 0)
-      user.displayAvgTime = formatDuration(user.avgTimeToSellMs)
-      return user
-    })
+    users = (data || []).map((row: LeaderboardRow) => mapLeaderboardRowToHomeUser(row))
   } catch (e) {
     console.error('Failed to load users from Supabase', e)
   }
@@ -455,7 +128,7 @@ export default function Home({
   const [view, setView] = useState<LeaderboardView>(initialView || 'totalSold')
   const [rawSearch, setRawSearch] = useState(initialQuery || '')
   const [query, setQuery] = useState(initialQuery || '') // debounced value used for server filtering
-  const [loadedUsers, setLoadedUsers] = useState<User[]>(() => users)
+  const [loadedUsers, setLoadedUsers] = useState<HomeUser[]>(() => users)
   const [page, setPage] = useState(1) // next page index (0 fetched server-side)
   const [hasMore, setHasMore] = useState(initialHasMore)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
@@ -474,7 +147,7 @@ export default function Home({
     }
   }, [view, query, router])
 
-  const appendUsers = useCallback((more: User[]) => {
+  const appendUsers = useCallback((more: HomeUser[]) => {
     setLoadedUsers((prev) => {
       const existing = new Set(prev.map((u) => u.id))
       const merged = [...prev]
@@ -503,70 +176,7 @@ export default function Home({
         const { data, error } = await fetchLeaderboardPage(view, query, { from: 0, to: PAGE_SIZE - 1 })
         if (error) throw new Error(error.message)
         if (isCancelled) return
-        const mapped = (data || []).map((row: LeaderboardRow) => {
-          if (view === 'queue') {
-            return {
-              id: row.author_id || row.username || '',
-              username: row.username || '',
-              fullName: row.name,
-              avatarUrl:
-                row.pfp_ipfs_cid && row.username
-                  ? 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png'
-                  : '/collection-icon.png',
-              xPfpUrl:
-                row.pfp_ipfs_cid && row.username
-                  ? 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png'
-                  : '/collection-icon.png',
-              totalSold: row.total_sold ?? 0,
-              rankQueuePosition: row.rank_queue_position ?? 0,
-              _search: ((row.username || '') + ' ' + (row.name || '')).toLowerCase(),
-            }
-          }
-          const totalSalesAmount = row.xch_total_sales_amount ?? 0
-          const avgSalesAmount = row.xch_average_sales_amount ?? 0
-          const avgTimeToSell = undefined as number | undefined
-          const user: User & {
-            displayTotalTradedXCH?: string
-            displayTotalRoyaltiesXCH?: string
-            displayAverageSaleXCH?: string
-            displayAvgTime?: string
-          } = {
-            id: row.author_id || row.username || '',
-            username: row.username || '',
-            fullName: row.name,
-            avatarUrl:
-              row.pfp_ipfs_cid && row.username
-                ? 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png'
-                : '/collection-icon.png',
-            xPfpUrl:
-              row.pfp_ipfs_cid && row.username
-                ? 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png'
-                : '/collection-icon.png',
-            totalSold: row.total_sold ?? 0,
-            totalTradedXCH: totalSalesAmount / MOJO_PER_XCH,
-            totalRoyaltiesXCH: (totalSalesAmount / MOJO_PER_XCH) * 0.1,
-            averageSaleXCH: avgSalesAmount / MOJO_PER_XCH,
-            avgTimeToSellMs: avgTimeToSell,
-            lastOfferId: row.last_offerid,
-            lastOfferStatus: row.last_offer_status,
-            lastSaleAtMs: row.last_sale_at ? new Date(row.last_sale_at).getTime() : null,
-            rankCopiesSold: row.rank_copies_sold,
-            rankFewestCopiesSold: row.rank_fewest_copies_sold,
-            rankTotalTradedValue: row.rank_total_traded_value,
-            rankLastSale: row.rank_last_sale,
-            rankTotalBadgeScore: row.rank_total_badge_score,
-            rankTotalShadowScore: row.rank_total_shadow_score,
-            rankQueuePosition: row.rank_queue_position ?? null,
-            totalBadgeScore: row.total_badge_score || 0,
-            totalShadowScore: row.total_shadow_score || 0,
-            _search: ((row.username || '') + ' ' + (row.name || '')).toLowerCase(),
-          }
-          user.displayTotalTradedXCH = formatXCH(user.totalTradedXCH ?? 0)
-          user.displayTotalRoyaltiesXCH = formatXCH(user.totalRoyaltiesXCH ?? 0)
-          user.displayAverageSaleXCH = formatXCH(user.averageSaleXCH ?? 0)
-          user.displayAvgTime = formatDuration(user.avgTimeToSellMs)
-          return user
-        })
+        const mapped = (data || []).map((row: LeaderboardRow) => mapLeaderboardRowToHomeUser(row))
         setLoadedUsers(mapped)
         setHasMore((data || []).length === PAGE_SIZE)
         setPage(1)
@@ -593,70 +203,7 @@ export default function Home({
       const { data, error } = await fetchLeaderboardPage(view as string, query, { from, to })
       if (error) throw new Error(error.message)
 
-      const mapped = (data || []).map((row: LeaderboardRow) => {
-        if (view === 'queue') {
-          return {
-            id: row.author_id || row.username || '',
-            username: row.username || '',
-            fullName: row.name,
-            avatarUrl:
-              row.pfp_ipfs_cid && row.username
-                ? 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png'
-                : '/collection-icon.png',
-            xPfpUrl:
-              row.pfp_ipfs_cid && row.username
-                ? 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png'
-                : '/collection-icon.png',
-            totalSold: row.total_sold ?? 0,
-            rankQueuePosition: row.rank_queue_position ?? 0,
-            _search: ((row.username || '') + ' ' + (row.name || '')).toLowerCase(),
-          }
-        }
-        const totalSalesAmount = row.xch_total_sales_amount ?? 0
-        const avgSalesAmount = row.xch_average_sales_amount ?? 0
-        const avgTimeToSell = undefined as number | undefined
-        const user: User & {
-          displayTotalTradedXCH?: string
-          displayTotalRoyaltiesXCH?: string
-          displayAverageSaleXCH?: string
-          displayAvgTime?: string
-        } = {
-          id: row.author_id || row.username || '',
-          username: row.username || '',
-          fullName: row.name,
-          avatarUrl:
-            row.pfp_ipfs_cid && row.username
-              ? 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png'
-              : '/collection-icon.png',
-          xPfpUrl:
-            row.pfp_ipfs_cid && row.username
-              ? 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png'
-              : '/collection-icon.png',
-          totalSold: row.total_sold ?? 0,
-          totalTradedXCH: totalSalesAmount / MOJO_PER_XCH,
-          totalRoyaltiesXCH: (totalSalesAmount / MOJO_PER_XCH) * 0.1,
-          averageSaleXCH: avgSalesAmount / MOJO_PER_XCH,
-          avgTimeToSellMs: avgTimeToSell,
-          lastOfferId: row.last_offerid,
-          lastOfferStatus: row.last_offer_status,
-          lastSaleAtMs: row.last_sale_at ? new Date(row.last_sale_at).getTime() : null,
-          rankCopiesSold: row.rank_copies_sold,
-          rankTotalTradedValue: row.rank_total_traded_value,
-          rankFewestCopiesSold: row.rank_fewest_copies_sold,
-          rankLastSale: row.rank_last_sale,
-          rankTotalBadgeScore: row.rank_total_badge_score,
-          rankTotalShadowScore: row.rank_total_shadow_score,
-          rankQueuePosition: row.rank_queue_position ?? null,
-          totalBadgeScore: row.total_badge_score || 0,
-          totalShadowScore: row.total_shadow_score || 0,
-          _search: ((row.username || '') + ' ' + (row.name || '')).toLowerCase(),
-        }
-        user.displayTotalTradedXCH = formatXCH(user.totalTradedXCH ?? 0)
-        user.displayTotalRoyaltiesXCH = formatXCH(user.totalRoyaltiesXCH ?? 0)
-        user.displayAverageSaleXCH = formatXCH(user.averageSaleXCH ?? 0)
-        user.displayAvgTime = formatDuration(user.avgTimeToSellMs)
-        return user
-      })
+      const mapped = (data || []).map((row: LeaderboardRow) => mapLeaderboardRowToHomeUser(row))
       appendUsers(mapped)
       setPage((p) => p + 1)
       setHasMore((data || []).length === PAGE_SIZE)
@@ -694,19 +241,8 @@ export default function Home({
     return () => observer.disconnect()
   }, [hasMore, loadMore, intersectionSupported])
 
-  // Simple in-memory filtering and sorting each render (small data pages)
-  const renderList = useMemo(() => {
-    // Data already server-ordered; fallback sort if needed
-    const arr = [...loadedUsers]
-    if (view === 'queue') arr.sort((a, b) => (a.rankQueuePosition || 0) - (b.rankQueuePosition || 0))
-    else if (view === 'totalTraded') arr.sort((a, b) => (a.rankTotalTradedValue || 0) - (b.rankTotalTradedValue || 0))
-    else if (view === 'rarest') arr.sort((a, b) => (a.rankFewestCopiesSold || 0) - (b.rankFewestCopiesSold || 0))
-    else if (view === 'badgeScore') arr.sort((a, b) => (a.rankTotalBadgeScore || 0) - (b.rankTotalBadgeScore || 0))
-    else if (view === 'shadowScore') arr.sort((a, b) => (a.rankTotalShadowScore || 0) - (b.rankTotalShadowScore || 0))
-    else if (view === 'recentTrades') arr.sort((a, b) => (a.rankLastSale || 0) - (b.rankLastSale || 0))
-    else arr.sort((a, b) => (a.rankCopiesSold || 0) - (b.rankCopiesSold || 0))
-    return arr
-  }, [loadedUsers, view])
+  // Use server-ordered list directly; no client-side fallback sorts
+  const renderList = loadedUsers
 
   const { theme, toggleTheme } = useTheme()
 
@@ -934,257 +470,7 @@ export default function Home({
         <Segment basic style={{ padding: 0 }}>
           <div className={styles.lbGrid}>
             {renderList.map((u, idx) => (
-              <div key={u.id} className={styles.lbCard}>
-                <div
-                  className={styles.rankBadge}
-                  style={{ backgroundColor: 'var(--badge-bg-solid)', color: 'var(--badge-fg-solid)' }}
-                >
-                  #
-                  {view === 'queue'
-                    ? u.rankQueuePosition || idx + 1
-                    : view === 'totalTraded'
-                      ? u.rankTotalTradedValue || u.rankCopiesSold || idx + 1
-                      : view === 'badgeScore'
-                        ? u.rankTotalBadgeScore || idx + 1
-                        : view === 'shadowScore'
-                          ? u.rankTotalShadowScore || idx + 1
-                          : view === 'recentTrades'
-                            ? u.rankLastSale || idx + 1
-                            : view === 'rarest'
-                              ? u.rankFewestCopiesSold || idx + 1
-                              : u.rankCopiesSold || idx + 1}
-                </div>
-                <PfpFlipCard user={u} rootHostForLinks={rootHostForLinks} idx={idx} />
-                <div className={styles.cardBody}>
-                  {u.username ? (
-                    <div className={styles.username}>
-                      <a
-                        href={`//${u.username}.${rootHostForLinks || 'go4.me'}/`}
-                        style={{ color: 'inherit', textDecoration: 'none' }}
-                        aria-label={`Open ${u.username}.${rootHostForLinks || 'go4.me'}`}
-                      >
-                        @{u.username}
-                      </a>
-                    </div>
-                  ) : (
-                    <div className={styles.username}>@{u.username}</div>
-                  )}
-                  {u.fullName && <div className={styles.fullName}>{u.fullName}</div>}
-                  {(view === 'totalSold' || view === 'rarest' || view === 'marmotRecovery') && (
-                    <>
-                      <div className={styles.badgeRow}>
-                        <span className={styles.miniBadge} title="Total sold">
-                          Sold {u.totalSold}
-                        </span>
-                        <span className={styles.miniBadge} title="XCH total sold">
-                          {formatXCH(u.totalTradedXCH ?? 0)} XCH
-                        </span>
-                      </div>
-                      <div className={styles.badgeRow}>
-                        <span className={styles.miniBadge} title="Royalties">
-                          Royalties {formatXCH(u.totalRoyaltiesXCH ?? (u.totalTradedXCH ?? 0) * 0.1)} XCH
-                        </span>
-                      </div>
-                      <div className={styles.badgeRow}>
-                        {u.lastOfferId && u.lastOfferStatus === 0 ? (
-                          <>
-                            <TakeOfferButton
-                              offerId={u.lastOfferId}
-                              className={styles.miniBadge}
-                              ariaLabel="Take offer via WalletConnect"
-                              title="Buy with WalletConnect"
-                              labelDefault="Dexie"
-                              labelWhenSage="Take Offer"
-                            >
-                              <Image
-                                src="https://raw.githubusercontent.com/dexie-space/dexie-kit/main/svg/duck.svg"
-                                alt="Dexie"
-                                width={16}
-                                height={16}
-                              />
-                            </TakeOfferButton>
-                            <a
-                              href={`https://mintgarden.io/offers/${u.lastOfferId}`}
-                              target="_blank"
-                              rel="noreferrer noopener"
-                              className={styles.miniBadge}
-                              aria-label="View latest offer on Mintgarden"
-                              title="Mintgarden"
-                            >
-                              <Image
-                                src="https://mintgarden.io/mint-logo-round.svg"
-                                alt="MintGarden"
-                                width={16}
-                                height={16}
-                              />
-                              Mintgarden
-                            </a>
-                          </>
-                        ) : (
-                          <span className={`${styles.miniBadge} ${styles.warningBadge}`}>
-                            {Number.isFinite(u?.rankQueuePosition) && (u.rankQueuePosition ?? 0) > 0
-                              ? `Next mint in ~${formatEtaFromQueue(u.rankQueuePosition)}`
-                              : 'Next Copy Coming Soon!'}
-                          </span>
-                        )}
-                      </div>
-                    </>
-                  )}
-                  {view === 'totalTraded' && (
-                    <>
-                      <div className={styles.badgeRow}>
-                        <span className={styles.miniBadge} title="XCH total sold">
-                          {formatXCH(u.totalTradedXCH ?? 0)} XCH
-                        </span>
-                        <span className={styles.miniBadge} title="Total sold">
-                          Sold {u.totalSold}
-                        </span>
-                      </div>
-                      <div className={styles.badgeRow}>
-                        <span className={styles.miniBadge} title="Royalties">
-                          Royalties {formatXCH(u.totalRoyaltiesXCH ?? (u.totalTradedXCH ?? 0) * 0.1)} XCH
-                        </span>
-                      </div>
-                      <div className={styles.badgeRow}>
-                        {u.lastOfferId && u.lastOfferStatus === 0 ? (
-                          <>
-                            <TakeOfferButton
-                              offerId={u.lastOfferId}
-                              className={styles.miniBadge}
-                              ariaLabel="Take offer via WalletConnect"
-                              title="Buy with WalletConnect"
-                              labelDefault="Dexie"
-                              labelWhenSage="Take Offer"
-                            >
-                              <Image
-                                src="https://raw.githubusercontent.com/dexie-space/dexie-kit/main/svg/duck.svg"
-                                alt="Dexie"
-                                width={16}
-                                height={16}
-                              />
-                            </TakeOfferButton>
-                            <a
-                              href={`https://mintgarden.io/offers/${u.lastOfferId}`}
-                              target="_blank"
-                              rel="noreferrer noopener"
-                              className={styles.miniBadge}
-                              aria-label="View latest offer on Mintgarden"
-                              title="Mintgarden"
-                            >
-                              <Image
-                                src="https://mintgarden.io/mint-logo-round.svg"
-                                alt="MintGarden"
-                                width={16}
-                                height={16}
-                              />
-                              Mintgarden
-                            </a>
-                          </>
-                        ) : (
-                          <span className={`${styles.miniBadge} ${styles.warningBadge}`}>
-                            {Number.isFinite(u?.rankQueuePosition) && (u.rankQueuePosition ?? 0) > 0
-                              ? `Next mint in ~${formatEtaFromQueue(u.rankQueuePosition)}`
-                              : 'Next Copy Coming Soon!'}
-                          </span>
-                        )}
-                      </div>
-                    </>
-                  )}
-                  {view === 'badgeScore' && (
-                    <>
-                      <div className={styles.badgeRow}>
-                        <span className={`${styles.miniBadge} ${styles.primaryBadge}`} title="Badge Score">
-                          Badge {formatInt(u.totalBadgeScore)}
-                        </span>
-                      </div>
-                    </>
-                  )}
-                  {view === 'shadowScore' && (
-                    <>
-                      <div className={styles.badgeRow}>
-                        <span className={`${styles.miniBadge} ${styles.dangerBadge}`} title="Shadow Score">
-                          Shadow {formatInt(u.totalShadowScore)}
-                        </span>
-                      </div>
-                    </>
-                  )}
-                  {view === 'queue' && (
-                    <>
-                      <div className={styles.badgeRow}>
-                        <span className={styles.miniBadge} title="Next edition number">
-                          Next Edition #{(u.totalSold ?? 0) + 1}
-                        </span>
-                        <span className={`${styles.miniBadge} ${styles.warningBadge}`} title="Estimated time to mint">
-                          Next mint in ~{formatEtaFromQueue(u.rankQueuePosition ?? 0)}
-                        </span>
-                      </div>
-                    </>
-                  )}
-                  {view === 'recentTrades' && u.lastSaleAtMs && (
-                    <div className={styles.badgeRow}>
-                      <span
-                        suppressHydrationWarning
-                        className={styles.miniBadge}
-                        title={new Date(u.lastSaleAtMs).toLocaleString()}
-                      >
-                        Last sale {formatRelativeAgo(u.lastSaleAtMs)}
-                      </span>
-                    </div>
-                  )}
-                  {view !== 'totalSold' &&
-                    view !== 'totalTraded' &&
-                    view !== 'rarest' &&
-                    view !== 'queue' &&
-                    view !== 'marmotRecovery' && (
-                      <>
-                        {u.lastOfferId && u.lastOfferStatus === 0 && (
-                          <div className={styles.badgeRow}>
-                            <TakeOfferButton
-                              offerId={u.lastOfferId}
-                              className={styles.miniBadge}
-                              ariaLabel="Take offer via WalletConnect or view on Dexie"
-                              title="Dexie"
-                              labelDefault="Dexie"
-                              labelWhenSage="Take Offer"
-                            >
-                              <Image
-                                src="https://raw.githubusercontent.com/dexie-space/dexie-kit/main/svg/duck.svg"
-                                alt="Dexie"
-                                width={16}
-                                height={16}
-                              />
-                            </TakeOfferButton>
-                            <a
-                              href={`https://mintgarden.io/offers/${u.lastOfferId}`}
-                              target="_blank"
-                              rel="noreferrer noopener"
-                              className={styles.miniBadge}
-                              aria-label="View latest offer on Mintgarden"
-                              title="Mintgarden"
-                            >
-                              <Image
-                                src="https://mintgarden.io/mint-logo-round.svg"
-                                alt="MintGarden"
-                                width={16}
-                                height={16}
-                              />
-                              Mintgarden
-                            </a>
-                          </div>
-                        )}
-                        {(!u.lastOfferId || u.lastOfferStatus !== 0) && (
-                          <div className={styles.badgeRow}>
-                            <span className={`${styles.miniBadge} ${styles.warningBadge}`}>
-                              {Number.isFinite(u?.rankQueuePosition) && (u.rankQueuePosition ?? 0) > 0
-                                ? `Next mint in ~${formatEtaFromQueue(u.rankQueuePosition)}`
-                                : 'Next Copy Coming Soon!'}
-                            </span>
-                          </div>
-                        )}
-                      </>
-                    )}
-                </div>
-              </div>
+              <PfpCard key={u.id} user={u} index={idx} view={view} rootHostForLinks={rootHostForLinks} />
             ))}
             {renderList.length === 0 && !isLoadingMore && (
               <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2rem 0', color: '#666' }}>
