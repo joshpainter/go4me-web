@@ -110,7 +110,9 @@ function MyApp({ Component, pageProps }: AppProps) {
 
     // Suppress Next.js dev overlay errors for WalletConnect
     // Narrowly probe Next.js global without extending the Window type
-    if (typeof window !== 'undefined' && (window as any).__NEXT_DATA__?.buildId) {
+    const nextData: unknown =
+      typeof window !== 'undefined' ? (window as unknown as { __NEXT_DATA__?: unknown }).__NEXT_DATA__ : undefined
+    if (nextData && typeof nextData === 'object') {
       const originalNextJsError = window.console.error.bind(window.console) as (...args: unknown[]) => void
       window.console.error = (...args: unknown[]) => {
         const message = joinMsg(...args)

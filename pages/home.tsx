@@ -710,7 +710,7 @@ export default function Home({
             size="large"
             placeholder="Search for go4s…"
             value={rawSearch}
-            onChange={(_: any, data: InputOnChangeData) => setRawSearch(String(data.value ?? ''))}
+            onChange={(_, data: InputOnChangeData) => setRawSearch(String(data.value ?? ''))}
             style={{ width: '100%', maxWidth: 'min(95vw, 2100px)' }}
           />
         </div>

@@ -41,10 +41,11 @@ export function resolveLeaderboardQuery(args: LeaderboardQueryArgs) {
 }
 
 // Apply search filter lazily
-export function applySearch(qb: any, fields: string[], query?: string) {
+export function applySearch<T>(qb: T, fields: string[], query?: string): T {
   if (!query || query.trim().length < 1) return qb
   const or = buildOrSearch(fields, query)
-  return or ? qb.or(or) : qb
+  const builder = qb as unknown as { or: (expr: string) => typeof qb }
+  return or ? builder.or(or) : qb
 }
 
 export async function executeLeaderboardQuery<T extends LeaderboardRow | QueueRow>(
@@ -54,7 +55,7 @@ export async function executeLeaderboardQuery<T extends LeaderboardRow | QueueRo
     const { data, error } = await qb
     if (error) return { data: [], error: normaliseError(error) }
     return { data: (data || []) as T[], error: null }
-  } catch (e: any) {
+  } catch (e: unknown) {
     return { data: [], error: normaliseError(e) }
   }
 }
@@ -114,7 +115,7 @@ export async function runViewQuery<RowT>(
     }
     const rows = (data || []) as RowT[]
     return { data: rows, error: null, meta: { rowCount: rows.length, durationMs: Date.now() - t0, from, to, view } }
-  } catch (e: any) {
+  } catch (e: unknown) {
     return {
       data: [],
       error: normaliseError(e),
@@ -130,9 +131,9 @@ export async function fetchLeaderboardPage<V extends LeaderboardView | string>(
 ): Promise<ServiceResult<LeaderboardViewRow<V>[]>> {
   return runViewQuery<LeaderboardViewRow<V>>(() => {
     const resolved = resolveLeaderboardQuery({ view, pagination })
-    if ('error' in resolved) return resolved as any
-    let { qb } = resolved as any
+    if ('error' in resolved) return resolved as unknown as { error: { message: string } }
+    let { qb } = resolved
     qb = applySearch(qb, ['username', 'name'], query)
-    return { qb, from: (resolved as any).from, to: (resolved as any).to }
+    return { qb, from: resolved.from, to: resolved.to }
   }, String(view))
 }

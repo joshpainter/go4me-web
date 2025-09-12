@@ -8,6 +8,7 @@ import { TakeOfferButton } from '../components/wallet/TakeOfferButton'
 import { TakeMintgardenOfferButton } from '../components/wallet/TakeMintgardenOfferButton'
 import { fetchUserProfile } from '../lib/database/services/profile'
 import { fetchUserPfps } from '../lib/database/services/collections'
+import type { OwnedPfpRow, OtherOwnerRow } from '../lib/database/services/collections'
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import type React from 'react'
 import { Icon, Menu, Input, Button } from 'semantic-ui-react'
@@ -21,7 +22,6 @@ import { SITE_CONFIG } from '../lib/constants'
 type Nullable<T> = T | null | undefined
 
 type CollectionTab = 'my' | 'others'
-const isCollectionTab = (v: string): v is CollectionTab => v === 'my' || v === 'others'
 
 export interface DomainUser {
   username: string
@@ -102,7 +102,7 @@ function DomainPfpFlip({
   xPfpUrl,
   username,
   linkHref,
-  rankCopiesSold,
+  rankCopiesSold: _rankCopiesSold,
 }: {
   avatarUrl: string
   xPfpUrl?: string | null
@@ -115,8 +115,8 @@ function DomainPfpFlip({
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    const touchCapable =
-      'ontouchstart' in window || navigator.maxTouchPoints > 0 || (navigator as any).msMaxTouchPoints > 0
+    const nav = navigator as Navigator & { msMaxTouchPoints?: number }
+    const touchCapable = 'ontouchstart' in window || nav.maxTouchPoints > 0 || (nav.msMaxTouchPoints ?? 0) > 0
     setIsTouch(!!touchCapable)
   }, [])
 
@@ -248,8 +248,8 @@ function PfpFlipThumb({
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    const touchCapable =
-      'ontouchstart' in window || navigator.maxTouchPoints > 0 || (navigator as any).msMaxTouchPoints > 0
+    const nav = navigator as Navigator & { msMaxTouchPoints?: number }
+    const touchCapable = 'ontouchstart' in window || nav.maxTouchPoints > 0 || (nav.msMaxTouchPoints ?? 0) > 0
     setIsTouch(!!touchCapable)
   }, [])
 
@@ -420,22 +420,23 @@ export const getServerSideProps: GetServerSideProps<DomainProps> = async (ctx) =
     try {
       const ownedResp = await fetchUserPfps('owned', username, { from: 0, to: PAGE_SIZE - 1 }, searchQ)
       if (ownedResp.error) throw new Error(ownedResp.error.message)
-      const ownedData = (ownedResp.data || []) as any[]
-      ownedPfps = ownedData.map((r: any) => {
+      const ownedData = (ownedResp.data || []) as OwnedPfpRow[]
+      ownedPfps = ownedData.map((r, idx) => {
         const pfpUsername = r.pfp_username || null
         const cid = r.pfp_ipfs_cid || null
         const dataUri = r.pfp_data_uri || ''
-        const frontUrl = dataUri
-        const backUrl = cid && pfpUsername ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-x.png` : dataUri
+        const frontUrl =
+          dataUri || (cid && pfpUsername ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-go4me.png` : '')
+        const backUrl = cid && pfpUsername ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-x.png` : frontUrl
         return {
-          id: r.nft_id,
+          id: r.nft_id ?? `${pfpUsername ?? 'owned'}-${idx}`,
           frontUrl,
           backUrl,
           pfpName: r.pfp_name,
           pfpUsername,
-          lastOfferId: r.last_offerid || r.lastOfferId || null,
-          lastOfferStatus: r.last_offer_status ?? r.lastOfferStatus ?? null,
-          rankQueuePosition: r.rank_queue_position ?? null,
+          lastOfferId: null,
+          lastOfferStatus: null,
+          rankQueuePosition: null,
         }
       })
       ownedHasMore = ownedData.length === PAGE_SIZE
@@ -448,22 +449,21 @@ export const getServerSideProps: GetServerSideProps<DomainProps> = async (ctx) =
     try {
       const othersResp = await fetchUserPfps('others', username, { from: 0, to: PAGE_SIZE - 1 }, searchQ)
       if (othersResp.error) throw new Error(othersResp.error.message)
-      const othersData = (othersResp.data || []) as any[]
-      otherOwners = othersData.map((r: any) => {
+      const othersData = (othersResp.data || []) as OtherOwnerRow[]
+      otherOwners = othersData.map((r, idx) => {
         const pfpUsername = r.pfp_username || null
         const cid = r.pfp_ipfs_cid || null
-        const dataUri = r.pfp_data_uri || ''
-        const frontUrl = dataUri
-        const backUrl = cid && pfpUsername ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-x.png` : dataUri
+        const frontUrl = cid && pfpUsername ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-go4me.png` : ''
+        const backUrl = cid && pfpUsername ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-x.png` : frontUrl
         return {
-          id: r.pfp_author_id,
+          id: r.pfp_author_id ?? `${pfpUsername ?? 'other'}-${idx}`,
           frontUrl,
           backUrl,
           pfpName: r.pfp_name,
           pfpUsername,
           lastOfferId: r.last_offerid || null,
           lastOfferStatus: r.last_offer_status ?? null,
-          rankQueuePosition: r.rank_queue_position ?? null,
+          rankQueuePosition: null,
         }
       })
       othersHasMore = othersData.length === PAGE_SIZE
@@ -570,29 +570,49 @@ export default function DomainPage(props: DomainProps) {
     if (typeof window !== 'undefined' && !('IntersectionObserver' in window)) setIntersectionSupported(false)
   }, [])
 
-  const mapRow = useCallback((r: PfpRow, idx: number, prefix = 'dyn'): PfpItem => {
-    const dataUri = r.pfp_data_uri || ''
-    const pfpUsername = r.pfp_username || r.username || null
-    const cid = r.pfp_ipfs_cid || null
+  type AnyRow = OwnedPfpRow | OtherOwnerRow | PfpRow
+  type CommonRow = Partial<
+    Pick<
+      PfpRow,
+      | 'pfp_data_uri'
+      | 'pfp_username'
+      | 'username'
+      | 'pfp_ipfs_cid'
+      | 'image_url'
+      | 'generated_pfp_url'
+      | 'pfp_name'
+      | 'last_offerid'
+      | 'last_offer_status'
+      | 'lastOfferStatus'
+      | 'rank_queue_position'
+      | 'nft_id'
+      | 'pfp_author_id'
+    >
+  >
+  const mapRow = useCallback((r: AnyRow, idx: number, _prefix = 'dyn'): PfpItem => {
+    const cr = r as CommonRow
+    const dataUri = cr.pfp_data_uri || ''
+    const pfpUsername = cr.pfp_username || cr.username || null
+    const cid = cr.pfp_ipfs_cid || null
     const frontUrl =
       dataUri ||
       (cid && pfpUsername
         ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-go4me.png`
-        : r.image_url || r.generated_pfp_url || '')
+        : cr.image_url || cr.generated_pfp_url || '')
     const backUrl =
       cid && pfpUsername
         ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-x.png`
-        : dataUri || r.image_url || r.generated_pfp_url || ''
+        : dataUri || cr.image_url || cr.generated_pfp_url || ''
     return {
-      id: (r.nft_id ?? r.pfp_author_id ?? `${prefix}-${idx}`) as string,
+      id: (cr.nft_id ?? cr.pfp_author_id ?? `dyn-${idx}`) as string,
       frontUrl,
       backUrl,
-      pfpName: r.pfp_name,
+      pfpName: cr.pfp_name,
       pfpUsername,
-      lastOfferId: r.last_offerid || null,
-      lastOfferStatus: r.last_offer_status ?? r.lastOfferStatus ?? null,
+      lastOfferId: cr.last_offerid || null,
+      lastOfferStatus: cr.last_offer_status ?? cr.lastOfferStatus ?? null,
       // If the view supplies queue minutes for this PFP, keep it so we can show ETA.
-      rankQueuePosition: r.rank_queue_position ?? null,
+      rankQueuePosition: cr.rank_queue_position ?? null,
     }
   }, [])
 
@@ -609,9 +629,9 @@ export default function DomainPage(props: DomainProps) {
       if (isMy) {
         const resp = await fetchUserPfps('owned', username, { from, to }, query)
         if (resp.error) throw new Error(resp.error.message)
-        const data = (resp.data || []) as any[]
+        const data = (resp.data || []) as OwnedPfpRow[]
         if (data.length > 0) {
-          const mapped = data.map((r: any, i) => mapRow(r as any, currentPage * pageSize + i, 'owned'))
+          const mapped = data.map((r, i) => mapRow(r, currentPage * pageSize + i, 'owned'))
           setOwnedList((prev) => [...prev, ...mapped])
           setOwnedPage((p) => p + 1)
           setOwnedMore(data.length === pageSize)
@@ -621,9 +641,9 @@ export default function DomainPage(props: DomainProps) {
       } else {
         const resp = await fetchUserPfps('others', username, { from, to }, query)
         if (resp.error) throw new Error(resp.error.message)
-        const data = (resp.data || []) as any[]
+        const data = (resp.data || []) as OtherOwnerRow[]
         if (data.length > 0) {
-          const mapped = data.map((r: any, i) => mapRow(r as any, currentPage * pageSize + i, 'other'))
+          const mapped = data.map((r, i) => mapRow(r, currentPage * pageSize + i, 'other'))
           setOthersList((prev) => [...prev, ...mapped])
           setOthersPage((p) => p + 1)
           setOthersMore(data.length === pageSize)
@@ -652,7 +672,7 @@ export default function DomainPage(props: DomainProps) {
           if (newQ) url.searchParams.set('q', newQ)
           else url.searchParams.delete('q')
           window.history.replaceState({}, '', url.toString())
-        } catch (_) {
+        } catch {
           // no-op
         }
       }
@@ -679,8 +699,8 @@ export default function DomainPage(props: DomainProps) {
         if (isMy) {
           const pfpsResp = await fetchUserPfps('owned', username, { from: 0, to: pageSize - 1 }, query)
           if (pfpsResp.error) throw new Error(pfpsResp.error.message)
-          const data = (pfpsResp.data || []) as any[]
-          const mapped = Array.isArray(data) ? data.map((r: any, i) => mapRow(r as any, i, 'owned')) : []
+          const data = (pfpsResp.data || []) as OwnedPfpRow[]
+          const mapped = Array.isArray(data) ? data.map((r, i) => mapRow(r, i, 'owned')) : []
           if (cancelled) return
           setOwnedList(mapped)
           setOwnedPage(1)
@@ -688,8 +708,8 @@ export default function DomainPage(props: DomainProps) {
         } else {
           const pfpsResp = await fetchUserPfps('others', username, { from: 0, to: pageSize - 1 }, query)
           if (pfpsResp.error) throw new Error(pfpsResp.error.message)
-          const data = (pfpsResp.data || []) as any[]
-          const mapped = Array.isArray(data) ? data.map((r: any, i) => mapRow(r as any, i, 'other')) : []
+          const data = (pfpsResp.data || []) as OtherOwnerRow[]
+          const mapped = Array.isArray(data) ? data.map((r, i) => mapRow(r, i, 'other')) : []
           if (cancelled) return
           setOthersList(mapped)
           setOthersPage(1)
@@ -844,11 +864,11 @@ export default function DomainPage(props: DomainProps) {
     try {
       const PAGE = 1000
       let from = 0
-      const rows: any[] = []
+      const rows: OtherOwnerRow[] = []
       while (true) {
         const resp = await fetchUserPfps('others', username, { from, to: from + PAGE - 1 }, query)
         if (resp.error) throw new Error(resp.error.message)
-        const data = (resp.data || []) as any[]
+        const data = (resp.data || []) as OtherOwnerRow[]
         if (data.length === 0) break
         rows.push(...data)
         if (data.length < PAGE) break
@@ -860,14 +880,14 @@ export default function DomainPage(props: DomainProps) {
         // Always wrap in quotes; escape existing quotes
         return '"' + s.replace(/"/g, '""') + '"'
       }
-      const sourceRows: any[] = rows.length > 0 ? rows : (othersList as any[]) || []
+      const sourceRows: Array<OtherOwnerRow | PfpItem> = rows.length > 0 ? rows : othersList || []
       const lines = ['username,name,xch_address,did_address']
       for (const r of sourceRows) {
         // Support both Supabase view rows and client-side mapped items
-        const u = r.pfp_username ?? r.pfpUsername ?? ''
-        const n = r.pfp_name ?? r.pfpName ?? ''
-        const a = r.owner_xch_address ?? ''
-        const d = r.owner_did_address ?? ''
+        const u = 'pfp_username' in r ? (r.pfp_username ?? '') : (r.pfpUsername ?? '')
+        const n = 'pfp_name' in r ? (r.pfp_name ?? '') : (r.pfpName ?? '')
+        const a = 'owner_xch_address' in r ? (r.owner_xch_address ?? '') : ''
+        const d = 'owner_did_address' in r ? (r.owner_did_address ?? '') : ''
         lines.push([quote(u), quote(n), quote(a), quote(d)].join(','))
       }
       const csv = lines.join('\n')

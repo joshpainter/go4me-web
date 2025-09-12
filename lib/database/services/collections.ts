@@ -34,14 +34,14 @@ export async function fetchUserPfps(
   try {
     const viewName = view === 'owned' ? 'get_user_page_owned_pfps' : 'get_user_page_other_owners'
 
-    let selectOpts: any = view === 'owned' ? OWNED_PFPS_COLUMNS : OTHER_OWNERS_COLUMNS
-    let headOpts: any = undefined
+    let selectOpts: string = view === 'owned' ? OWNED_PFPS_COLUMNS : OTHER_OWNERS_COLUMNS
+    let headOpts: { count: 'exact'; head: true } | undefined = undefined
     if (countOnly) {
       selectOpts = 'username'
       headOpts = { count: 'exact', head: true }
     }
 
-    let qb: any = supabase.from(viewName).select(selectOpts, headOpts).ilike('username', username)
+    let qb = supabase.from(viewName).select(selectOpts, headOpts).ilike('username', username)
 
     if (!countOnly) {
       qb = qb.range(pagination.from, pagination.to)
@@ -51,10 +51,17 @@ export async function fetchUserPfps(
     if (or) qb = qb.or(or)
 
     const resp = await qb
-    if (resp.error) return { data: [], error: normaliseError(resp.error), count: resp.count }
-
-    return { data: (resp.data || []) as (OwnedPfpRow | OtherOwnerRow)[], error: null, count: resp.count }
-  } catch (e: any) {
+    if (countOnly) {
+      if (resp.error) return { data: [], error: normaliseError(resp.error), count: resp.count ?? 0 }
+      return { data: [], error: null, count: resp.count ?? 0 }
+    }
+    if (resp.error) return { data: [], error: normaliseError(resp.error), count: resp.count ?? undefined }
+    return {
+      data: (resp.data as unknown as (OwnedPfpRow | OtherOwnerRow)[]) || [],
+      error: null,
+      count: resp.count ?? undefined,
+    }
+  } catch (e: unknown) {
     return { data: [], error: normaliseError(e) }
   }
 }

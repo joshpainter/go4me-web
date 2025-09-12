@@ -15,10 +15,23 @@ type Props = {
   labelWhenSage?: string
 }
 
-export function TakeOfferButton({ offerId, children, className, title, ariaLabel, labelDefault = 'Dexie', labelWhenSage = 'Take Offer' }: Props) {
+export function TakeOfferButton({
+  offerId,
+  children,
+  className,
+  title,
+  ariaLabel,
+  labelDefault = 'Dexie',
+  labelWhenSage = 'Take Offer',
+}: Props) {
   const { chiaTakeOffer } = useJsonRpc()
   const { session, connect, reset } = useWalletConnect()
-  const { isAvailable: gobyAvailable, isConnected: gobyConnected, connect: gobyConnect, disconnect: gobyDisconnect } = useGoby()
+  const {
+    isAvailable: gobyAvailable,
+    isConnected: gobyConnected,
+    connect: gobyConnect,
+    disconnect: gobyDisconnect,
+  } = useGoby()
   const { showToast } = useToast()
   const [busy, setBusy] = useState(false)
   const [cooldown, setCooldown] = useState(false)
@@ -36,7 +49,9 @@ export function TakeOfferButton({ offerId, children, className, title, ariaLabel
       if (session) {
         // Disconnect Goby if it's connected while WalletConnect is active
         if (gobyConnected) {
-          try { await gobyDisconnect() } catch {}
+          try {
+            await gobyDisconnect()
+          } catch {}
         }
       }
       // If Goby is already connected, use it exclusively
@@ -45,7 +60,9 @@ export function TakeOfferButton({ offerId, children, className, title, ariaLabel
       }
       // If neither is connected, prefer Goby on desktop, WalletConnect otherwise
       else if (gobyAvailable && !isMobile) {
-        try { await gobyConnect() } catch {}
+        try {
+          await gobyConnect()
+        } catch {}
       }
       // Fallback to WalletConnect if Goby connection failed or not available
       if (!gobyConnected && !session) {
@@ -70,15 +87,17 @@ export function TakeOfferButton({ offerId, children, className, title, ariaLabel
       if (!offer) throw new Error('Offer not found in Dexie response')
 
       const r = await chiaTakeOffer({ offer })
-      // r may be null/undefined if rejected in some wallets; guard access
-      if (r && (r as any).id) {
+      // r may be null/undefined or a generic object; guard access
+      const txId = (r && typeof r === 'object' && (r as { id?: string }).id) || null
+      if (txId) {
         // Show transaction success toast
         showToast('Offer accepted successfully!', 'success')
       }
-    } catch (e: any) {
-      const msg = (e?.message || String(e))
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e)
       const isRejection = /reject|denied|cancel|close|user.?reject|user.?denied|user.?cancel/i.test(msg)
-      const isConnectionError = /session not found|pairing|no matching key|history:|please request after current approval resolve/i.test(msg)
+      const isConnectionError =
+        /session not found|pairing|no matching key|history:|please request after current approval resolve/i.test(msg)
 
       // Only reset wallet connections for actual connection errors, not user rejections
       if (isConnectionError) {
@@ -88,7 +107,9 @@ export function TakeOfferButton({ offerId, children, className, title, ariaLabel
           reset?.()
         } else if (msg.includes('please request after current approval resolve') && gobyConnected) {
           // Goby pending state error
-          try { gobyDisconnect?.() } catch {}
+          try {
+            gobyDisconnect?.()
+          } catch {}
         }
       }
 
@@ -109,7 +130,8 @@ export function TakeOfferButton({ offerId, children, className, title, ariaLabel
         } else if (msg.includes('session not found') || msg.includes('pairing') || msg.includes('no matching key')) {
           userMessage = 'Wallet connection lost. Please reconnect your wallet.'
         } else if (msg.includes('please request after current approval resolve')) {
-          userMessage = 'Wallet is still processing previous request. Try disconnecting and reconnecting your wallet, then try again.'
+          userMessage =
+            'Wallet is still processing previous request. Try disconnecting and reconnecting your wallet, then try again.'
         }
 
         showToast(userMessage, 'error')
@@ -147,19 +169,23 @@ export function TakeOfferButton({ offerId, children, className, title, ariaLabel
         disabled={busy || cooldown}
         title={cooldown ? 'Please wait...' : title}
         aria-label={ariaLabel}
-        style={{ cursor: (busy || cooldown) ? 'default' : 'pointer' }}
+        style={{ cursor: busy || cooldown ? 'default' : 'pointer' }}
       >
-        {busy ? 'Taking…'
-          : cooldown ? 'Wait...'
-          : children
-            ? <span style={{ display: 'inline-flex', alignItems: 'center' }}>
-                {children}
-                <span style={{ marginLeft: 4 }}>{isConnectedAny ? labelWhenSage : labelDefault}</span>
-              </span>
-            : (isConnectedAny ? labelWhenSage : labelDefault)
-        }
+        {busy ? (
+          'Taking…'
+        ) : cooldown ? (
+          'Wait...'
+        ) : children ? (
+          <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+            {children}
+            <span style={{ marginLeft: 4 }}>{isConnectedAny ? labelWhenSage : labelDefault}</span>
+          </span>
+        ) : isConnectedAny ? (
+          labelWhenSage
+        ) : (
+          labelDefault
+        )}
       </button>
     </div>
   )
 }
-

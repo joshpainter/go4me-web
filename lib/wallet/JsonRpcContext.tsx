@@ -17,7 +17,12 @@ export const JsonRpcContext = createContext<JsonRpcShape>({} as JsonRpcShape)
 
 export function JsonRpcProvider({ children }: PropsWithChildren) {
   const { client, session, chainId } = useWalletConnect()
-  const { isAvailable: gobyAvailable, isConnected: gobyConnected, request: gobyRequest, connect: gobyConnect } = useGoby()
+  const {
+    isAvailable: gobyAvailable,
+    isConnected: gobyConnected,
+    request: gobyRequest,
+    connect: gobyConnect,
+  } = useGoby()
 
   // Mobile detection - disable Goby functionality on mobile
   const { isMobile } = useViewport()
@@ -34,14 +39,18 @@ export function JsonRpcProvider({ children }: PropsWithChildren) {
           request: { method, params },
         })
         if (result && typeof result === 'object' && 'error' in result) {
-          throw new Error(JSON.stringify((result as any).error))
+          const errObj = result as { error: unknown }
+          throw new Error(JSON.stringify(errObj.error))
         }
         return result as T
-      } catch (e: any) {
-        const msg = (e?.message || '').toLowerCase()
-        if (msg.includes('user rejected') || msg.includes('rejected') || msg.includes('denied')) throw new Error('Request rejected in wallet')
-        if (msg.includes('no matching key') || msg.includes('pairing') || msg.includes('history:')) throw new Error('Wallet session not found. Please reconnect.')
-        if (msg.includes('please request after current approval resolve')) throw new Error('please request after current approval resolve')
+      } catch (e: unknown) {
+        const msg = String((e as { message?: string } | undefined)?.message || '').toLowerCase()
+        if (msg.includes('user rejected') || msg.includes('rejected') || msg.includes('denied'))
+          throw new Error('Request rejected in wallet')
+        if (msg.includes('no matching key') || msg.includes('pairing') || msg.includes('history:'))
+          throw new Error('Wallet session not found. Please reconnect.')
+        if (msg.includes('please request after current approval resolve'))
+          throw new Error('please request after current approval resolve')
         throw e
       }
     }
@@ -58,16 +67,14 @@ export function JsonRpcProvider({ children }: PropsWithChildren) {
     // Don't auto-connect Goby if WalletConnect is already active
     // Only try to connect Goby if no wallet is currently connected
     if (gobyAvailable && !gobyConnected && !session && !isMobile) {
-      try { await gobyConnect() } catch {}
+      try {
+        await gobyConnect()
+      } catch {}
     }
     return await request<{ id: string }>(ChiaMethod.TakeOffer, data)
   }
 
-  return (
-    <JsonRpcContext.Provider value={{ chiaTakeOffer }}>
-      {children}
-    </JsonRpcContext.Provider>
-  )
+  return <JsonRpcContext.Provider value={{ chiaTakeOffer }}>{children}</JsonRpcContext.Provider>
 }
 
 export function useJsonRpc() {
@@ -75,4 +82,3 @@ export function useJsonRpc() {
   if (!ctx) throw new Error('useJsonRpc must be used within JsonRpcProvider')
   return ctx
 }
-
