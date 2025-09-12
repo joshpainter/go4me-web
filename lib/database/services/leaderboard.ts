@@ -68,7 +68,7 @@ export async function fetchLeaderboardDecomposed(
   if ('error' in resolved) return { data: [], error: { message: resolved.error?.message || 'Unknown error' } }
   let { qb } = resolved
 
-  qb = applySearch(qb, view === 'queue' ? ['username', 'name'] : ['username', 'name'], query)
+  qb = applySearch(qb, ['username', 'name'], query)
 
   return executeLeaderboardQuery(qb)
 }
@@ -132,7 +132,7 @@ export async function fetchLeaderboardPage<V extends LeaderboardView | string>(
     const resolved = resolveLeaderboardQuery({ view, pagination })
     if ('error' in resolved) return resolved as any
     let { qb } = resolved as any
-    qb = applySearch(qb, view === 'queue' ? ['username', 'name'] : ['username', 'name'], query)
+    qb = applySearch(qb, ['username', 'name'], query)
     return { qb, from: (resolved as any).from, to: (resolved as any).to }
   }, String(view))
 }

@@ -24,17 +24,6 @@ export const LEADERBOARD_COLUMNS = [
   'xch_address',
 ].join(',')
 
-export const QUEUE_COLUMNS = [
-  'author_id',
-  'username',
-  'name',
-  'rank_queue_position',
-  'pfp_ipfs_cid',
-  'last_nft_series_number',
-  'last_offerid',
-  'xch_address',
-].join(',')
-
 export const USER_PROFILE_COLUMNS = [
   'author_id',
   'username',
