@@ -1,13 +1,13 @@
-// @ts-nocheck
 import Head from 'next/head'
 import Link from 'next/link'
 import Script from 'next/script'
 import Image from 'next/image'
 import styles from '../styles/Home.module.css'
-import { Segment, Container, Menu, Input, Icon } from 'semantic-ui-react'
+import { Segment, Container, Menu, Input, Icon, type InputOnChangeData } from 'semantic-ui-react'
 import { useTheme } from './_app'
 import { useMemo, useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/router'
+import type { GetServerSideProps } from 'next'
 import { fetchLeaderboardPage } from '../lib/database/services/leaderboard'
 import { TakeOfferButton } from '../components/wallet/TakeOfferButton'
 import GlobalWalletBar from '../components/wallet/GlobalWalletBar'
@@ -15,10 +15,75 @@ import { OrganizationSchema, WebSiteSchema } from '../components/SEO/StructuredD
 import { SITE_CONFIG } from '../lib/constants'
 import { LEADERBOARD_PAGE_SIZE, MOJO_PER_XCH, QUEUE_SECONDS_PER_POSITION } from '../lib/constants'
 
+// Types
+type LeaderboardView =
+  | 'totalSold'
+  | 'totalTraded'
+  | 'badgeScore'
+  | 'shadowScore'
+  | 'rarest'
+  | 'recentTrades'
+  | 'marmotRecovery'
+  | 'queue'
+
+type Nullable<T> = T | null | undefined
+
+export interface User {
+  id: string
+  username: string
+  fullName?: string | null
+  avatarUrl: string
+  xPfpUrl?: string | null
+  totalSold: number
+  totalTradedXCH?: number
+  totalRoyaltiesXCH?: number
+  averageSaleXCH?: number
+  avgTimeToSellMs?: Nullable<number>
+  latestPrice?: number
+  lastOfferId?: string | null
+  lastOfferStatus?: number | null
+  lastSaleAtMs?: Nullable<number>
+  rankCopiesSold?: Nullable<number>
+  rankFewestCopiesSold?: Nullable<number>
+  rankTotalTradedValue?: Nullable<number>
+  rankLastSale?: Nullable<number>
+  rankTotalBadgeScore?: Nullable<number>
+  rankTotalShadowScore?: Nullable<number>
+  rankQueuePosition?: Nullable<number>
+  totalBadgeScore?: number
+  totalShadowScore?: number
+  displayTotalTradedXCH?: string
+  displayTotalRoyaltiesXCH?: string
+  displayAverageSaleXCH?: string
+  displayAvgTime?: string
+  _search?: string
+}
+
+const ALL_VIEWS: LeaderboardView[] = [
+  'totalSold',
+  'totalTraded',
+  'badgeScore',
+  'shadowScore',
+  'rarest',
+  'recentTrades',
+  'marmotRecovery',
+  'queue',
+]
+const isValidView = (v: unknown): v is LeaderboardView => typeof v === 'string' && (ALL_VIEWS as string[]).includes(v)
+
+interface HomeProps {
+  users: User[]
+  hasMore: boolean
+  initialView?: LeaderboardView | null
+  initialQuery?: string
+  rootHostForLinks?: string
+}
+
 // Simple formatting helpers
-const formatXCH = (n) => new Intl.NumberFormat(undefined, { maximumFractionDigits: 4 }).format(n)
-const formatInt = (n) => new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(n ?? 0)
-const formatRelativeAgo = (ms) => {
+const formatXCH = (n: number) => new Intl.NumberFormat(undefined, { maximumFractionDigits: 4 }).format(n)
+const formatInt = (n: number | null | undefined) =>
+  new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(n ?? 0)
+const formatRelativeAgo = (ms: number | null | undefined) => {
   if (!ms) return '—'
   const diff = Date.now() - ms
   if (diff < 0) return 'just now'
@@ -36,7 +101,7 @@ const formatRelativeAgo = (ms) => {
   const y = Math.floor(mo / 12)
   return `${y} year${y === 1 ? '' : 's'} ago`
 }
-const formatDuration = (ms) => {
+const formatDuration = (ms: number | null | undefined) => {
   if (!ms) return '—'
   const seconds = Math.floor(ms / 1000)
   const d = Math.floor(seconds / 86400)
@@ -51,7 +116,7 @@ const formatDuration = (ms) => {
 
 // Format queue ETA where each queue position = 10 seconds
 // Returns compact strings like "3m 20s", "1h 5m", or "25s"
-const formatEtaFromQueue = (positions) => {
+const formatEtaFromQueue = (positions: number | null | undefined) => {
   const totalSeconds = Math.max(0, Math.round((positions || 0) * QUEUE_SECONDS_PER_POSITION))
   const d = Math.floor(totalSeconds / 86400)
   const h = Math.floor((totalSeconds % 86400) / 3600)
@@ -64,7 +129,7 @@ const formatEtaFromQueue = (positions) => {
 }
 
 // Card image with flip interaction: front = new PFP (avatarUrl), back = original (xPfpUrl) in a circle mask
-function PfpFlipCard({ user, rootHostForLinks, idx }) {
+function PfpFlipCard({ user, rootHostForLinks, idx }: { user: User; rootHostForLinks?: string; idx: number }) {
   const [isFlipped, setIsFlipped] = useState(false)
   const [isTouch, setIsTouch] = useState(false)
   const profileHref = user.username ? `//${user.username}.${rootHostForLinks || 'go4.me'}/` : undefined
@@ -241,7 +306,7 @@ function PfpFlipCard({ user, rootHostForLinks, idx }) {
   )
 }
 
-export async function getServerSideProps(context) {
+export const getServerSideProps: GetServerSideProps<HomeProps> = async (context) => {
   const startTime = Date.now()
 
   context.res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=600')
@@ -260,7 +325,7 @@ export async function getServerSideProps(context) {
   )
 
   // Derive root host (without subdomain) + preserve port so we can build username.<server> links dynamically
-  const hostHeader = context.req?.headers?.host || ''
+  const hostHeader = (context.req?.headers?.host as string) || ''
   const [hostNoPort, portPart] = hostHeader.split(':')
   let rootDomain = hostNoPort
   if (hostNoPort && hostNoPort !== 'localhost' && hostNoPort !== '127.0.0.1') {
@@ -273,17 +338,18 @@ export async function getServerSideProps(context) {
   }
   const rootHostForLinks = portPart ? `${rootDomain}:${portPart}` : rootDomain
 
-  let users = []
+  let users: User[] = []
   try {
     const PAGE_SIZE = LEADERBOARD_PAGE_SIZE
     const { view: viewParam, q: qParam } = context.query || {}
-    const currentView = viewParam || 'totalSold'
+    const rawView = Array.isArray(viewParam) ? viewParam[0] : viewParam
+    const currentView: LeaderboardView = isValidView(rawView) ? rawView : 'totalSold'
     const q = (qParam || '').toString().trim()
 
-    const { data, error } = await fetchLeaderboardPage(currentView, q, { from: 0, to: PAGE_SIZE - 1 })
+    const { data, error } = await fetchLeaderboardPage(currentView as string, q, { from: 0, to: PAGE_SIZE - 1 })
     if (error) throw new Error(error.message)
 
-    users = (data || []).map((row) => {
+    users = (data || []).map((row: any) => {
       if (currentView === 'queue') {
         return {
           id: row.author_id,
@@ -299,7 +365,12 @@ export async function getServerSideProps(context) {
       const totalSalesAmount = row.xch_total_sales_amount ?? 0
       const avgSalesAmount = row.xch_average_sales_amount ?? 0
       const avgTimeToSell = row.average_time_to_sell ?? 0
-      const user = {
+      const user: User & {
+        displayTotalTradedXCH?: string
+        displayTotalRoyaltiesXCH?: string
+        displayAverageSaleXCH?: string
+        displayAvgTime?: string
+      } = {
         // Use a stable unique id consistently across SSR + client pagination to avoid duplicates
         id: row.author_id,
         username: row.username,
@@ -326,9 +397,9 @@ export async function getServerSideProps(context) {
         totalShadowScore: row.total_shadow_score || 0,
         _search: (row.username + ' ' + row.name).toLowerCase(),
       }
-      user.displayTotalTradedXCH = formatXCH(user.totalTradedXCH)
-      user.displayTotalRoyaltiesXCH = formatXCH(user.totalRoyaltiesXCH)
-      user.displayAverageSaleXCH = formatXCH(user.averageSaleXCH)
+      user.displayTotalTradedXCH = formatXCH(user.totalTradedXCH ?? 0)
+      user.displayTotalRoyaltiesXCH = formatXCH(user.totalRoyaltiesXCH ?? 0)
+      user.displayAverageSaleXCH = formatXCH(user.averageSaleXCH ?? 0)
       user.displayAvgTime = formatDuration(user.avgTimeToSellMs)
       return user
     })
@@ -341,7 +412,9 @@ export async function getServerSideProps(context) {
     props: {
       users,
       hasMore,
-      initialView: Array.isArray(context.query.view) ? context.query.view[0] : context.query.view || null,
+      initialView: isValidView(Array.isArray(context.query.view) ? context.query.view[0] : context.query.view)
+        ? ((Array.isArray(context.query.view) ? context.query.view[0] : context.query.view) as LeaderboardView)
+        : null,
       initialQuery: Array.isArray(context.query.q) ? context.query.q[0] : context.query.q || '',
       rootHostForLinks,
     },
@@ -354,12 +427,12 @@ export default function Home({
   initialView,
   initialQuery,
   rootHostForLinks,
-}) {
+}: HomeProps) {
   const router = useRouter()
-  const [view, setView] = useState(initialView || 'totalSold')
+  const [view, setView] = useState<LeaderboardView>(initialView || 'totalSold')
   const [rawSearch, setRawSearch] = useState(initialQuery || '')
   const [query, setQuery] = useState(initialQuery || '') // debounced value used for server filtering
-  const [loadedUsers, setLoadedUsers] = useState(() => users)
+  const [loadedUsers, setLoadedUsers] = useState<User[]>(() => users)
   const [page, setPage] = useState(1) // next page index (0 fetched server-side)
   const [hasMore, setHasMore] = useState(initialHasMore)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
@@ -378,7 +451,7 @@ export default function Home({
     }
   }, [view, query, router])
 
-  const appendUsers = useCallback((more) => {
+  const appendUsers = useCallback((more: User[]) => {
     setLoadedUsers((prev) => {
       const existing = new Set(prev.map((u) => u.id))
       const merged = [...prev]
@@ -407,7 +480,7 @@ export default function Home({
         const { data, error } = await fetchLeaderboardPage(view, query, { from: 0, to: PAGE_SIZE - 1 })
         if (error) throw new Error(error.message)
         if (isCancelled) return
-        const mapped = (data || []).map((row) => {
+        const mapped = (data || []).map((row: any) => {
           if (view === 'queue') {
             return {
               id: row.author_id,
@@ -423,7 +496,12 @@ export default function Home({
           const totalSalesAmount = row.xch_total_sales_amount ?? row.total_traded_value ?? row.traded_xch ?? 0
           const avgSalesAmount = row.xch_average_sale_amount ?? row.xch_average_sales_amount ?? 0
           const avgTimeToSell = row.average_time_to_sell ?? 0
-          const user = {
+          const user: User & {
+            displayTotalTradedXCH?: string
+            displayTotalRoyaltiesXCH?: string
+            displayAverageSaleXCH?: string
+            displayAvgTime?: string
+          } = {
             id: row.author_id,
             username: row.username,
             fullName: row.name,
@@ -449,9 +527,9 @@ export default function Home({
             totalShadowScore: row.total_shadow_score || 0,
             _search: (row.username + ' ' + row.name).toLowerCase(),
           }
-          user.displayTotalTradedXCH = formatXCH(user.totalTradedXCH)
-          user.displayTotalRoyaltiesXCH = formatXCH(user.totalRoyaltiesXCH)
-          user.displayAverageSaleXCH = formatXCH(user.averageSaleXCH)
+          user.displayTotalTradedXCH = formatXCH(user.totalTradedXCH ?? 0)
+          user.displayTotalRoyaltiesXCH = formatXCH(user.totalRoyaltiesXCH ?? 0)
+          user.displayAverageSaleXCH = formatXCH(user.averageSaleXCH ?? 0)
           user.displayAvgTime = formatDuration(user.avgTimeToSellMs)
           return user
         })
@@ -478,10 +556,10 @@ export default function Home({
     try {
       const from = page * PAGE_SIZE
       const to = from + PAGE_SIZE - 1
-      const { data, error } = await fetchLeaderboardPage(view, query, { from, to })
+      const { data, error } = await fetchLeaderboardPage(view as string, query, { from, to })
       if (error) throw new Error(error.message)
 
-      const mapped = (data || []).map((row) => {
+      const mapped = (data || []).map((row: any) => {
         if (view === 'queue') {
           return {
             id: row.author_id,
@@ -497,7 +575,12 @@ export default function Home({
         const totalSalesAmount = row.xch_total_sales_amount ?? row.total_traded_value ?? row.traded_xch ?? 0
         const avgSalesAmount = row.xch_average_sale_amount ?? row.xch_average_sales_amount ?? 0
         const avgTimeToSell = row.average_time_to_sell ?? 0
-        const user = {
+        const user: User & {
+          displayTotalTradedXCH?: string
+          displayTotalRoyaltiesXCH?: string
+          displayAverageSaleXCH?: string
+          displayAvgTime?: string
+        } = {
           id: row.author_id,
           username: row.username,
           fullName: row.name,
@@ -523,9 +606,9 @@ export default function Home({
           totalShadowScore: row.total_shadow_score || 0,
           _search: (row.username + ' ' + row.name).toLowerCase(),
         }
-        user.displayTotalTradedXCH = formatXCH(user.totalTradedXCH)
-        user.displayTotalRoyaltiesXCH = formatXCH(user.totalRoyaltiesXCH)
-        user.displayAverageSaleXCH = formatXCH(user.averageSaleXCH)
+        user.displayTotalTradedXCH = formatXCH(user.totalTradedXCH ?? 0)
+        user.displayTotalRoyaltiesXCH = formatXCH(user.totalRoyaltiesXCH ?? 0)
+        user.displayAverageSaleXCH = formatXCH(user.averageSaleXCH ?? 0)
         user.displayAvgTime = formatDuration(user.avgTimeToSellMs)
         return user
       })
@@ -627,7 +710,7 @@ export default function Home({
             size="large"
             placeholder="Search for go4s…"
             value={rawSearch}
-            onChange={(_, { value }) => setRawSearch(value)}
+            onChange={(_: any, data: InputOnChangeData) => setRawSearch(String(data.value ?? ''))}
             style={{ width: '100%', maxWidth: 'min(95vw, 2100px)' }}
           />
         </div>
@@ -784,7 +867,14 @@ export default function Home({
 
         {/* Mobile Dropdown */}
         <div className={styles.mobileTabSelector}>
-          <select value={view} onChange={(e) => setView(e.target.value)} className={styles.mobileTabDropdown}>
+          <select
+            value={view}
+            onChange={(e) => {
+              const v = e.target.value
+              if (isValidView(v)) setView(v)
+            }}
+            className={styles.mobileTabDropdown}
+          >
             <option value="totalSold">Total Editions Sold</option>
             <option value="totalTraded">Total Traded Value</option>
             <option value="badgeScore">Badge Score</option>
@@ -842,12 +932,12 @@ export default function Home({
                           Sold {u.totalSold}
                         </span>
                         <span className={styles.miniBadge} title="XCH total sold">
-                          {formatXCH(u.totalTradedXCH)} XCH
+                          {formatXCH(u.totalTradedXCH ?? 0)} XCH
                         </span>
                       </div>
                       <div className={styles.badgeRow}>
                         <span className={styles.miniBadge} title="Royalties">
-                          Royalties {formatXCH(u.totalRoyaltiesXCH ?? u.totalTradedXCH * 0.1)} XCH
+                          Royalties {formatXCH(u.totalRoyaltiesXCH ?? (u.totalTradedXCH ?? 0) * 0.1)} XCH
                         </span>
                       </div>
                       <div className={styles.badgeRow}>
@@ -899,7 +989,7 @@ export default function Home({
                     <>
                       <div className={styles.badgeRow}>
                         <span className={styles.miniBadge} title="XCH total sold">
-                          {formatXCH(u.totalTradedXCH)} XCH
+                          {formatXCH(u.totalTradedXCH ?? 0)} XCH
                         </span>
                         <span className={styles.miniBadge} title="Total sold">
                           Sold {u.totalSold}
@@ -907,7 +997,7 @@ export default function Home({
                       </div>
                       <div className={styles.badgeRow}>
                         <span className={styles.miniBadge} title="Royalties">
-                          Royalties {formatXCH(u.totalRoyaltiesXCH ?? u.totalTradedXCH * 0.1)} XCH
+                          Royalties {formatXCH(u.totalRoyaltiesXCH ?? (u.totalTradedXCH ?? 0) * 0.1)} XCH
                         </span>
                       </div>
                       <div className={styles.badgeRow}>
