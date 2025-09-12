@@ -1,4 +1,3 @@
-// @ts-nocheck
 import Head from 'next/head'
 import Image from 'next/image'
 import { Icon } from 'semantic-ui-react'
@@ -8,7 +7,7 @@ import { useTheme } from './_app'
 import { SITE_CONFIG } from '../lib/constants'
 import GlobalWalletBar from '../components/wallet/GlobalWalletBar'
 
-export async function getServerSideProps(context) {
+export async function getServerSideProps(context: { req: { headers?: Record<string, string | undefined> } }) {
   const hostHeader = context.req?.headers?.host || ''
   const [hostNoPort, portPart] = hostHeader.split(':')
   let rootDomain = hostNoPort
@@ -22,7 +21,7 @@ export async function getServerSideProps(context) {
   return { props: { rootHostForLinks } }
 }
 
-export default function HowItWorks({ rootHostForLinks }) {
+export default function HowItWorks({ rootHostForLinks }: { rootHostForLinks: string }) {
   const { theme, toggleTheme } = useTheme()
   const [copiedAsset, setCopiedAsset] = useState(false)
   const G4M_ASSET_ID = '37b231bbdc0002a4fbbb65de0007a9cf1645a292888711968a8abb9a3e40596e'
@@ -43,7 +42,7 @@ export default function HowItWorks({ rootHostForLinks }) {
       }
       setCopiedAsset(true)
       setTimeout(() => setCopiedAsset(false), 1600)
-    } catch (_) {
+    } catch {
       // no-op
     }
   }

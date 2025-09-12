@@ -1,8 +1,10 @@
-// @ts-nocheck
+import type { GetServerSideProps } from 'next'
 import { fetchUsernamesPage } from '../lib/database/services/sitemap'
 import { SITE_CONFIG, SITEMAP_CONFIG } from '../lib/constants'
 
-function generateSiteMap(users) {
+type UserRow = { username: string | null }
+
+function generateSiteMap(users: UserRow[]): string {
   const baseUrl = SITE_CONFIG.url
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -58,7 +60,7 @@ function generateSiteMap(users) {
   </url>
   <!-- User profile pages -->
   ${users
-    .map((user) => {
+    .map((user: UserRow) => {
       if (!user.username) return ''
       return `
   <url>
@@ -72,17 +74,17 @@ function generateSiteMap(users) {
 </urlset>`
 }
 
-export async function getServerSideProps({ res }) {
+export const getServerSideProps: GetServerSideProps = async ({ res }) => {
   try {
     const { PAGE_SIZE, MAX_USERS } = SITEMAP_CONFIG
     let page = 0
-    const users = []
+    const users: UserRow[] = []
     while (users.length < MAX_USERS) {
       const from = page * PAGE_SIZE
       const to = from + PAGE_SIZE - 1
       const { data, error } = await fetchUsernamesPage({ from, to })
       if (error) throw new Error(error.message)
-      const rows = data || []
+      const rows = (data || []) as UserRow[]
       if (rows.length === 0) break
       users.push(...rows)
       if (rows.length < PAGE_SIZE) break
