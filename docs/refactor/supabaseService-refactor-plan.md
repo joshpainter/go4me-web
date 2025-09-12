@@ -21,7 +21,7 @@ The service centralizes DB access with helper utilities (query sanitization, pag
 ## 3. Key Issues / Smells
 
 - Repeated `buildOrSearch` + inline `or()` logic per query.
-- Repeated ordering maps (INITIAL vs PAGE) with similar structure.
+- Previously duplicated ordering maps (INITIAL vs PAGE) with similar structure. Resolved: consolidated into a single ORDER*MAP using precomputed rank*\* columns; removed any "phase" switching.
 - `select('*')` prevents column-level optimization and can increase payload size.
 - Special-case logic (marmotRecovery) embedded directly in core function.
 - No pluggable caching or in-memory LRU for highly requested pages (leaderboard page 1 / usernames pages).
@@ -70,7 +70,7 @@ Phase 2 (Decomposition)
 Phase 3 (Enhanced Typing & API)
 
 - Introduce discriminated union return type: `{ data, error, meta }` where `meta` includes `rowCount`, `durationMs`, `from`, `to`, `view`.
-- Provide `fetchLeaderboardPage({ view, query, pagination, phase })` wrapper.
+- Provide `fetchLeaderboardPage(view, query, pagination)` wrapper (phase parameter removed; single ORDER_MAP used for all cases).
 - Add generic `runViewQuery<RowType>(...)` util to centralize error normalization.
 
 Status:
@@ -169,6 +169,7 @@ Leaderboard:
 - [x] Migrate domain page to decomposed services (profile/collections).
 - [x] Migrate sitemap to decomposed service (sitemap usernames).
 - [x] Remove legacy `fetchLeaderboard` from `supabaseService.ts` (deprecated and now removed).
+- [x] Consolidate dual ordering maps into a single `ORDER_MAP` and remove `phase` argument from services and callsites.
 
 ### Deprecations
 

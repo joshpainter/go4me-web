@@ -277,7 +277,7 @@ export async function getServerSideProps(context) {
     const currentView = viewParam || 'totalSold'
     const q = (qParam || '').toString().trim()
 
-    const { data, error } = await fetchLeaderboardPage(currentView, q, { from: 0, to: PAGE_SIZE - 1 }, 'initial')
+    const { data, error } = await fetchLeaderboardPage(currentView, q, { from: 0, to: PAGE_SIZE - 1 })
     if (error) throw new Error(error.message)
 
     users = (data || []).map((row) => {
@@ -401,7 +401,7 @@ export default function Home({
     const fetchFirst = async () => {
       setIsLoadingMore(true)
       try {
-        const { data, error } = await fetchLeaderboardPage(view, query, { from: 0, to: PAGE_SIZE - 1 }, 'initial')
+        const { data, error } = await fetchLeaderboardPage(view, query, { from: 0, to: PAGE_SIZE - 1 })
         if (error) throw new Error(error.message)
         if (isCancelled) return
         const mapped = (data || []).map((row) => {
@@ -475,7 +475,7 @@ export default function Home({
     try {
       const from = page * PAGE_SIZE
       const to = from + PAGE_SIZE - 1
-      const { data, error } = await fetchLeaderboardPage(view, query, { from, to }, 'page')
+      const { data, error } = await fetchLeaderboardPage(view, query, { from, to })
       if (error) throw new Error(error.message)
 
       const mapped = (data || []).map((row) => {

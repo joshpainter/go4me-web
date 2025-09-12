@@ -2,7 +2,7 @@ import { getSupabaseClient } from '../supabaseClient'
 import { clampRange } from '../core/pagination'
 import { buildOrSearch } from '../core/filters'
 import { normaliseError } from '../core/errors'
-import { ORDER_MAP_INITIAL, ORDER_MAP_PAGE } from '../core/ordering'
+import { ORDER_MAP } from '../core/ordering'
 import { LEADERBOARD_COLUMNS, QUEUE_COLUMNS } from '../core/columns'
 import type { Tables } from '../database.types'
 import type { DatabaseResponse, LeaderboardView, PaginationOptions, ServiceResult } from '../types'
@@ -15,12 +15,11 @@ interface LeaderboardQueryArgs {
   view: LeaderboardView | string
   query?: string
   pagination: PaginationOptions
-  phase?: 'initial' | 'page'
 }
 
 // Resolve base query builder (no filters applied yet)
 export function resolveLeaderboardQuery(args: LeaderboardQueryArgs) {
-  const { view, pagination, phase = 'initial' } = args
+  const { view, pagination } = args
   const supabase = getSupabaseClient()
   if (!supabase) return { error: { message: 'Supabase not initialised' } as const }
   const { from, to } = clampRange(pagination)
@@ -34,7 +33,7 @@ export function resolveLeaderboardQuery(args: LeaderboardQueryArgs) {
     return { qb, from, to }
   }
 
-  const orderSpec = (phase === 'initial' ? ORDER_MAP_INITIAL : ORDER_MAP_PAGE)[view] || ORDER_MAP_INITIAL.totalSold
+  const orderSpec = ORDER_MAP[view] || ORDER_MAP.totalSold
 
   let qb = supabase.from('get_leaderboard').select(LEADERBOARD_COLUMNS)
 
@@ -69,9 +68,8 @@ export async function fetchLeaderboardDecomposed(
   view: LeaderboardView | string,
   query: string | undefined,
   pagination: PaginationOptions,
-  phase: 'initial' | 'page' = 'initial',
 ): Promise<DatabaseResponse<(LeaderboardRow | QueueRow)[]>> {
-  const resolved = resolveLeaderboardQuery({ view, pagination, phase })
+  const resolved = resolveLeaderboardQuery({ view, pagination })
   if ('error' in resolved) return { data: [], error: { message: resolved.error?.message || 'Unknown error' } }
   let { qb } = resolved
 
@@ -134,10 +132,9 @@ export async function fetchLeaderboardPage<V extends LeaderboardView | string>(
   view: V,
   query: string | undefined,
   pagination: PaginationOptions,
-  phase: 'initial' | 'page' = 'initial',
 ): Promise<ServiceResult<LeaderboardViewRow<V>[]>> {
   return runViewQuery<LeaderboardViewRow<V>>(() => {
-    const resolved = resolveLeaderboardQuery({ view, pagination, phase })
+    const resolved = resolveLeaderboardQuery({ view, pagination })
     if ('error' in resolved) return resolved as any
     let { qb } = resolved as any
     qb = applySearch(qb, view === 'queue' ? ['username', 'name'] : ['username', 'name'], query)
