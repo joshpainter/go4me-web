@@ -288,7 +288,7 @@ export async function getServerSideProps(context) {
           fullName: row.full_name || row.name,
           avatarUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png',
           xPfpUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png',
-          lastNftSeriesNumber: row.last_nft_series_number ?? 0,
+          totalSold: row.total_sold ?? 0,
           rankQueuePosition: row.rank_queue_position ?? 0,
           _search: ((row.username || '') + ' ' + (row.full_name || row.name || '')).toLowerCase(),
         }
@@ -412,7 +412,7 @@ export default function Home({
               fullName: row.full_name || row.name,
               avatarUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png',
               xPfpUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png',
-              lastNftSeriesNumber: row.last_nft_series_number ?? 0,
+              totalSold: row.total_sold ?? 0,
               rankQueuePosition: row.rank_queue_position ?? 0,
               _search: ((row.username || '') + ' ' + (row.full_name || row.name || '')).toLowerCase(),
             }
@@ -486,7 +486,7 @@ export default function Home({
             fullName: row.full_name || row.name,
             avatarUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png',
             xPfpUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png',
-            lastNftSeriesNumber: row.last_nft_series_number ?? 0,
+            totalSold: row.total_sold ?? 0,
             rankQueuePosition: row.rank_queue_position ?? 0,
             _search: ((row.username || '') + ' ' + (row.full_name || row.name || '')).toLowerCase(),
           }
@@ -974,7 +974,7 @@ export default function Home({
                     <>
                       <div className={styles.badgeRow}>
                         <span className={styles.miniBadge} title="Next edition number">
-                          Next Edition #{(u.lastNftSeriesNumber ?? 0) + 1}
+                          Next Edition #{(u.totalSold ?? 0) + 1}
                         </span>
                         <span className={`${styles.miniBadge} ${styles.warningBadge}`} title="Estimated time to mint">
                           Next mint in ~{formatEtaFromQueue(u.rankQueuePosition ?? 0)}

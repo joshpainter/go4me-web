@@ -16,4 +16,5 @@ export const ORDER_MAP: Record<string, OrderSpec> = {
   recentTrades: { column: 'rank_last_sale', ascending: true },
   rarest: { column: 'rank_fewest_copies_sold', ascending: true },
   marmotRecovery: { column: 'rank_copies_sold', ascending: true },
+  queue: { column: 'rank_queue_position', ascending: true },
 }

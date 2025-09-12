@@ -3,13 +3,13 @@ import { clampRange } from '../core/pagination'
 import { buildOrSearch } from '../core/filters'
 import { normaliseError } from '../core/errors'
 import { ORDER_MAP } from '../core/ordering'
-import { LEADERBOARD_COLUMNS, QUEUE_COLUMNS } from '../core/columns'
+import { LEADERBOARD_COLUMNS } from '../core/columns'
 import type { Tables } from '../database.types'
 import type { DatabaseResponse, LeaderboardView, PaginationOptions, ServiceResult } from '../types'
 
 // Row types
 export type LeaderboardRow = Tables<'get_leaderboard'>
-export type QueueRow = Tables<'get_ungenerated_nfts'>
+export type QueueRow = Tables<'get_leaderboard'>
 
 interface LeaderboardQueryArgs {
   view: LeaderboardView | string
@@ -24,18 +24,13 @@ export function resolveLeaderboardQuery(args: LeaderboardQueryArgs) {
   if (!supabase) return { error: { message: 'Supabase not initialised' } as const }
   const { from, to } = clampRange(pagination)
 
-  if (view === 'queue') {
-    const qb = supabase
-      .from('get_ungenerated_nfts')
-      .select(QUEUE_COLUMNS)
-      .order('rank_queue_position', { ascending: true })
-      .range(from, to)
-    return { qb, from, to }
-  }
-
   const orderSpec = ORDER_MAP[view] || ORDER_MAP.totalSold
 
   let qb = supabase.from('get_leaderboard').select(LEADERBOARD_COLUMNS)
+
+  if (view === 'queue') {
+    qb = qb.not('rank_queue_position', 'is', null)
+  }
 
   if (view === 'marmotRecovery') {
     qb = qb.eq('xch_address', 'xch120ywvwahucfptkeuzzdpdz5v0nnarq5vgw94g247jd5vswkn7rls35y2gc')
