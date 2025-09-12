@@ -32,7 +32,6 @@ export const QUEUE_COLUMNS = [
   'pfp_ipfs_cid',
   'last_nft_series_number',
   'last_offerid',
-  'last_offer_status',
   'xch_address',
 ].join(',')
 

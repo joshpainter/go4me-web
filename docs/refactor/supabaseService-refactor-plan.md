@@ -64,7 +64,7 @@ Phase 1 (Safe Extraction)
 Phase 2 (Decomposition)
 
 - Split `fetchLeaderboard` into: `resolveLeaderboardQuery(view, options)` and `executeQuery(qb)`.
-- Move marmotRecovery author id resolution into a helper `getMarmotAuthorIds()` (cached for short TTL e.g. 60s).
+- Change marmotRecovery to filter directly on xch_address column of leaderboard instead of the extra author id resolution
 - Provide per-view column sets + ordering config objects.
 
 Phase 3 (Enhanced Typing & API)
@@ -150,12 +150,19 @@ Leaderboard:
 
 ## 14. Immediate Action Items
 
-- [ ] Extract helpers into `core/`.
-- [ ] Define per-view column sets & ordering config with types.
-- [ ] Replace `select('*')` with explicit lists.
+- [x] Extract helpers into `core/`.
+- [x] Define per-view column sets & ordering config with types.
+- [x] Replace `select('*')` with explicit lists.
 - [ ] Introduce `ViewMap` + generic row resolver.
 - [ ] Add meta timing wrapper.
 - [ ] Implement basic LRU for first-page caching.
+
+### Phase 2 Progress
+
+- [x] Created `services/leaderboard.ts` with `resolveLeaderboardQuery`, `applySearch`, `executeLeaderboardQuery`, and `fetchLeaderboardDecomposed`.
+- [x] Simplified `marmotRecovery` to filter directly on `xch_address`.
+- [ ] Migrate existing page imports to use decomposed service (next step).
+- [ ] Remove legacy logic from `supabaseService.ts` after migration.
 
 ---
 
