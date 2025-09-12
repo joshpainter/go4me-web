@@ -86,9 +86,9 @@ function MyApp({ Component, pageProps }: AppProps) {
     }
 
     // Override console methods to suppress WalletConnect noise
-    const originalConsoleError = console.error.bind(console) as (...args: unknown[]) => void
-    const originalConsoleWarn = console.warn.bind(console) as (...args: unknown[]) => void
-    const originalConsoleLog = console.log.bind(console) as (...args: unknown[]) => void
+    const originalConsoleError: (...args: unknown[]) => void = console.error.bind(console)
+    const originalConsoleWarn: (...args: unknown[]) => void = console.warn.bind(console)
+    const originalConsoleLog: (...args: unknown[]) => void = console.log.bind(console)
 
     console.error = (...args: unknown[]) => {
       const message = joinMsg(...args)

@@ -49,10 +49,10 @@ export function applySearch<T>(qb: T, fields: string[], query?: string): T {
 }
 
 export async function executeLeaderboardQuery<T extends LeaderboardRow | QueueRow>(
-  qb: any,
+  qb: unknown,
 ): Promise<DatabaseResponse<T[]>> {
   try {
-    const { data, error } = await qb
+    const { data, error } = (await qb) as { data: T[] | null; error: unknown }
     if (error) return { data: [], error: normaliseError(error) }
     return { data: (data || []) as T[], error: null }
   } catch (e: unknown) {
@@ -91,7 +91,7 @@ export type LeaderboardViewRow<V extends LeaderboardView | string> = V extends k
   : LeaderboardRow | QueueRow
 
 export async function runViewQuery<RowT>(
-  build: () => { qb: any; from: number; to: number } | { error: { message: string } },
+  build: () => { qb: unknown; from: number; to: number } | { error: { message: string } },
   view: string,
 ): Promise<ServiceResult<RowT[]>> {
   const t0 = Date.now()
@@ -105,7 +105,7 @@ export async function runViewQuery<RowT>(
   }
   const { qb, from, to } = resolved
   try {
-    const { data, error, count } = await qb
+    const { data, error } = (await qb) as { data: RowT[] | null; error: unknown }
     if (error) {
       return {
         data: [],

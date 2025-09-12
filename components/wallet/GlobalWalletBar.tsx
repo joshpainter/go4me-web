@@ -11,13 +11,7 @@ export default function GlobalWalletBar({ inline = false }: { inline?: boolean }
   const { isInitializing, session, accounts, connect, disconnect } = useWalletConnect()
   const { chiaTakeOffer } = useJsonRpc()
   const { showToast } = useToast()
-  const {
-    isAvailable: gobyAvailable,
-    isConnected: gobyConnected,
-    accounts: gobyAccounts,
-    connect: gobyConnect,
-    disconnect: gobyDisconnect,
-  } = useGoby()
+  const { isConnected: gobyConnected, accounts: gobyAccounts, disconnect: gobyDisconnect } = useGoby()
 
   const [open, setOpen] = useState(false)
   const [pendingOfferId, setPendingOfferId] = useState<string | null>(null)
@@ -28,7 +22,6 @@ export default function GlobalWalletBar({ inline = false }: { inline?: boolean }
   const hasTriggeredRef = useRef(false)
   const rootRef = useRef<HTMLDivElement | null>(null)
 
-  const isConnectedAny = !!session || (gobyConnected && !isMobile)
   const primaryAccount = useMemo(
     () => (gobyConnected && !isMobile ? gobyAccounts?.[0] || '' : accounts?.[0] || ''),
     [gobyConnected, gobyAccounts, accounts, isMobile],
@@ -130,15 +123,15 @@ export default function GlobalWalletBar({ inline = false }: { inline?: boolean }
               : data.offer?.offer || data.offer || data?.data?.offer
         }
         if (!offer || typeof offer !== 'string') throw new Error('No offer found to submit')
-        const r = await chiaTakeOffer({ offer })
+        const r = (await chiaTakeOffer({ offer })) as { id: string }
         setResultId(r.id)
         showToast('Offer accepted successfully! Transaction submitted to the blockchain.', 'success')
         setPendingOfferId(null)
         setPendingOfferStr(null)
         sessionStorage.removeItem('pendingOfferId')
         sessionStorage.removeItem('pendingOfferStr')
-      } catch (e: any) {
-        const msg = e?.message || String(e)
+      } catch (e: unknown) {
+        const msg = (e as { message?: string } | null)?.message || String(e)
         const isRejection = /reject|denied|cancel|close|user.?reject|user.?denied|user.?cancel/i.test(msg)
         const isConnectionError =
           /session not found|pairing|no matching key|history:|please request after current approval resolve/i.test(msg)

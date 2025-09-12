@@ -66,27 +66,7 @@ export function WalletConnectProvider({ children }: PropsWithChildren) {
     } catch {}
   }, [])
 
-  // Aggressively clear stale core storage entries that can cause "No matching key"
-  const hardResetCore = useCallback(async (c: Client) => {
-    try {
-      const core: unknown = (c as unknown as { core?: unknown }).core
-      const storage: unknown = core && (core as { storage?: unknown }).storage
-      if (!storage || typeof (storage as { getKeys?: () => Promise<string[]> }).getKeys !== 'function') return
-      const keys: string[] = await (storage as { getKeys: () => Promise<string[]> }).getKeys()
-      const toRemove = keys.filter(
-        (k) =>
-          k.includes('core:pairing') ||
-          k.includes('core:history') ||
-          k.includes('core:expirer') ||
-          k.includes('core:messages'),
-      )
-      for (const k of toRemove) {
-        try {
-          await (storage as { removeItem: (k: string) => Promise<void> }).removeItem(k)
-        } catch {}
-      }
-    } catch {}
-  }, [])
+  // Previously had a core reset helper; removed as unused to avoid noise
 
   const connect = useCallback(async () => {
     if (!client) throw new Error('WalletConnect is not initialized')
@@ -136,8 +116,9 @@ export function WalletConnectProvider({ children }: PropsWithChildren) {
           purgeAllPairings(client)
         } catch {}
       }
-    } catch (e: any) {
-      console.warn('Disconnect error (ignored):', e?.message || e)
+    } catch (e: unknown) {
+      const msg = (e as { message?: string } | null)?.message || String(e)
+      console.warn('Disconnect error (ignored):', msg)
     } finally {
       reset()
     }
@@ -151,9 +132,10 @@ export function WalletConnectProvider({ children }: PropsWithChildren) {
           const sess = c.session.get(topic)
           const updated = { ...sess, namespaces }
           onSessionConnected(updated)
-        } catch (e: any) {
+        } catch (e: unknown) {
+          const msg = (e as { message?: string } | null)?.message || String(e)
           // Gracefully ignore late events after disconnect
-          console.warn('Ignored session_update:', e?.message || e)
+          console.warn('Ignored session_update:', msg)
         }
       })
       c.on('session_delete', () => {
@@ -181,7 +163,7 @@ export function WalletConnectProvider({ children }: PropsWithChildren) {
           ) {
             return // silently ignore
           }
-          originalConsoleError.apply(console, args as [])
+          originalConsoleError.apply(console, args as unknown[])
         }
 
         // Handle unhandled promise rejections from WalletConnect
@@ -355,13 +337,7 @@ export function WalletConnectProvider({ children }: PropsWithChildren) {
   return (
     <WalletConnectContext.Provider value={value}>
       {children}
-      <CustomConnectModal
-        isOpen={showModal}
-        onClose={handleCloseModal}
-        qrCodeUri={qrCodeUri}
-        isConnecting={isConnecting}
-        error={error}
-      />
+      <CustomConnectModal isOpen={showModal} onClose={handleCloseModal} qrCodeUri={qrCodeUri} error={error} />
     </WalletConnectContext.Provider>
   )
 }

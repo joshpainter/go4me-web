@@ -148,15 +148,18 @@ export function GobyProvider({ children }: PropsWithChildren) {
   }, [])
 
   const request = useCallback(
-    async <T,>(method: string, params?: any): Promise<T> => {
+    async <T,>(method: string, params?: unknown): Promise<T> => {
       if (!available || !window.chia) throw new Error('Goby is not available')
-      const provider: any = window.chia
+      const provider: GobyProvider = window.chia
 
       const isTakeOffer = (m: string) => /takeoffer|acceptoffer|chia_takeoffer/i.test(m)
-      const extractOffer = (p: any): string | null => {
+      const extractOffer = (p: unknown): string | null => {
         if (!p) return null
         if (typeof p === 'string' && p.startsWith('offer')) return p
-        if (typeof p?.offer === 'string' && p.offer.startsWith('offer')) return p.offer
+        if (typeof p === 'object' && p !== null && typeof (p as { offer?: unknown }).offer === 'string') {
+          const off = (p as { offer: string }).offer
+          if (off.startsWith('offer')) return off
+        }
         if (Array.isArray(p) && typeof p[0] === 'string' && p[0].startsWith('offer')) return p[0]
         return null
       }
@@ -168,16 +171,12 @@ export function GobyProvider({ children }: PropsWithChildren) {
         // Official mapping per docs: window.chia.request({ method: 'takeOffer', params: { offer } })
         if (typeof provider.request === 'function') {
           const res = await provider.request({ method: 'takeOffer', params: { offer } })
-          const r = res as Record<string, unknown> | string | undefined
-          const id =
-            typeof r === 'string' ? r : r?.id || (r as any)?.txId || (r as any)?.txid || (r as any)?.hash || 'goby'
+          const id = extractId(res)
           return { id } as unknown as T
         }
         if (typeof provider.takeOffer === 'function') {
           const res = await provider.takeOffer({ offer })
-          const r = res as Record<string, unknown> | string | undefined
-          const id =
-            typeof r === 'string' ? r : r?.id || (r as any)?.txId || (r as any)?.txid || (r as any)?.hash || 'goby'
+          const id = extractId(res)
           return { id } as unknown as T
         }
         throw new Error('Goby takeOffer not supported by this version')
@@ -194,6 +193,22 @@ export function GobyProvider({ children }: PropsWithChildren) {
     },
     [available],
   )
+
+  // Helper: normalise various possible return shapes to an id string
+  function extractId(res: unknown): string {
+    if (typeof res === 'string') return res
+    if (res && typeof res === 'object') {
+      const r = res as Record<string, unknown>
+      const candidates = [
+        r.id,
+        (r as { txId?: unknown }).txId,
+        (r as { txid?: unknown }).txid,
+        (r as { hash?: unknown }).hash,
+      ]
+      for (const c of candidates) if (typeof c === 'string' && c) return c
+    }
+    return 'goby'
+  }
 
   const value = useMemo(
     () => ({

@@ -18,7 +18,7 @@ export async function fetchUserProfile(username: string): Promise<DatabaseRespon
 
     if (error) return { data: null, error: normaliseError(error) }
     return { data: (data as unknown as UserProfileRow) ?? null, error: null }
-  } catch (e: any) {
+  } catch (e: unknown) {
     return { data: null, error: normaliseError(e) }
   }
 }

@@ -14,6 +14,9 @@ import GlobalWalletBar from '../components/wallet/GlobalWalletBar'
 import { OrganizationSchema, WebSiteSchema } from '../components/SEO/StructuredData'
 import { SITE_CONFIG } from '../lib/constants'
 import { LEADERBOARD_PAGE_SIZE, MOJO_PER_XCH, QUEUE_SECONDS_PER_POSITION } from '../lib/constants'
+import type { Tables } from '../lib/database/database.types'
+// Use Supabase-generated row shape for get_leaderboard
+type LeaderboardRow = Tables<'get_leaderboard'>
 
 // Types
 type LeaderboardView =
@@ -137,16 +140,22 @@ function PfpFlipCard({ user, rootHostForLinks, idx }: { user: User; rootHostForL
 
   const flipInnerStyle = {
     position: 'absolute' as const,
-    inset: 0 as any,
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
     transformStyle: 'preserve-3d' as const,
     transition: 'transform 360ms cubic-bezier(0.2, 0.7, 0.2, 1)',
     transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
   }
   const faceStyle = {
     position: 'absolute' as const,
-    inset: 0 as any,
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
     backfaceVisibility: 'hidden' as const,
-    WebkitBackfaceVisibility: 'hidden' as any,
+    WebkitBackfaceVisibility: 'hidden' as const,
     borderRadius: 8,
     overflow: 'hidden' as const,
   }
@@ -160,8 +169,8 @@ function PfpFlipCard({ user, rootHostForLinks, idx }: { user: User; rootHostForL
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    const touchCapable =
-      'ontouchstart' in window || navigator.maxTouchPoints > 0 || (navigator as any).msMaxTouchPoints > 0
+    const msPoints = (navigator as Navigator & { msMaxTouchPoints?: number }).msMaxTouchPoints || 0
+    const touchCapable = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || msPoints > 0
     setIsTouch(!!touchCapable)
   }, [])
 
@@ -338,9 +347,9 @@ export const getServerSideProps: GetServerSideProps<HomeProps> = async (context)
   }
   const rootHostForLinks = portPart ? `${rootDomain}:${portPart}` : rootDomain
 
+  const PAGE_SIZE = LEADERBOARD_PAGE_SIZE
   let users: User[] = []
   try {
-    const PAGE_SIZE = LEADERBOARD_PAGE_SIZE
     const { view: viewParam, q: qParam } = context.query || {}
     const rawView = Array.isArray(viewParam) ? viewParam[0] : viewParam
     const currentView: LeaderboardView = isValidView(rawView) ? rawView : 'totalSold'
@@ -349,22 +358,30 @@ export const getServerSideProps: GetServerSideProps<HomeProps> = async (context)
     const { data, error } = await fetchLeaderboardPage(currentView as string, q, { from: 0, to: PAGE_SIZE - 1 })
     if (error) throw new Error(error.message)
 
-    users = (data || []).map((row: any) => {
+    users = (data || []).map((row: LeaderboardRow) => {
       if (currentView === 'queue') {
         return {
-          id: row.author_id,
-          username: row.username,
-          fullName: row.full_name || row.name,
-          avatarUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png',
-          xPfpUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png',
+          id: row.author_id || row.username || '',
+          username: row.username || '',
+          fullName: row.name,
+          avatarUrl:
+            row.pfp_ipfs_cid && row.username
+              ? 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png'
+              : '/collection-icon.png',
+          xPfpUrl:
+            row.pfp_ipfs_cid && row.username
+              ? 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png'
+              : '/collection-icon.png',
           totalSold: row.total_sold ?? 0,
           rankQueuePosition: row.rank_queue_position ?? 0,
-          _search: ((row.username || '') + ' ' + (row.full_name || row.name || '')).toLowerCase(),
+          _search: ((row.username || '') + ' ' + (row.name || '')).toLowerCase(),
         }
       }
       const totalSalesAmount = row.xch_total_sales_amount ?? 0
       const avgSalesAmount = row.xch_average_sales_amount ?? 0
-      const avgTimeToSell = row.average_time_to_sell ?? 0
+      // Important: Next.js cannot serialize `undefined` in getServerSideProps.
+      // Use `null` for unknown values to keep SSR JSON-safe.
+      const avgTimeToSell: number | null = null
       const user: User & {
         displayTotalTradedXCH?: string
         displayTotalRoyaltiesXCH?: string
@@ -372,11 +389,17 @@ export const getServerSideProps: GetServerSideProps<HomeProps> = async (context)
         displayAvgTime?: string
       } = {
         // Use a stable unique id consistently across SSR + client pagination to avoid duplicates
-        id: row.author_id,
-        username: row.username,
+        id: row.author_id || row.username || '',
+        username: row.username || '',
         fullName: row.name,
-        avatarUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png',
-        xPfpUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png',
+        avatarUrl:
+          row.pfp_ipfs_cid && row.username
+            ? 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png'
+            : '/collection-icon.png',
+        xPfpUrl:
+          row.pfp_ipfs_cid && row.username
+            ? 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png'
+            : '/collection-icon.png',
         totalSold: row.total_sold ?? 0,
         totalTradedXCH: totalSalesAmount / MOJO_PER_XCH,
         totalRoyaltiesXCH: (totalSalesAmount / MOJO_PER_XCH) * 0.1,
@@ -395,7 +418,7 @@ export const getServerSideProps: GetServerSideProps<HomeProps> = async (context)
         rankQueuePosition: row.rank_queue_position ?? null,
         totalBadgeScore: row.total_badge_score || 0,
         totalShadowScore: row.total_shadow_score || 0,
-        _search: (row.username + ' ' + row.name).toLowerCase(),
+        _search: ((row.username || '') + ' ' + (row.name || '')).toLowerCase(),
       }
       user.displayTotalTradedXCH = formatXCH(user.totalTradedXCH ?? 0)
       user.displayTotalRoyaltiesXCH = formatXCH(user.totalRoyaltiesXCH ?? 0)
@@ -407,7 +430,7 @@ export const getServerSideProps: GetServerSideProps<HomeProps> = async (context)
     console.error('Failed to load users from Supabase', e)
   }
 
-  const hasMore = users.length === 100
+  const hasMore = users.length === PAGE_SIZE
   return {
     props: {
       users,
@@ -480,39 +503,50 @@ export default function Home({
         const { data, error } = await fetchLeaderboardPage(view, query, { from: 0, to: PAGE_SIZE - 1 })
         if (error) throw new Error(error.message)
         if (isCancelled) return
-        const mapped = (data || []).map((row: any) => {
+        const mapped = (data || []).map((row: LeaderboardRow) => {
           if (view === 'queue') {
             return {
-              id: row.author_id,
-              username: row.username,
-              fullName: row.full_name || row.name,
-              avatarUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png',
-              xPfpUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png',
+              id: row.author_id || row.username || '',
+              username: row.username || '',
+              fullName: row.name,
+              avatarUrl:
+                row.pfp_ipfs_cid && row.username
+                  ? 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png'
+                  : '/collection-icon.png',
+              xPfpUrl:
+                row.pfp_ipfs_cid && row.username
+                  ? 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png'
+                  : '/collection-icon.png',
               totalSold: row.total_sold ?? 0,
               rankQueuePosition: row.rank_queue_position ?? 0,
-              _search: ((row.username || '') + ' ' + (row.full_name || row.name || '')).toLowerCase(),
+              _search: ((row.username || '') + ' ' + (row.name || '')).toLowerCase(),
             }
           }
-          const totalSalesAmount = row.xch_total_sales_amount ?? row.total_traded_value ?? row.traded_xch ?? 0
-          const avgSalesAmount = row.xch_average_sale_amount ?? row.xch_average_sales_amount ?? 0
-          const avgTimeToSell = row.average_time_to_sell ?? 0
+          const totalSalesAmount = row.xch_total_sales_amount ?? 0
+          const avgSalesAmount = row.xch_average_sales_amount ?? 0
+          const avgTimeToSell = undefined as number | undefined
           const user: User & {
             displayTotalTradedXCH?: string
             displayTotalRoyaltiesXCH?: string
             displayAverageSaleXCH?: string
             displayAvgTime?: string
           } = {
-            id: row.author_id,
-            username: row.username,
+            id: row.author_id || row.username || '',
+            username: row.username || '',
             fullName: row.name,
-            avatarUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png',
-            xPfpUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png',
+            avatarUrl:
+              row.pfp_ipfs_cid && row.username
+                ? 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png'
+                : '/collection-icon.png',
+            xPfpUrl:
+              row.pfp_ipfs_cid && row.username
+                ? 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png'
+                : '/collection-icon.png',
             totalSold: row.total_sold ?? 0,
             totalTradedXCH: totalSalesAmount / MOJO_PER_XCH,
             totalRoyaltiesXCH: (totalSalesAmount / MOJO_PER_XCH) * 0.1,
             averageSaleXCH: avgSalesAmount / MOJO_PER_XCH,
             avgTimeToSellMs: avgTimeToSell,
-            latestPrice: row.latest_price_xch ?? row.last_price ?? 0,
             lastOfferId: row.last_offerid,
             lastOfferStatus: row.last_offer_status,
             lastSaleAtMs: row.last_sale_at ? new Date(row.last_sale_at).getTime() : null,
@@ -525,7 +559,7 @@ export default function Home({
             rankQueuePosition: row.rank_queue_position ?? null,
             totalBadgeScore: row.total_badge_score || 0,
             totalShadowScore: row.total_shadow_score || 0,
-            _search: (row.username + ' ' + row.name).toLowerCase(),
+            _search: ((row.username || '') + ' ' + (row.name || '')).toLowerCase(),
           }
           user.displayTotalTradedXCH = formatXCH(user.totalTradedXCH ?? 0)
           user.displayTotalRoyaltiesXCH = formatXCH(user.totalRoyaltiesXCH ?? 0)
@@ -559,39 +593,50 @@ export default function Home({
       const { data, error } = await fetchLeaderboardPage(view as string, query, { from, to })
       if (error) throw new Error(error.message)
 
-      const mapped = (data || []).map((row: any) => {
+      const mapped = (data || []).map((row: LeaderboardRow) => {
         if (view === 'queue') {
           return {
-            id: row.author_id,
-            username: row.username,
-            fullName: row.full_name || row.name,
-            avatarUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png',
-            xPfpUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png',
+            id: row.author_id || row.username || '',
+            username: row.username || '',
+            fullName: row.name,
+            avatarUrl:
+              row.pfp_ipfs_cid && row.username
+                ? 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png'
+                : '/collection-icon.png',
+            xPfpUrl:
+              row.pfp_ipfs_cid && row.username
+                ? 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png'
+                : '/collection-icon.png',
             totalSold: row.total_sold ?? 0,
             rankQueuePosition: row.rank_queue_position ?? 0,
-            _search: ((row.username || '') + ' ' + (row.full_name || row.name || '')).toLowerCase(),
+            _search: ((row.username || '') + ' ' + (row.name || '')).toLowerCase(),
           }
         }
-        const totalSalesAmount = row.xch_total_sales_amount ?? row.total_traded_value ?? row.traded_xch ?? 0
-        const avgSalesAmount = row.xch_average_sale_amount ?? row.xch_average_sales_amount ?? 0
-        const avgTimeToSell = row.average_time_to_sell ?? 0
+        const totalSalesAmount = row.xch_total_sales_amount ?? 0
+        const avgSalesAmount = row.xch_average_sales_amount ?? 0
+        const avgTimeToSell = undefined as number | undefined
         const user: User & {
           displayTotalTradedXCH?: string
           displayTotalRoyaltiesXCH?: string
           displayAverageSaleXCH?: string
           displayAvgTime?: string
         } = {
-          id: row.author_id,
-          username: row.username,
+          id: row.author_id || row.username || '',
+          username: row.username || '',
           fullName: row.name,
-          avatarUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png',
-          xPfpUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png',
+          avatarUrl:
+            row.pfp_ipfs_cid && row.username
+              ? 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png'
+              : '/collection-icon.png',
+          xPfpUrl:
+            row.pfp_ipfs_cid && row.username
+              ? 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-x.png'
+              : '/collection-icon.png',
           totalSold: row.total_sold ?? 0,
           totalTradedXCH: totalSalesAmount / MOJO_PER_XCH,
           totalRoyaltiesXCH: (totalSalesAmount / MOJO_PER_XCH) * 0.1,
           averageSaleXCH: avgSalesAmount / MOJO_PER_XCH,
           avgTimeToSellMs: avgTimeToSell,
-          latestPrice: row.latest_price_xch ?? row.last_price ?? 0,
           lastOfferId: row.last_offerid,
           lastOfferStatus: row.last_offer_status,
           lastSaleAtMs: row.last_sale_at ? new Date(row.last_sale_at).getTime() : null,
@@ -604,7 +649,7 @@ export default function Home({
           rankQueuePosition: row.rank_queue_position ?? null,
           totalBadgeScore: row.total_badge_score || 0,
           totalShadowScore: row.total_shadow_score || 0,
-          _search: (row.username + ' ' + row.name).toLowerCase(),
+          _search: ((row.username || '') + ' ' + (row.name || '')).toLowerCase(),
         }
         user.displayTotalTradedXCH = formatXCH(user.totalTradedXCH ?? 0)
         user.displayTotalRoyaltiesXCH = formatXCH(user.totalRoyaltiesXCH ?? 0)

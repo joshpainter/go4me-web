@@ -20,7 +20,7 @@ export async function fetchUsernamesPage(pagination: PaginationOptions): Promise
 
     if (error) return { data: [], error: normaliseError(error) }
     return { data: (data || []) as UsernameRow[], error: null }
-  } catch (e: any) {
+  } catch (e: unknown) {
     return { data: [], error: normaliseError(e) }
   }
 }

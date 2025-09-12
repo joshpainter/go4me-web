@@ -32,15 +32,15 @@ export function Toast({ message, type, isVisible, onClose, duration = 5000, link
   const getIcon = (): SemanticICONS => {
     switch (type) {
       case 'error':
-        return 'exclamation triangle'
+        return 'exclamation triangle' as SemanticICONS
       case 'success':
-        return 'check circle'
+        return 'check circle' as SemanticICONS
       case 'warning':
-        return 'warning sign'
+        return 'warning sign' as SemanticICONS
       case 'info':
-        return 'info circle'
+        return 'info circle' as SemanticICONS
       default:
-        return 'info circle'
+        return 'info circle' as SemanticICONS
     }
   }
 
