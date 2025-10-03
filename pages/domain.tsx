@@ -1,3 +1,4 @@
+import type { GetServerSideProps } from 'next'
 import Head from 'next/head'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -5,16 +6,86 @@ import styles from '../styles/Home.module.css'
 import GlobalWalletBar from '../components/wallet/GlobalWalletBar'
 import { TakeOfferButton } from '../components/wallet/TakeOfferButton'
 import { TakeMintgardenOfferButton } from '../components/wallet/TakeMintgardenOfferButton'
-import { fetchUserProfile, fetchUserPfps } from '../lib/database/supabaseService'
+import { fetchUserProfile } from '../lib/database/services/profile'
+import { fetchUserPfps } from '../lib/database/services/collections'
+import type { OwnedPfpRow, OtherOwnerRow } from '../lib/database/services/collections'
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import type React from 'react'
 import { Icon, Menu, Input, Button } from 'semantic-ui-react'
 import { useTheme } from './_app'
 import { USER_COLLECTION_PAGE_SIZE } from '../lib/constants'
 import { QUEUE_SECONDS_PER_POSITION } from '../lib/constants'
 import { PersonSchema, BreadcrumbSchema } from '../components/SEO/StructuredData'
 import { SITE_CONFIG } from '../lib/constants'
+
+// Types
+type Nullable<T> = T | null | undefined
+
+type CollectionTab = 'my' | 'others'
+
+export interface DomainUser {
+  username: string
+  fullName: string
+  description: string
+  avatarUrl: string
+  xPfpUrl?: string | null
+  xchAddress?: string
+  didAddress?: string | null
+  lastOfferId?: string
+  lastOfferStatus?: number | null
+  pfpUpdateRequestedAt?: string | null
+  totalBadgeScore: number
+  totalShadowScore: number
+  rankCopiesSold?: Nullable<number>
+  rankQueuePosition?: Nullable<number>
+}
+
+export interface PfpItem {
+  id: string
+  frontUrl: string
+  backUrl: string
+  pfpName?: string | null
+  pfpUsername?: string | null
+  lastOfferId?: string | null
+  lastOfferStatus?: number | null
+  rankQueuePosition?: Nullable<number>
+}
+
+type ListWithCount<T> = T[] & { _totalCount?: number }
+
+// Minimal row shape from Supabase for mapping
+interface PfpRow {
+  nft_id?: string
+  pfp_author_id?: string
+  pfp_data_uri?: string
+  pfp_username?: string
+  username?: string
+  pfp_ipfs_cid?: string
+  image_url?: string
+  generated_pfp_url?: string
+  pfp_name?: string
+  last_offerid?: string
+  last_offer_status?: number
+  lastOfferStatus?: number
+  rank_queue_position?: number
+  owner_xch_address?: string
+  owner_did_address?: string
+}
+
+interface DomainProps {
+  user: DomainUser
+  ownedPfps: ListWithCount<PfpItem>
+  otherOwners: ListWithCount<PfpItem>
+  ownedHasMore: boolean
+  othersHasMore: boolean
+  pageSize: number
+  rootHostForLinks: string
+  ownedCount: number
+  othersCount: number
+  initialQuery: string
+}
 // Queue ETA formatter: each queue position = QUEUE_SECONDS_PER_POSITION seconds
-const formatEtaFromQueue = (positions) => {
+const formatEtaFromQueue = (positions: number | null | undefined) => {
   const totalSeconds = Math.max(0, Math.round((positions || 0) * QUEUE_SECONDS_PER_POSITION))
   const d = Math.floor(totalSeconds / 86400)
   const h = Math.floor((totalSeconds % 86400) / 3600)
@@ -26,36 +97,48 @@ const formatEtaFromQueue = (positions) => {
   return `${s}s`
 }
 // Flip component for profile avatar (front: go4me PFP, back: X image)
-function DomainPfpFlip({ avatarUrl, xPfpUrl, username, linkHref }) {
+function DomainPfpFlip({
+  avatarUrl,
+  xPfpUrl,
+  username,
+  linkHref,
+  rankCopiesSold: _rankCopiesSold,
+}: {
+  avatarUrl: string
+  xPfpUrl?: string | null
+  username?: string
+  linkHref?: string
+  rankCopiesSold?: number | null
+}) {
   const [isFlipped, setIsFlipped] = useState(false)
   const [isTouch, setIsTouch] = useState(false)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    const touchCapable = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0
+    const nav = navigator as Navigator & { msMaxTouchPoints?: number }
+    const touchCapable = 'ontouchstart' in window || nav.maxTouchPoints > 0 || (nav.msMaxTouchPoints ?? 0) > 0
     setIsTouch(!!touchCapable)
   }, [])
 
   const commonAlt = username ? `${username} avatar` : 'avatar'
 
-  const flipInnerStyle = {
+  const flipInnerStyle: React.CSSProperties = {
     position: 'absolute',
-    inset: 0,
+    inset: 0 as unknown as number,
     transformStyle: 'preserve-3d',
     transition: 'transform 420ms cubic-bezier(0.2, 0.7, 0.2, 1)',
     willChange: 'transform',
     transform: (isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)') + ' translateZ(0)',
   }
-  const faceStyle = {
+  const faceStyle: React.CSSProperties = {
     position: 'absolute',
-    inset: 0,
+    inset: 0 as unknown as number,
     backfaceVisibility: 'hidden',
-    WebkitBackfaceVisibility: 'hidden',
     transform: 'translateZ(0)',
     borderRadius: 12,
     overflow: 'hidden',
   }
-  const backStyle = {
+  const backStyle: React.CSSProperties = {
     ...faceStyle,
     transform: 'rotateY(180deg)',
     display: 'flex',
@@ -149,36 +232,46 @@ function DomainPfpFlip({ avatarUrl, xPfpUrl, username, linkHref }) {
 }
 
 // Flip component for collection grid thumbnails (cards)
-function PfpFlipThumb({ frontUrl, backUrl, username, profileHref }) {
+function PfpFlipThumb({
+  frontUrl,
+  backUrl,
+  username,
+  profileHref,
+}: {
+  frontUrl: string
+  backUrl: string
+  username?: string | null
+  profileHref?: string
+}) {
   const [isFlipped, setIsFlipped] = useState(false)
   const [isTouch, setIsTouch] = useState(false)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    const touchCapable = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0
+    const nav = navigator as Navigator & { msMaxTouchPoints?: number }
+    const touchCapable = 'ontouchstart' in window || nav.maxTouchPoints > 0 || (nav.msMaxTouchPoints ?? 0) > 0
     setIsTouch(!!touchCapable)
   }, [])
 
   const commonAlt = username ? `${username} avatar` : 'avatar'
 
-  const flipInnerStyle = {
+  const flipInnerStyle: React.CSSProperties = {
     position: 'absolute',
-    inset: 0,
+    inset: 0 as unknown as number,
     transformStyle: 'preserve-3d',
     transition: 'transform 360ms cubic-bezier(0.2, 0.7, 0.2, 1)',
     willChange: 'transform',
     transform: (isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)') + ' translateZ(0)',
   }
-  const faceStyle = {
+  const faceStyle: React.CSSProperties = {
     position: 'absolute',
-    inset: 0,
+    inset: 0 as unknown as number,
     backfaceVisibility: 'hidden',
-    WebkitBackfaceVisibility: 'hidden',
     transform: 'translateZ(0)',
     borderRadius: 8,
     overflow: 'hidden',
   }
-  const backStyle = {
+  const backStyle: React.CSSProperties = {
     ...faceStyle,
     transform: 'rotateY(180deg)',
     display: 'flex',
@@ -269,7 +362,7 @@ function PfpFlipThumb({ frontUrl, backUrl, username, profileHref }) {
   )
 }
 
-export async function getServerSideProps(ctx) {
+export const getServerSideProps: GetServerSideProps<DomainProps> = async (ctx) => {
   const { req, res, query } = ctx
 
   // Set caching headers for better performance
@@ -292,11 +385,13 @@ export async function getServerSideProps(ctx) {
   if (!/^[a-zA-Z0-9_-]{1,32}$/.test(username)) return { notFound: true }
 
   const PAGE_SIZE = USER_COLLECTION_PAGE_SIZE
-  let user = null
-  let ownedPfps = []
-  let otherOwners = []
+  let user: DomainUser | null = null
+  let ownedPfps: PfpItem[] = []
+  let otherOwners: PfpItem[] = []
   let ownedHasMore = false
   let othersHasMore = false
+  let ownedCountVal = 0
+  let othersCountVal = 0
   try {
     // Profile
     const profileResp = await fetchUserProfile(username)
@@ -304,7 +399,7 @@ export async function getServerSideProps(ctx) {
     const row = profileResp.data
     if (row) {
       user = {
-        username: row.username,
+        username: row.username || username,
         fullName: row.name || '',
         description: row.description || '',
         avatarUrl: 'https://can.seedsn.app/ipfs/' + row.pfp_ipfs_cid + '/' + row.username + '-go4me.png',
@@ -325,26 +420,27 @@ export async function getServerSideProps(ctx) {
     try {
       const ownedResp = await fetchUserPfps('owned', username, { from: 0, to: PAGE_SIZE - 1 }, searchQ)
       if (ownedResp.error) throw new Error(ownedResp.error.message)
-      const ownedData = ownedResp.data || []
+      const ownedData = (ownedResp.data || []) as OwnedPfpRow[]
       ownedPfps = ownedData.map((r, idx) => {
         const pfpUsername = r.pfp_username || null
         const cid = r.pfp_ipfs_cid || null
         const dataUri = r.pfp_data_uri || ''
-        const frontUrl = dataUri
-        const backUrl = cid && pfpUsername ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-x.png` : dataUri
+        const frontUrl =
+          dataUri || (cid && pfpUsername ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-go4me.png` : '')
+        const backUrl = cid && pfpUsername ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-x.png` : frontUrl
         return {
-          id: r.nft_id,
+          id: r.nft_id ?? `${pfpUsername ?? 'owned'}-${idx}`,
           frontUrl,
           backUrl,
           pfpName: r.pfp_name,
           pfpUsername,
-          lastOfferId: r.last_offerid || r.lastOfferId || null,
-          lastOfferStatus: r.last_offer_status ?? r.lastOfferStatus ?? null,
-          rankQueuePosition: r.rank_queue_position ?? null,
+          lastOfferId: null,
+          lastOfferStatus: null,
+          rankQueuePosition: null,
         }
       })
       ownedHasMore = ownedData.length === PAGE_SIZE
-      ownedPfps._totalCount = typeof ownedResp.count === 'number' ? ownedResp.count : ownedData.length
+      ownedCountVal = typeof ownedResp.count === 'number' ? ownedResp.count : ownedData.length
     } catch (ownedErr) {
       console.warn('Owned PFP fetch failed (non-fatal)', ownedErr)
     }
@@ -353,26 +449,25 @@ export async function getServerSideProps(ctx) {
     try {
       const othersResp = await fetchUserPfps('others', username, { from: 0, to: PAGE_SIZE - 1 }, searchQ)
       if (othersResp.error) throw new Error(othersResp.error.message)
-      const othersData = othersResp.data || []
+      const othersData = (othersResp.data || []) as OtherOwnerRow[]
       otherOwners = othersData.map((r, idx) => {
         const pfpUsername = r.pfp_username || null
         const cid = r.pfp_ipfs_cid || null
-        const dataUri = r.pfp_data_uri || ''
-        const frontUrl = dataUri
-        const backUrl = cid && pfpUsername ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-x.png` : dataUri
+        const frontUrl = cid && pfpUsername ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-go4me.png` : ''
+        const backUrl = cid && pfpUsername ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-x.png` : frontUrl
         return {
-          id: r.pfp_author_id,
+          id: r.pfp_author_id ?? `${pfpUsername ?? 'other'}-${idx}`,
           frontUrl,
           backUrl,
           pfpName: r.pfp_name,
           pfpUsername,
           lastOfferId: r.last_offerid || null,
           lastOfferStatus: r.last_offer_status ?? null,
-          rankQueuePosition: r.rank_queue_position ?? null,
+          rankQueuePosition: null,
         }
       })
       othersHasMore = othersData.length === PAGE_SIZE
-      otherOwners._totalCount = typeof othersResp.count === 'number' ? othersResp.count : othersData.length
+      othersCountVal = typeof othersResp.count === 'number' ? othersResp.count : othersData.length
     } catch (othersErr) {
       console.warn('Other owners fetch failed (non-fatal)', othersErr)
     }
@@ -394,14 +489,8 @@ export async function getServerSideProps(ctx) {
   }
   if (portPart) rootHostForLinks += ':' + portPart
 
-  const ownedCount =
-    ownedPfps && ownedPfps._totalCount ? ownedPfps._totalCount : Array.isArray(ownedPfps) ? ownedPfps.length : 0
-  const othersCount =
-    otherOwners && otherOwners._totalCount
-      ? otherOwners._totalCount
-      : Array.isArray(otherOwners)
-        ? otherOwners.length
-        : 0
+  const ownedCount = ownedCountVal
+  const othersCount = othersCountVal
   return {
     props: {
       user,
@@ -418,18 +507,19 @@ export async function getServerSideProps(ctx) {
   }
 }
 
-export default function DomainPage({
-  user,
-  ownedPfps = [],
-  otherOwners = [],
-  ownedHasMore = false,
-  othersHasMore = false,
-  pageSize = 60,
-  rootHostForLinks,
-  ownedCount = 0,
-  othersCount = 0,
-  initialQuery = '',
-}) {
+export default function DomainPage(props: DomainProps) {
+  const {
+    user,
+    ownedPfps = [],
+    otherOwners = [],
+    ownedHasMore = false,
+    othersHasMore = false,
+    pageSize = 60,
+    rootHostForLinks,
+    ownedCount = 0,
+    othersCount = 0,
+    initialQuery = '',
+  } = props
   const {
     username,
     fullName,
@@ -458,18 +548,18 @@ export default function DomainPage({
   const showMarmotBadge = xchAddress === MARMOT_BADGE_XCH
   const [copiedXch, setCopiedXch] = useState(false)
   const [copiedDid, setCopiedDid] = useState(false)
-  const [collectionTab, setCollectionTab] = useState('my') // 'my' | 'others'
+  const [collectionTab, setCollectionTab] = useState<CollectionTab>('my') // 'my' | 'others'
   // Infinite scroll state
-  const [ownedList, setOwnedList] = useState(() => ownedPfps)
+  const [ownedList, setOwnedList] = useState<PfpItem[]>(() => ownedPfps)
   const [ownedPage, setOwnedPage] = useState(1) // next page index (0 preloaded)
   const [ownedMore, setOwnedMore] = useState(ownedHasMore)
-  const [othersList, setOthersList] = useState(() => otherOwners)
+  const [othersList, setOthersList] = useState<PfpItem[]>(() => otherOwners)
   const [othersPage, setOthersPage] = useState(1)
   const [othersMore, setOthersMore] = useState(othersHasMore)
   const [ownedTotalCount, setOwnedTotalCount] = useState(ownedCount || 0)
   const [othersTotalCount, setOthersTotalCount] = useState(othersCount || 0)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
-  const sentinelRef = useRef(null)
+  const sentinelRef = useRef<HTMLDivElement | null>(null)
   const [intersectionSupported, setIntersectionSupported] = useState(true)
   const { theme, toggleTheme } = useTheme()
   const [rawSearch, setRawSearch] = useState(initialQuery || '')
@@ -480,29 +570,49 @@ export default function DomainPage({
     if (typeof window !== 'undefined' && !('IntersectionObserver' in window)) setIntersectionSupported(false)
   }, [])
 
-  const mapRow = useCallback((r, idx, prefix = 'dyn') => {
-    const dataUri = r.pfp_data_uri || ''
-    const pfpUsername = r.pfp_username || r.username || null
-    const cid = r.pfp_ipfs_cid || null
+  type AnyRow = OwnedPfpRow | OtherOwnerRow | PfpRow
+  type CommonRow = Partial<
+    Pick<
+      PfpRow,
+      | 'pfp_data_uri'
+      | 'pfp_username'
+      | 'username'
+      | 'pfp_ipfs_cid'
+      | 'image_url'
+      | 'generated_pfp_url'
+      | 'pfp_name'
+      | 'last_offerid'
+      | 'last_offer_status'
+      | 'lastOfferStatus'
+      | 'rank_queue_position'
+      | 'nft_id'
+      | 'pfp_author_id'
+    >
+  >
+  const mapRow = useCallback((r: AnyRow, idx: number, _prefix = 'dyn'): PfpItem => {
+    const cr = r as CommonRow
+    const dataUri = cr.pfp_data_uri || ''
+    const pfpUsername = cr.pfp_username || cr.username || null
+    const cid = cr.pfp_ipfs_cid || null
     const frontUrl =
       dataUri ||
       (cid && pfpUsername
         ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-go4me.png`
-        : r.image_url || r.generated_pfp_url || '')
+        : cr.image_url || cr.generated_pfp_url || '')
     const backUrl =
       cid && pfpUsername
         ? `https://can.seedsn.app/ipfs/${cid}/${pfpUsername}-x.png`
-        : dataUri || r.image_url || r.generated_pfp_url || ''
+        : dataUri || cr.image_url || cr.generated_pfp_url || ''
     return {
-      id: r.nft_id || r.pfp_author_id,
+      id: (cr.nft_id ?? cr.pfp_author_id ?? `dyn-${idx}`) as string,
       frontUrl,
       backUrl,
-      pfpName: r.pfp_name,
+      pfpName: cr.pfp_name,
       pfpUsername,
-      lastOfferId: r.last_offerid || null,
-      lastOfferStatus: r.last_offer_status ?? r.lastOfferStatus ?? null,
+      lastOfferId: cr.last_offerid || null,
+      lastOfferStatus: cr.last_offer_status ?? cr.lastOfferStatus ?? null,
       // If the view supplies queue minutes for this PFP, keep it so we can show ETA.
-      rankQueuePosition: r.rank_queue_position ?? null,
+      rankQueuePosition: cr.rank_queue_position ?? null,
     }
   }, [])
 
@@ -516,23 +626,30 @@ export default function DomainPage({
       const currentPage = isMy ? ownedPage : othersPage
       const from = currentPage * pageSize
       const to = from + pageSize - 1
-      const resp = await fetchUserPfps(isMy ? 'owned' : 'others', username, { from, to }, query)
-      if (resp.error) throw new Error(resp.error.message)
-      const data = resp.data || []
-      if (data.length > 0) {
-        const mapped = data.map((r, i) => mapRow(r, currentPage * pageSize + i, isMy ? 'owned' : 'other'))
-        if (isMy) {
+      if (isMy) {
+        const resp = await fetchUserPfps('owned', username, { from, to }, query)
+        if (resp.error) throw new Error(resp.error.message)
+        const data = (resp.data || []) as OwnedPfpRow[]
+        if (data.length > 0) {
+          const mapped = data.map((r, i) => mapRow(r, currentPage * pageSize + i, 'owned'))
           setOwnedList((prev) => [...prev, ...mapped])
           setOwnedPage((p) => p + 1)
           setOwnedMore(data.length === pageSize)
         } else {
+          setOwnedMore(false)
+        }
+      } else {
+        const resp = await fetchUserPfps('others', username, { from, to }, query)
+        if (resp.error) throw new Error(resp.error.message)
+        const data = (resp.data || []) as OtherOwnerRow[]
+        if (data.length > 0) {
+          const mapped = data.map((r, i) => mapRow(r, currentPage * pageSize + i, 'other'))
           setOthersList((prev) => [...prev, ...mapped])
           setOthersPage((p) => p + 1)
           setOthersMore(data.length === pageSize)
+        } else {
+          setOthersMore(false)
         }
-      } else {
-        if (isMy) setOwnedMore(false)
-        else setOthersMore(false)
       }
     } catch (e) {
       console.error('Failed to load more collection rows', e)
@@ -555,7 +672,7 @@ export default function DomainPage({
           if (newQ) url.searchParams.set('q', newQ)
           else url.searchParams.delete('q')
           window.history.replaceState({}, '', url.toString())
-        } catch (_) {
+        } catch {
           // no-op
         }
       }
@@ -579,16 +696,21 @@ export default function DomainPage({
     const fetchFirstPage = async () => {
       try {
         const isMy = collectionTab === 'my'
-        const pfpsResp = await fetchUserPfps(isMy ? 'owned' : 'others', username, { from: 0, to: pageSize - 1 }, query)
-        if (pfpsResp.error) throw new Error(pfpsResp.error.message)
-        const data = pfpsResp.data || []
-        const mapped = Array.isArray(data) ? data.map((r, i) => mapRow(r, i, isMy ? 'owned' : 'other')) : []
-        if (cancelled) return
         if (isMy) {
+          const pfpsResp = await fetchUserPfps('owned', username, { from: 0, to: pageSize - 1 }, query)
+          if (pfpsResp.error) throw new Error(pfpsResp.error.message)
+          const data = (pfpsResp.data || []) as OwnedPfpRow[]
+          const mapped = Array.isArray(data) ? data.map((r, i) => mapRow(r, i, 'owned')) : []
+          if (cancelled) return
           setOwnedList(mapped)
           setOwnedPage(1)
           setOwnedMore(data.length === pageSize)
         } else {
+          const pfpsResp = await fetchUserPfps('others', username, { from: 0, to: pageSize - 1 }, query)
+          if (pfpsResp.error) throw new Error(pfpsResp.error.message)
+          const data = (pfpsResp.data || []) as OtherOwnerRow[]
+          const mapped = Array.isArray(data) ? data.map((r, i) => mapRow(r, i, 'other')) : []
+          if (cancelled) return
           setOthersList(mapped)
           setOthersPage(1)
           setOthersMore(data.length === pageSize)
@@ -697,9 +819,9 @@ export default function DomainPage({
   }
 
   // Turn URLs in description into clickable links (http(s):// and www.)
-  const linkify = useCallback((text) => {
+  const linkify = useCallback((text: string): React.ReactNode => {
     if (!text || typeof text !== 'string') return text
-    const nodes = []
+    const nodes: React.ReactNode[] = []
     const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/gi
     let lastIndex = 0
     let match
@@ -742,30 +864,30 @@ export default function DomainPage({
     try {
       const PAGE = 1000
       let from = 0
-      const rows = []
+      const rows: OtherOwnerRow[] = []
       while (true) {
         const resp = await fetchUserPfps('others', username, { from, to: from + PAGE - 1 }, query)
         if (resp.error) throw new Error(resp.error.message)
-        const data = resp.data || []
+        const data = (resp.data || []) as OtherOwnerRow[]
         if (data.length === 0) break
         rows.push(...data)
         if (data.length < PAGE) break
         from += PAGE
       }
 
-      const quote = (val) => {
+      const quote = (val: unknown) => {
         const s = (val ?? '').toString()
         // Always wrap in quotes; escape existing quotes
         return '"' + s.replace(/"/g, '""') + '"'
       }
-      const sourceRows = rows.length > 0 ? rows : othersList || []
+      const sourceRows: Array<OtherOwnerRow | PfpItem> = rows.length > 0 ? rows : othersList || []
       const lines = ['username,name,xch_address,did_address']
       for (const r of sourceRows) {
         // Support both Supabase view rows and client-side mapped items
-        const u = r.pfp_username || ''
-        const n = r.pfp_name || ''
-        const a = r.owner_xch_address || ''
-        const d = r.owner_did_address || ''
+        const u = 'pfp_username' in r ? (r.pfp_username ?? '') : (r.pfpUsername ?? '')
+        const n = 'pfp_name' in r ? (r.pfp_name ?? '') : (r.pfpName ?? '')
+        const a = 'owner_xch_address' in r ? (r.owner_xch_address ?? '') : ''
+        const d = 'owner_did_address' in r ? (r.owner_did_address ?? '') : ''
         lines.push([quote(u), quote(n), quote(a), quote(d)].join(','))
       }
       const csv = lines.join('\n')
@@ -1283,7 +1405,7 @@ export default function DomainPage({
           <div className={styles.mobileTabSelector}>
             <select
               value={collectionTab}
-              onChange={(e) => setCollectionTab(e.target.value)}
+              onChange={(e) => setCollectionTab(e.target.value as CollectionTab)}
               className={styles.mobileTabDropdown}
             >
               <option value="my">My Collection ({ownedTotalCount || 0})</option>

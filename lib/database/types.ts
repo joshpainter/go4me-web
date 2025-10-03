@@ -102,6 +102,21 @@ export interface ServiceResponse<T> {
   count?: number
 }
 
+// Phase 3: Enhanced service results with metadata
+export interface ServiceMeta {
+  rowCount: number
+  durationMs: number
+  from: number
+  to: number
+  view: string
+}
+
+export interface ServiceResult<T> {
+  data: T | null
+  error: DatabaseError | null
+  meta: ServiceMeta
+}
+
 // Query parameter types
 export interface LeaderboardQuery {
   view:

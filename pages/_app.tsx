@@ -1,28 +1,54 @@
 import 'semantic-ui-css/semantic.min.css'
 import '../styles/globals.css'
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
+import type { AppProps } from 'next/app'
 import { WalletConnectProvider } from '../lib/wallet/WalletConnectContext'
 import { JsonRpcProvider } from '../lib/wallet/JsonRpcContext'
 import { GobyProvider } from '../lib/wallet/GobyContext'
 import { ToastProvider } from '../components/ui/Toast'
 
-const ThemeContext = createContext({ theme: 'light', toggleTheme: () => {} })
+type ThemeValue = { theme: 'light' | 'dark'; toggleTheme: () => void }
+const ThemeContext = createContext<ThemeValue>({ theme: 'light', toggleTheme: () => {} })
 export const useTheme = () => useContext(ThemeContext)
 
-function MyApp({ Component, pageProps }) {
-  const [theme, setTheme] = useState('light')
+// Utility helpers to avoid implicit any and stringify error-like values safely
+const toStr = (v: unknown): string => {
+  try {
+    if (typeof v === 'string') return v
+    if (v instanceof Error) return v.message
+    if (v && typeof v === 'object') return JSON.stringify(v)
+    return String(v)
+  } catch {
+    return String(v)
+  }
+}
+
+const joinMsg = (...args: unknown[]) => args.map(toStr).join(' ')
+
+const extractOnErrorMessage = (message: Event | string | unknown, error?: unknown): string => {
+  if (typeof message === 'string') return message
+  if (message instanceof ErrorEvent) return message.message
+  if (error instanceof Error) return error.message
+  if (typeof error === 'string') return error
+  return toStr(error)
+}
+
+function MyApp({ Component, pageProps }: AppProps) {
+  const [theme, setTheme] = useState<'light' | 'dark'>('light')
 
   // Initialize theme on mount (avoids SSR mismatch issues)
   useEffect(() => {
     try {
-      const stored = localStorage.getItem('theme')
-      const preferred = stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+      const stored = typeof localStorage !== 'undefined' ? localStorage.getItem('theme') : null
+      const preferred =
+        (stored as 'light' | 'dark' | null) ||
+        (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
       setTheme(preferred)
       document.documentElement.setAttribute('data-theme', preferred)
     } catch {}
 
     // Comprehensive WalletConnect error suppression
-    const isWalletConnectMessage = (val) => {
+    const isWalletConnectMessage = (val: unknown): boolean => {
       if (!val) return false
       if (typeof val === 'string') {
         return (
@@ -39,18 +65,19 @@ function MyApp({ Component, pageProps }) {
         )
       }
       if (val && typeof val === 'object') {
-        if (val.message && typeof val.message === 'string') return isWalletConnectMessage(val.message)
-        if (val.context && typeof val.context === 'string' && val.context.startsWith('core')) return true
+        const obj = val as Record<string, unknown>
+        if (typeof obj.message === 'string' && obj.message) return isWalletConnectMessage(obj.message)
+        if (typeof obj.context === 'string' && obj.context.startsWith('core')) return true
       }
       return false
     }
 
-    const isWalletConnectError = (...args) => args.some(isWalletConnectMessage)
+    const isWalletConnectError = (...args: unknown[]) => args.some(isWalletConnectMessage)
 
     // Override window.onerror to catch all errors
     const originalOnError = window.onerror
     window.onerror = (message, source, lineno, colno, error) => {
-      const errorMessage = String(message || error?.message || error || '')
+      const errorMessage = extractOnErrorMessage(message, error)
       if (isWalletConnectError(errorMessage) || isWalletConnectError(source || '')) {
         return true // Prevent default error handling
       }
@@ -59,56 +86,63 @@ function MyApp({ Component, pageProps }) {
     }
 
     // Override console methods to suppress WalletConnect noise
-    const originalConsoleError = console.error
-    const originalConsoleWarn = console.warn
-    const originalConsoleLog = console.log
+    const originalConsoleError: (...args: unknown[]) => void = console.error.bind(console)
+    const originalConsoleWarn: (...args: unknown[]) => void = console.warn.bind(console)
+    const originalConsoleLog: (...args: unknown[]) => void = console.log.bind(console)
 
-    console.error = (...args) => {
-      const message = args.join(' ')
+    console.error = (...args: unknown[]) => {
+      const message = joinMsg(...args)
       if (isWalletConnectError(message)) return
-      originalConsoleError.apply(console, args)
+      originalConsoleError(...args)
     }
 
-    console.warn = (...args) => {
-      const message = args.join(' ')
+    console.warn = (...args: unknown[]) => {
+      const message = joinMsg(...args)
       if (isWalletConnectError(message)) return
-      originalConsoleWarn.apply(console, args)
+      originalConsoleWarn(...args)
     }
 
-    console.log = (...args) => {
-      const message = args.join(' ')
+    console.log = (...args: unknown[]) => {
+      const message = joinMsg(...args)
       if (isWalletConnectError(message)) return
-      originalConsoleLog.apply(console, args)
+      originalConsoleLog(...args)
     }
 
     // Suppress Next.js dev overlay errors for WalletConnect
-    if (typeof window !== 'undefined' && window.__NEXT_DATA__?.buildId) {
-      const originalNextJsError = window.console.error
-      window.console.error = (...args) => {
-        const message = args.join(' ')
+    // Narrowly probe Next.js global without extending the Window type
+    const nextData: unknown =
+      typeof window !== 'undefined' ? (window as unknown as { __NEXT_DATA__?: unknown }).__NEXT_DATA__ : undefined
+    if (nextData && typeof nextData === 'object') {
+      const originalNextJsError = window.console.error.bind(window.console) as (...args: unknown[]) => void
+      window.console.error = (...args: unknown[]) => {
+        const message = joinMsg(...args)
         if (isWalletConnectError(message)) return
-        if (originalNextJsError) originalNextJsError.apply(window.console, args)
+        originalNextJsError(...args)
       }
     }
 
-    const handleError = (event) => {
-      const message = event.error?.message || event.message || String(event.error || event)
+    const handleError = (event: ErrorEvent | Event) => {
+      if (!(event instanceof ErrorEvent)) return undefined
+      const message = event.error instanceof Error ? event.error.message : event.message || toStr(event.error)
       if (isWalletConnectError(message)) {
         event.preventDefault()
         event.stopPropagation()
         event.stopImmediatePropagation()
         return false
       }
+      return undefined
     }
 
-    const handleUnhandledRejection = (event) => {
-      const message = event.reason?.message || String(event.reason)
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      const reason = event.reason as unknown
+      const message = reason instanceof Error ? reason.message : toStr(reason)
       if (isWalletConnectError(message)) {
         event.preventDefault()
         event.stopPropagation()
         event.stopImmediatePropagation()
         return false
       }
+      return undefined
     }
 
     // Add multiple event listeners to catch all error types
@@ -130,10 +164,12 @@ function MyApp({ Component, pageProps }) {
     return cleanup
   }, [])
 
-  const applyTheme = useCallback((next) => {
+  const applyTheme = useCallback((next: 'light' | 'dark') => {
     setTheme(next)
     document.documentElement.setAttribute('data-theme', next)
-    try { localStorage.setItem('theme', next) } catch {}
+    try {
+      localStorage.setItem('theme', next)
+    } catch {}
   }, [])
 
   const toggleTheme = useCallback(() => {

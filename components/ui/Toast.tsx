@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Icon } from 'semantic-ui-react'
+import type { SemanticICONS } from 'semantic-ui-react/dist/commonjs/generic'
 
 interface ToastProps {
   message: string
@@ -28,23 +29,33 @@ export function Toast({ message, type, isVisible, onClose, duration = 5000, link
 
   if (!isVisible && !isAnimating) return null
 
-  const getIcon = () => {
+  const getIcon = (): SemanticICONS => {
     switch (type) {
-      case 'error': return 'exclamation triangle'
-      case 'success': return 'check circle'
-      case 'warning': return 'warning sign'
-      case 'info': return 'info circle'
-      default: return 'info circle'
+      case 'error':
+        return 'exclamation triangle' as SemanticICONS
+      case 'success':
+        return 'check circle' as SemanticICONS
+      case 'warning':
+        return 'warning sign' as SemanticICONS
+      case 'info':
+        return 'info circle' as SemanticICONS
+      default:
+        return 'info circle' as SemanticICONS
     }
   }
 
   const getColors = () => {
     switch (type) {
-      case 'error': return { bg: '#fee2e2', border: '#fca5a5', text: '#dc2626' }
-      case 'success': return { bg: '#dcfce7', border: '#86efac', text: '#16a34a' }
-      case 'warning': return { bg: '#fef3c7', border: '#fcd34d', text: '#d97706' }
-      case 'info': return { bg: '#dbeafe', border: '#93c5fd', text: '#2563eb' }
-      default: return { bg: '#f3f4f6', border: '#d1d5db', text: '#374151' }
+      case 'error':
+        return { bg: '#fee2e2', border: '#fca5a5', text: '#dc2626' }
+      case 'success':
+        return { bg: '#dcfce7', border: '#86efac', text: '#16a34a' }
+      case 'warning':
+        return { bg: '#fef3c7', border: '#fcd34d', text: '#d97706' }
+      case 'info':
+        return { bg: '#dbeafe', border: '#93c5fd', text: '#2563eb' }
+      default:
+        return { bg: '#f3f4f6', border: '#d1d5db', text: '#374151' }
     }
   }
 
@@ -68,26 +79,28 @@ export function Toast({ message, type, isVisible, onClose, duration = 5000, link
         transition: 'transform 0.3s ease-in-out',
         display: 'flex',
         alignItems: 'flex-start',
-        gap: '12px'
+        gap: '12px',
       }}
     >
-      <Icon 
-        name={getIcon() as any} 
-        style={{ 
-          color: colors.text, 
+      <Icon
+        name={getIcon()}
+        style={{
+          color: colors.text,
           fontSize: '18px',
           marginTop: '2px',
-          flexShrink: 0
-        }} 
+          flexShrink: 0,
+        }}
       />
       <div style={{ flex: 1 }}>
-        <div style={{
-          color: colors.text,
-          fontSize: '14px',
-          fontWeight: '500',
-          lineHeight: '1.4',
-          wordBreak: 'break-word'
-        }}>
+        <div
+          style={{
+            color: colors.text,
+            fontSize: '14px',
+            fontWeight: '500',
+            lineHeight: '1.4',
+            wordBreak: 'break-word',
+          }}
+        >
           {message}
           {link && (
             <div style={{ marginTop: '8px' }}>
@@ -99,7 +112,7 @@ export function Toast({ message, type, isVisible, onClose, duration = 5000, link
                   color: colors.text,
                   textDecoration: 'underline',
                   fontSize: '12px',
-                  fontWeight: 'normal'
+                  fontWeight: 'normal',
                 }}
               >
                 {linkText || 'View Transaction'}
@@ -118,7 +131,7 @@ export function Toast({ message, type, isVisible, onClose, duration = 5000, link
           color: colors.text,
           opacity: 0.7,
           fontSize: '16px',
-          flexShrink: 0
+          flexShrink: 0,
         }}
         aria-label="Close notification"
       >
@@ -129,7 +142,12 @@ export function Toast({ message, type, isVisible, onClose, duration = 5000, link
 }
 
 interface ToastContextType {
-  showToast: (message: string, type?: 'error' | 'success' | 'warning' | 'info', link?: string, linkText?: string) => void
+  showToast: (
+    message: string,
+    type?: 'error' | 'success' | 'warning' | 'info',
+    link?: string,
+    linkText?: string,
+  ) => void
 }
 
 import { createContext, useContext, ReactNode } from 'react'
@@ -139,24 +157,37 @@ const ToastContext = createContext<ToastContextType | null>(null)
 let toastIdCounter = 0
 
 export function ToastProvider({ children }: { children: ReactNode }) {
-  const [toasts, setToasts] = useState<Array<{ id: number; message: string; type: 'error' | 'success' | 'warning' | 'info'; link?: string; linkText?: string }>>([])
+  const [toasts, setToasts] = useState<
+    Array<{
+      id: number
+      message: string
+      type: 'error' | 'success' | 'warning' | 'info'
+      link?: string
+      linkText?: string
+    }>
+  >([])
 
-  const showToast = (message: string, type: 'error' | 'success' | 'warning' | 'info' = 'info', link?: string, linkText?: string) => {
+  const showToast = (
+    message: string,
+    type: 'error' | 'success' | 'warning' | 'info' = 'info',
+    link?: string,
+    linkText?: string,
+  ) => {
     const id = ++toastIdCounter
-    setToasts(prev => {
+    setToasts((prev) => {
       const newToasts = [...prev, { id, message, type, link, linkText }]
       return newToasts.slice(-5) // Limit concurrent toasts
     })
   }
 
   const removeToast = (id: number) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id))
+    setToasts((prev) => prev.filter((toast) => toast.id !== id))
   }
 
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
-      {toasts.map(toast => (
+      {toasts.map((toast) => (
         <Toast
           key={toast.id}
           message={toast.message}

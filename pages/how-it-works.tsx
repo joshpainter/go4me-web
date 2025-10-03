@@ -7,8 +7,7 @@ import { useTheme } from './_app'
 import { SITE_CONFIG } from '../lib/constants'
 import GlobalWalletBar from '../components/wallet/GlobalWalletBar'
 
-export async function getServerSideProps(context) {
-  // Derive root host (without subdomain) + preserve port so we can build absolute-ish links
+export async function getServerSideProps(context: { req: { headers?: Record<string, string | undefined> } }) {
   const hostHeader = context.req?.headers?.host || ''
   const [hostNoPort, portPart] = hostHeader.split(':')
   let rootDomain = hostNoPort
@@ -22,7 +21,7 @@ export async function getServerSideProps(context) {
   return { props: { rootHostForLinks } }
 }
 
-export default function HowItWorks({ rootHostForLinks }) {
+export default function HowItWorks({ rootHostForLinks }: { rootHostForLinks: string }) {
   const { theme, toggleTheme } = useTheme()
   const [copiedAsset, setCopiedAsset] = useState(false)
   const G4M_ASSET_ID = '37b231bbdc0002a4fbbb65de0007a9cf1645a292888711968a8abb9a3e40596e'
@@ -43,14 +42,15 @@ export default function HowItWorks({ rootHostForLinks }) {
       }
       setCopiedAsset(true)
       setTimeout(() => setCopiedAsset(false), 1600)
-    } catch (_) {
+    } catch {
       // no-op
     }
   }
+
   return (
     <div className={styles.container}>
       <Head>
-        <title>{`How it works • ${SITE_CONFIG.name}`}</title>
+        <title>{`How it works - ${SITE_CONFIG.name}`}</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta
           name="description"
@@ -58,12 +58,10 @@ export default function HowItWorks({ rootHostForLinks }) {
         />
         <link rel="icon" href="/collection-icon.png" />
         <link rel="canonical" href={`${SITE_CONFIG.url}/how-it-works`} />
-
-        {/* Open Graph / Twitter Card Meta */}
         <meta property="og:site_name" content={SITE_CONFIG.name} />
         <meta property="og:url" content={`${SITE_CONFIG.url}/how-it-works`} />
         <meta property="og:type" content="article" />
-        <meta property="og:title" content={`How it works • ${SITE_CONFIG.name}`} />
+        <meta property="og:title" content={`How it works - ${SITE_CONFIG.name}`} />
         <meta
           property="og:description"
           content="Learn how to claim your free go4.me PFP NFT, earn royalties, and participate in the Chia NFT marketplace. Step-by-step guide to getting started."
@@ -71,7 +69,7 @@ export default function HowItWorks({ rootHostForLinks }) {
         <meta property="og:image" content={SITE_CONFIG.banner} />
         <meta property="og:image:alt" content={`${SITE_CONFIG.name} how it works guide`} />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={`How it works • ${SITE_CONFIG.name}`} />
+        <meta name="twitter:title" content={`How it works - ${SITE_CONFIG.name}`} />
         <meta
           name="twitter:description"
           content="Learn how to claim your free go4.me PFP NFT, earn royalties, and participate in the Chia NFT marketplace. Step-by-step guide to getting started."
@@ -80,14 +78,11 @@ export default function HowItWorks({ rootHostForLinks }) {
         <meta name="twitter:site" content={SITE_CONFIG.twitter} />
       </Head>
 
-      {/* Sticky top bar (no search, includes back link) */}
       <div className={styles.stickyTopbar}>
-        {/* Left: back to leaderboard */}
         <a href={`//${rootHostForLinks}/`} aria-label="Back to leaderboard home" className={styles.topNavLink}>
-          <Image src="/collection-icon.png" alt="go4.me" width={40} height={40} />← Back
+          <Image src="/collection-icon.png" alt="go4.me" width={40} height={40} /> Back
         </a>
         <div style={{ flex: 1 }} />
-        {/* Right: theme toggle + wallet */}
         <div className={styles.topNavActions}>
           <GlobalWalletBar inline />
           <button
@@ -96,19 +91,7 @@ export default function HowItWorks({ rootHostForLinks }) {
             aria-label="Toggle dark mode"
             title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
             className={styles.desktopThemeButton}
-            style={{
-              height: 34,
-              background: 'transparent',
-              border: '1px solid var(--color-border)',
-              borderRadius: '4px',
-              color: 'var(--color-text)',
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '6px 8px',
-              transition: 'all 0.2s ease',
-            }}
+            style={{ height: 34 }}
           >
             <Icon name={theme === 'dark' ? 'sun' : 'moon'} />
           </button>
@@ -117,7 +100,6 @@ export default function HowItWorks({ rootHostForLinks }) {
 
       <main>
         <div style={{ paddingTop: 84 }} />
-        {/* Centered collection logo like home page */}
         <div
           style={{
             width: '100%',
@@ -147,8 +129,8 @@ export default function HowItWorks({ rootHostForLinks }) {
           <section style={{ marginTop: 28 }}>
             <h3>Claiming your go4.me PFP</h3>
             <p>
-              To get started, share your XCH address and tag @go4mebot on X. We’ll generate your custom go4.me PFP and
-              publish it so others can collect it. You’ll earn royalties whenever your editions are traded.
+              To get started, share your XCH address and tag @go4mebot on X. We&apos;ll generate your custom go4.me PFP
+              and publish it so others can collect it. You&apos;ll earn royalties whenever your editions are traded.
             </p>
             <p>
               You can also add your DID to your go4.me page by sharing it on X and tagging @go4mebot the same way you do
@@ -175,14 +157,14 @@ export default function HowItWorks({ rootHostForLinks }) {
               and featured placements.
             </p>
             <p>
-              Make sure all your collected go4me PFPs are at the XCH address that you used when you registered. If your
-              PFPs show up on your go4me page, you are all set! If they don&apos;t, transfer them to the XCH address at
-              the top of your go4me page and wait for them to show up. This usually doesn&apos;t take longer than 10
+              Make sure all your collected go4.me PFPs are at the XCH address that you used when you registered. If your
+              PFPs show up on your go4.me page, you are all set! If they don&apos;t, transfer them to the XCH address at
+              the top of your go4.me page and wait for them to show up. This usually doesn&apos;t take longer than 10
               minutes.
             </p>
             <p>
               Your airdrop amount is calculated using the Rarity Badge for each PFP you&apos;ve collected. The Rarity
-              Badge (lower‑left of each PFP) is worth:
+              Badge (lower-left of each PFP) is worth:
             </p>
             <ul>
               <li>Crown: 100</li>
@@ -202,7 +184,7 @@ export default function HowItWorks({ rootHostForLinks }) {
               badge score. If it exceeds 500,000 G4M, your airdrop will be calculated proportionally based on your badge
               score relative to the total airdrop amount.
             </p>
-            <p>What can you do with $G4M? Collect more go4me PFPs, of course!</p>
+            <p>What can you do with $G4M? Collect more go4.me PFPs, of course!</p>
           </section>
 
           <section id="marmot-badge" style={{ marginTop: 24 }}>
@@ -217,14 +199,14 @@ export default function HowItWorks({ rootHostForLinks }) {
               </a>
             </p>
             <p>
-              When you set your go4me royalty address to the{' '}
+              When you set your go4.me royalty address to the{' '}
               <strong>
                 <a href="https://x.com/MarmotRecovery" target="_blank" rel="noreferrer">
                   @MarmotRecovery
                 </a>
               </strong>{' '}
               address, the sales for new numbered copies created after the change will also go directly to marmots
-              instead of the go4me wallet, in addition to your royalties!
+              instead of the go4.me wallet, in addition to your royalties!
             </p>
             <p>
               Remember that you can always temporarily change your XCH address for a time, and then change it back.
@@ -364,7 +346,7 @@ export default function HowItWorks({ rootHostForLinks }) {
           <section style={{ marginTop: 24 }}>
             <h3>Trading on marketplaces</h3>
             <p>
-              You can view and exchange offers on third‑party marketplaces like Dexie and Mintgarden. Look for the
+              You can view and exchange offers on third-party marketplaces like Dexie and Mintgarden. Look for the
               badges and links under each card on the leaderboard.
             </p>
             <div style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -398,14 +380,6 @@ export default function HowItWorks({ rootHostForLinks }) {
                 <Icon name="external" size="small" />
               </a>
             </div>
-          </section>
-
-          <section style={{ marginTop: 24 }}>
-            <h3>FAQs</h3>
-            <p>
-              Have questions about minting, royalties, or eligibility? We’ll expand this page with detailed guidance.
-              For now, reach out on X and we’ll help you get set up.
-            </p>
           </section>
         </div>
       </main>

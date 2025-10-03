@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, type NextRequest } from 'next/server'
 
 /**
  * Middleware to rewrite ONLY username subdomains (username.go4.me / username.localhost)
@@ -7,7 +7,7 @@ import { NextResponse } from 'next/server'
  * For subdomains we append ?pfp=<username> so /domain can load user-specific data.
  * Avoids loops by only acting on pathname '/'.
  */
-export function middleware(req) {
+export function middleware(req: NextRequest) {
   const url = req.nextUrl.clone()
   const originalPath = url.pathname
   if (originalPath !== '/') {
@@ -31,7 +31,11 @@ export function middleware(req) {
   }
 
   // username.go4.me OR username.localhost
-  if (normalizedHost.endsWith('.go4.me') || normalizedHost.endsWith('.go4.fail') || normalizedHost.endsWith('.localhost')) {
+  if (
+    normalizedHost.endsWith('.go4.me') ||
+    normalizedHost.endsWith('.go4.fail') ||
+    normalizedHost.endsWith('.localhost')
+  ) {
     const parts = normalizedHost.split('.')
     const sub = parts[0]
     if (sub && sub !== 'go4' && sub !== 'localhost') {
@@ -39,7 +43,7 @@ export function middleware(req) {
       url.searchParams.set('pfp', sub)
       const res = NextResponse.rewrite(url)
       res.headers.set('x-mw', 'rewrite-subdomain')
-      res.headers.set('x-mw-sub', sub)
+      res.headers.set('x-mw-sub', String(sub))
       return res
     }
   }
