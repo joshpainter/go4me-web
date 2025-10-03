@@ -40,6 +40,7 @@ export default function TimelineGrid({ initial }: { initial: TimelineSnappRow[] 
             created_at={it.created_at ?? undefined}
             last_offer_created_at={it.last_offer_created_at ?? undefined}
             author_id={it.author_id ?? undefined}
+            last_offer_id={it.last_offer_id ?? undefined}
           />
         ))}
       </div>

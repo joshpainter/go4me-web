@@ -22,16 +22,18 @@ export interface TimelineSnappCardProps {
   created_at?: string | null
   last_offer_created_at?: string | null
   author_id?: string | null
+  last_offer_id?: string | null
 }
 
 export default function TimelineSnappCard(props: TimelineSnappCardProps) {
-  const { ipfs_cid, title, created_at, last_offer_created_at } = props
+  const { ipfs_cid, title, created_at, last_offer_created_at, last_offer_id } = props
   const [flipped, setFlipped] = React.useState(false)
   const reducedMotion = usePrefersReducedMotion()
   const [generatedLoaded, setGeneratedLoaded] = React.useState(false)
   const [sourceLoaded, setSourceLoaded] = React.useState(false)
 
   const { generated, source } = snappImageUrls(ipfs_cid)
+  const dexieUrl = last_offer_id ? `https://dexie.space/offers/${last_offer_id}` : undefined
   const slugifiedTitle = (title ?? 'go4snapp')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
@@ -130,6 +132,28 @@ export default function TimelineSnappCard(props: TimelineSnappCardProps) {
           ) : (
             <button type="button" className="card-action card-action--disabled" disabled>
               Generated unavailable
+            </button>
+          )}
+          {dexieUrl ? (
+            <a
+              className="card-action card-action--dexie"
+              href={dexieUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="View offer on Dexie"
+            >
+              <Image
+                src="https://raw.githubusercontent.com/dexie-space/dexie-kit/main/svg/duck.svg"
+                alt="Dexie"
+                width={16}
+                height={16}
+                className="card-action__icon"
+              />
+              Dexie
+            </a>
+          ) : (
+            <button type="button" className="card-action card-action--disabled" disabled>
+              Dexie unavailable
             </button>
           )}
         </div>
@@ -258,6 +282,33 @@ export default function TimelineSnappCard(props: TimelineSnappCardProps) {
           color: #8b98a5;
           border-color: #2f3336;
           background: transparent;
+        }
+        .card-action--dexie {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          background: linear-gradient(180deg, #7ab0ff 0%, #2f77ff 100%);
+          color: #ffffff;
+          border-color: rgba(47, 109, 255, 0.9);
+          box-shadow:
+            0 6px 14px rgba(47, 109, 255, 0.18),
+            0 2px 6px rgba(47, 109, 255, 0.12),
+            inset 0 1px 0 rgba(255, 255, 255, 0.25),
+            inset 0 -1px 0 rgba(0, 0, 0, 0.08);
+          text-decoration: none;
+        }
+        .card-action--dexie:hover {
+          background: linear-gradient(180deg, #89b8ff 0%, #2a6fee 100%);
+          border-color: #1d9bf0;
+          color: #ffffff;
+        }
+        .card-action--dexie img {
+          width: 16px;
+          height: 16px;
+        }
+        :global(.card-action__icon) {
+          width: 16px !important;
+          height: 16px !important;
         }
       `}</style>
     </article>

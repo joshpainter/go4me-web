@@ -22,17 +22,17 @@ export default function TimelinePage({ initial }: { initial: TimelineSnappRow[] 
   return (
     <>
       <Head>
-        <title>Timeline — New Go4s and Go4Snapps</title>
+        <title>Timeline</title>
         <meta name="description" content="Discover the latest Go4Snapps as they are created and traded." />
         <link rel="canonical" href="/timeline" />
-        <meta property="og:title" content="Timeline — New Go4s and Go4Snapps" />
-        <meta property="og:description" content="Discover the latest Go4Snapps as they are created and traded." />
+        <meta property="og:title" content="Timeline" />
+        <meta property="og:description" content="Discover the latest go4s as they are created and traded." />
       </Head>
       <div className="timeline-page">
         <main className="timeline-shell">
           <header className="timeline-header">
             <h1 className="timeline-title">Timeline</h1>
-            <p className="timeline-subtitle">See the latest Go4Snapps as they drop.</p>
+            <p className="timeline-subtitle">See the latest go4s as they drop!</p>
           </header>
           <TimelineGrid initial={initial} />
         </main>

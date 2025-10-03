@@ -158,6 +158,7 @@ Card content
 - Timestamp priority: `last_offer_created_at` if present, else `created_at`
 - Optional title/description (truncate)
 - Actions: View details (navigates to item page), Share
+- Dexie quick link when `last_offer_id` is present (styled like the home page Dexie pill)
 
 Image sources (by ipfs_cid)
 
