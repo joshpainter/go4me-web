@@ -11,6 +11,7 @@ export type Database = {
       go4me_nfts: {
         Row: {
           badge: string | null
+          collection_id: string | null
           created_at: string
           data_uri: string | null
           description: string | null
@@ -27,6 +28,7 @@ export type Database = {
         }
         Insert: {
           badge?: string | null
+          collection_id?: string | null
           created_at?: string
           data_uri?: string | null
           description?: string | null
@@ -43,6 +45,7 @@ export type Database = {
         }
         Update: {
           badge?: string | null
+          collection_id?: string | null
           created_at?: string
           data_uri?: string | null
           description?: string | null
@@ -58,6 +61,170 @@ export type Database = {
           x_users_username?: string | null
         }
         Relationships: []
+      }
+      go4snapps: {
+        Row: {
+          author_id: string | null
+          created_at: string
+          description: string | null
+          go4snapp_id: string
+          ipfs_cid: string | null
+          ipfs_cid_updated_at: string | null
+          last_edition_number: number | null
+          last_offer_created_at: string | null
+          last_offer_id: string | null
+          processing_error: string | null
+          processing_started_at: string | null
+          replied_to_post_at: string | null
+          title: string | null
+          total_auction_offer_count: number | null
+        }
+        Insert: {
+          author_id?: string | null
+          created_at?: string
+          description?: string | null
+          go4snapp_id: string
+          ipfs_cid?: string | null
+          ipfs_cid_updated_at?: string | null
+          last_edition_number?: number | null
+          last_offer_created_at?: string | null
+          last_offer_id?: string | null
+          processing_error?: string | null
+          processing_started_at?: string | null
+          replied_to_post_at?: string | null
+          title?: string | null
+          total_auction_offer_count?: number | null
+        }
+        Update: {
+          author_id?: string | null
+          created_at?: string
+          description?: string | null
+          go4snapp_id?: string
+          ipfs_cid?: string | null
+          ipfs_cid_updated_at?: string | null
+          last_edition_number?: number | null
+          last_offer_created_at?: string | null
+          last_offer_id?: string | null
+          processing_error?: string | null
+          processing_started_at?: string | null
+          replied_to_post_at?: string | null
+          title?: string | null
+          total_auction_offer_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'go4snapps_author_id_fkey'
+            columns: ['author_id']
+            isOneToOne: false
+            referencedRelation: 'get_leaderboard'
+            referencedColumns: ['author_id']
+          },
+          {
+            foreignKeyName: 'go4snapps_author_id_fkey'
+            columns: ['author_id']
+            isOneToOne: false
+            referencedRelation: 'get_nfts_processing_now'
+            referencedColumns: ['author_id']
+          },
+          {
+            foreignKeyName: 'go4snapps_author_id_fkey'
+            columns: ['author_id']
+            isOneToOne: false
+            referencedRelation: 'get_nonwelcomed_users'
+            referencedColumns: ['author_id']
+          },
+          {
+            foreignKeyName: 'go4snapps_author_id_fkey'
+            columns: ['author_id']
+            isOneToOne: false
+            referencedRelation: 'get_ungenerated_go4snapps'
+            referencedColumns: ['author_id']
+          },
+          {
+            foreignKeyName: 'go4snapps_author_id_fkey'
+            columns: ['author_id']
+            isOneToOne: false
+            referencedRelation: 'get_ungenerated_nfts'
+            referencedColumns: ['author_id']
+          },
+          {
+            foreignKeyName: 'go4snapps_author_id_fkey'
+            columns: ['author_id']
+            isOneToOne: false
+            referencedRelation: 'get_ungenerated_pfps'
+            referencedColumns: ['author_id']
+          },
+          {
+            foreignKeyName: 'go4snapps_author_id_fkey'
+            columns: ['author_id']
+            isOneToOne: false
+            referencedRelation: 'get_unminted_go4snapps'
+            referencedColumns: ['author_id']
+          },
+          {
+            foreignKeyName: 'go4snapps_author_id_fkey'
+            columns: ['author_id']
+            isOneToOne: false
+            referencedRelation: 'get_unprocessed_commands'
+            referencedColumns: ['author_id']
+          },
+          {
+            foreignKeyName: 'go4snapps_author_id_fkey'
+            columns: ['author_id']
+            isOneToOne: false
+            referencedRelation: 'get_user_page_info'
+            referencedColumns: ['author_id']
+          },
+          {
+            foreignKeyName: 'go4snapps_author_id_fkey'
+            columns: ['author_id']
+            isOneToOne: false
+            referencedRelation: 'get_user_page_other_owners'
+            referencedColumns: ['pfp_author_id']
+          },
+          {
+            foreignKeyName: 'go4snapps_author_id_fkey'
+            columns: ['author_id']
+            isOneToOne: false
+            referencedRelation: 'get_user_page_owned_pfps'
+            referencedColumns: ['author_id']
+          },
+          {
+            foreignKeyName: 'go4snapps_author_id_fkey'
+            columns: ['author_id']
+            isOneToOne: false
+            referencedRelation: 'get_x_users_to_update'
+            referencedColumns: ['author_id']
+          },
+          {
+            foreignKeyName: 'go4snapps_author_id_fkey'
+            columns: ['author_id']
+            isOneToOne: false
+            referencedRelation: 'x_users'
+            referencedColumns: ['author_id']
+          },
+          {
+            foreignKeyName: 'go4snapps_go4snapp_id_fkey'
+            columns: ['go4snapp_id']
+            isOneToOne: true
+            referencedRelation: 'get_unprocessed_commands'
+            referencedColumns: ['mentioned_post_id']
+          },
+          {
+            foreignKeyName: 'go4snapps_go4snapp_id_fkey'
+            columns: ['go4snapp_id']
+            isOneToOne: true
+            referencedRelation: 'get_unprocessed_mentions'
+            referencedColumns: ['mentioned_post_id']
+          },
+          {
+            foreignKeyName: 'go4snapps_go4snapp_id_fkey'
+            columns: ['go4snapp_id']
+            isOneToOne: true
+            referencedRelation: 'x_mentions'
+            referencedColumns: ['mentioned_post_id']
+          },
+        ]
       }
       offer_file_assets: {
         Row: {
@@ -315,13 +482,6 @@ export type Database = {
         }
         Relationships: []
       }
-      get_last_completed_offer: {
-        Row: {
-          completed_at: string | null
-          offer_id: string | null
-        }
-        Relationships: []
-      }
       get_last_stored_post_id: {
         Row: {
           mentioned_post_id: string | null
@@ -332,13 +492,6 @@ export type Database = {
         Row: {
           nft_id: string | null
           updated_at: string | null
-        }
-        Relationships: []
-      }
-      get_latest_open_offer: {
-        Row: {
-          collected_at: string | null
-          offer_id: string | null
         }
         Relationships: []
       }
@@ -424,6 +577,206 @@ export type Database = {
         }
         Relationships: []
       }
+      get_timeline_go4snapps: {
+        Row: {
+          author_id: string | null
+          created_at: string | null
+          description: string | null
+          go4snapp_id: string | null
+          ipfs_cid: string | null
+          ipfs_cid_updated_at: string | null
+          last_edition_number: number | null
+          last_offer_created_at: string | null
+          last_offer_id: string | null
+          processing_error: string | null
+          processing_started_at: string | null
+          replied_to_post_at: string | null
+          title: string | null
+          total_auction_offer_count: number | null
+        }
+        Insert: {
+          author_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          go4snapp_id?: string | null
+          ipfs_cid?: string | null
+          ipfs_cid_updated_at?: string | null
+          last_edition_number?: number | null
+          last_offer_created_at?: string | null
+          last_offer_id?: string | null
+          processing_error?: string | null
+          processing_started_at?: string | null
+          replied_to_post_at?: string | null
+          title?: string | null
+          total_auction_offer_count?: number | null
+        }
+        Update: {
+          author_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          go4snapp_id?: string | null
+          ipfs_cid?: string | null
+          ipfs_cid_updated_at?: string | null
+          last_edition_number?: number | null
+          last_offer_created_at?: string | null
+          last_offer_id?: string | null
+          processing_error?: string | null
+          processing_started_at?: string | null
+          replied_to_post_at?: string | null
+          title?: string | null
+          total_auction_offer_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'go4snapps_author_id_fkey'
+            columns: ['author_id']
+            isOneToOne: false
+            referencedRelation: 'get_leaderboard'
+            referencedColumns: ['author_id']
+          },
+          {
+            foreignKeyName: 'go4snapps_author_id_fkey'
+            columns: ['author_id']
+            isOneToOne: false
+            referencedRelation: 'get_nfts_processing_now'
+            referencedColumns: ['author_id']
+          },
+          {
+            foreignKeyName: 'go4snapps_author_id_fkey'
+            columns: ['author_id']
+            isOneToOne: false
+            referencedRelation: 'get_nonwelcomed_users'
+            referencedColumns: ['author_id']
+          },
+          {
+            foreignKeyName: 'go4snapps_author_id_fkey'
+            columns: ['author_id']
+            isOneToOne: false
+            referencedRelation: 'get_ungenerated_go4snapps'
+            referencedColumns: ['author_id']
+          },
+          {
+            foreignKeyName: 'go4snapps_author_id_fkey'
+            columns: ['author_id']
+            isOneToOne: false
+            referencedRelation: 'get_ungenerated_nfts'
+            referencedColumns: ['author_id']
+          },
+          {
+            foreignKeyName: 'go4snapps_author_id_fkey'
+            columns: ['author_id']
+            isOneToOne: false
+            referencedRelation: 'get_ungenerated_pfps'
+            referencedColumns: ['author_id']
+          },
+          {
+            foreignKeyName: 'go4snapps_author_id_fkey'
+            columns: ['author_id']
+            isOneToOne: false
+            referencedRelation: 'get_unminted_go4snapps'
+            referencedColumns: ['author_id']
+          },
+          {
+            foreignKeyName: 'go4snapps_author_id_fkey'
+            columns: ['author_id']
+            isOneToOne: false
+            referencedRelation: 'get_unprocessed_commands'
+            referencedColumns: ['author_id']
+          },
+          {
+            foreignKeyName: 'go4snapps_author_id_fkey'
+            columns: ['author_id']
+            isOneToOne: false
+            referencedRelation: 'get_user_page_info'
+            referencedColumns: ['author_id']
+          },
+          {
+            foreignKeyName: 'go4snapps_author_id_fkey'
+            columns: ['author_id']
+            isOneToOne: false
+            referencedRelation: 'get_user_page_other_owners'
+            referencedColumns: ['pfp_author_id']
+          },
+          {
+            foreignKeyName: 'go4snapps_author_id_fkey'
+            columns: ['author_id']
+            isOneToOne: false
+            referencedRelation: 'get_user_page_owned_pfps'
+            referencedColumns: ['author_id']
+          },
+          {
+            foreignKeyName: 'go4snapps_author_id_fkey'
+            columns: ['author_id']
+            isOneToOne: false
+            referencedRelation: 'get_x_users_to_update'
+            referencedColumns: ['author_id']
+          },
+          {
+            foreignKeyName: 'go4snapps_author_id_fkey'
+            columns: ['author_id']
+            isOneToOne: false
+            referencedRelation: 'x_users'
+            referencedColumns: ['author_id']
+          },
+          {
+            foreignKeyName: 'go4snapps_go4snapp_id_fkey'
+            columns: ['go4snapp_id']
+            isOneToOne: true
+            referencedRelation: 'get_unprocessed_commands'
+            referencedColumns: ['mentioned_post_id']
+          },
+          {
+            foreignKeyName: 'go4snapps_go4snapp_id_fkey'
+            columns: ['go4snapp_id']
+            isOneToOne: true
+            referencedRelation: 'get_unprocessed_mentions'
+            referencedColumns: ['mentioned_post_id']
+          },
+          {
+            foreignKeyName: 'go4snapps_go4snapp_id_fkey'
+            columns: ['go4snapp_id']
+            isOneToOne: true
+            referencedRelation: 'x_mentions'
+            referencedColumns: ['mentioned_post_id']
+          },
+        ]
+      }
+      get_ungenerated_go4snapps: {
+        Row: {
+          author_id: string | null
+          description: string | null
+          go4snapp_id: string | null
+          go4snapp_requested_at: string | null
+          name: string | null
+          title: string | null
+          username: string | null
+          x_post_data: Json | null
+          xch_address: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'go4snapps_go4snapp_id_fkey'
+            columns: ['go4snapp_id']
+            isOneToOne: true
+            referencedRelation: 'get_unprocessed_commands'
+            referencedColumns: ['mentioned_post_id']
+          },
+          {
+            foreignKeyName: 'go4snapps_go4snapp_id_fkey'
+            columns: ['go4snapp_id']
+            isOneToOne: true
+            referencedRelation: 'get_unprocessed_mentions'
+            referencedColumns: ['mentioned_post_id']
+          },
+          {
+            foreignKeyName: 'go4snapps_go4snapp_id_fkey'
+            columns: ['go4snapp_id']
+            isOneToOne: true
+            referencedRelation: 'x_mentions'
+            referencedColumns: ['mentioned_post_id']
+          },
+        ]
+      }
       get_ungenerated_nfts: {
         Row: {
           author_id: string | null
@@ -475,11 +828,55 @@ export type Database = {
         }
         Relationships: []
       }
-      get_unique_pfp_count: {
+      get_unique_nft_counts: {
         Row: {
+          go4snappcount: number | null
           uniquepfpcount: number | null
         }
         Relationships: []
+      }
+      get_unminted_go4snapps: {
+        Row: {
+          author_id: string | null
+          description: string | null
+          go4snapp_id: string | null
+          go4snapp_requested_at: string | null
+          ipfs_cid: string | null
+          ipfs_cid_updated_at: string | null
+          last_edition_number: number | null
+          last_offer_created_at: string | null
+          last_offer_id: string | null
+          last_offer_status: number | null
+          name: string | null
+          title: string | null
+          total_auction_offer_count: number | null
+          username: string | null
+          x_post_data: Json | null
+          xch_address: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'go4snapps_go4snapp_id_fkey'
+            columns: ['go4snapp_id']
+            isOneToOne: true
+            referencedRelation: 'get_unprocessed_commands'
+            referencedColumns: ['mentioned_post_id']
+          },
+          {
+            foreignKeyName: 'go4snapps_go4snapp_id_fkey'
+            columns: ['go4snapp_id']
+            isOneToOne: true
+            referencedRelation: 'get_unprocessed_mentions'
+            referencedColumns: ['mentioned_post_id']
+          },
+          {
+            foreignKeyName: 'go4snapps_go4snapp_id_fkey'
+            columns: ['go4snapp_id']
+            isOneToOne: true
+            referencedRelation: 'x_mentions'
+            referencedColumns: ['mentioned_post_id']
+          },
+        ]
       }
       get_unprocessed_commands: {
         Row: {
@@ -496,6 +893,7 @@ export type Database = {
           referenced_post_id: string | null
           user_jsonb: Json | null
           username: string | null
+          x_post_data: Json | null
           xch_address: string | null
           xch_address_updated_at: string | null
         }
