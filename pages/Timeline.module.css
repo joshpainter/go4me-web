@@ -1,0 +1,35 @@
+.timelinePage {
+  min-height: 100vh;
+  background: #ffffff;
+  display: flex;
+  justify-content: center;
+}
+
+.timelineShell {
+  width: 100%;
+  max-width: 600px;
+  padding: 0 16px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.timelineHeader {
+  margin: 0 -16px;
+  padding: 20px 16px 16px;
+  background: #ffffff;
+  border-bottom: 1px solid #e1e8ed;
+}
+
+.timelineTitle {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: #14171a;
+}
+
+.timelineSubtitle {
+  margin: 8px 0 0;
+  font-size: 15px;
+  color: #657786;
+}

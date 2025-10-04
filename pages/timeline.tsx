@@ -3,6 +3,7 @@ import React from 'react'
 import TimelineGrid from '../components/Timeline/TimelineGrid'
 import { getSupabaseClient } from '../lib/database/supabaseClient'
 import type { Database } from '../lib/database/database.types'
+import styles from './Timeline.module.css'
 
 export type TimelineSnappRow = Database['public']['Views']['get_timeline_go4snapps']['Row']
 
@@ -28,58 +29,15 @@ export default function TimelinePage({ initial }: { initial: TimelineSnappRow[] 
         <meta property="og:title" content="Timeline" />
         <meta property="og:description" content="Discover the latest go4s as they are created and traded." />
       </Head>
-      <div className="timeline-page">
-        <main className="timeline-shell">
-          <header className="timeline-header">
-            <h1 className="timeline-title">Timeline</h1>
-            <p className="timeline-subtitle">See the latest go4s as they drop!</p>
+      <div className={styles.timelinePage}>
+        <main className={styles.timelineShell}>
+          <header className={styles.timelineHeader}>
+            <h1 className={styles.timelineTitle}>go4snapps</h1>
+            <p className={styles.timelineSubtitle}>See the latest go4s as they drop!</p>
           </header>
           <TimelineGrid initial={initial} />
         </main>
       </div>
-      <style jsx>{`
-        .timeline-page {
-          min-height: 100vh;
-          background: #0f1419;
-          display: flex;
-          justify-content: center;
-        }
-        .timeline-shell {
-          width: 100%;
-          max-width: 680px;
-          padding: 0 16px 64px;
-          display: flex;
-          flex-direction: column;
-          gap: 24px;
-        }
-        .timeline-header {
-          position: sticky;
-          top: 0;
-          z-index: 20;
-          margin: 0 -16px;
-          padding: 20px 16px 16px;
-          background: rgba(15, 20, 25, 0.85);
-          backdrop-filter: blur(12px);
-          border-bottom: 1px solid #2f3336;
-        }
-        .timeline-title {
-          margin: 0;
-          font-size: 28px;
-          font-weight: 700;
-          color: #e7e9ea;
-        }
-        .timeline-subtitle {
-          margin: 8px 0 0;
-          font-size: 15px;
-          color: #8b98a5;
-        }
-      `}</style>
-      <style jsx global>{`
-        body {
-          background: #0f1419;
-          color: #e7e9ea;
-        }
-      `}</style>
     </>
   )
 }

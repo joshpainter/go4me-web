@@ -593,38 +593,9 @@ export type Database = {
           replied_to_post_at: string | null
           title: string | null
           total_auction_offer_count: number | null
-        }
-        Insert: {
-          author_id?: string | null
-          created_at?: string | null
-          description?: string | null
-          go4snapp_id?: string | null
-          ipfs_cid?: string | null
-          ipfs_cid_updated_at?: string | null
-          last_edition_number?: number | null
-          last_offer_created_at?: string | null
-          last_offer_id?: string | null
-          processing_error?: string | null
-          processing_started_at?: string | null
-          replied_to_post_at?: string | null
-          title?: string | null
-          total_auction_offer_count?: number | null
-        }
-        Update: {
-          author_id?: string | null
-          created_at?: string | null
-          description?: string | null
-          go4snapp_id?: string | null
-          ipfs_cid?: string | null
-          ipfs_cid_updated_at?: string | null
-          last_edition_number?: number | null
-          last_offer_created_at?: string | null
-          last_offer_id?: string | null
-          processing_error?: string | null
-          processing_started_at?: string | null
-          replied_to_post_at?: string | null
-          title?: string | null
-          total_auction_offer_count?: number | null
+          user_display_name: string | null
+          user_pfp_ipfs_cid: string | null
+          username: string | null
         }
         Relationships: [
           {

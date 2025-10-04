@@ -1,6 +1,7 @@
 import React from 'react'
 import Image from 'next/image'
 import { snappImageUrls } from '../../lib/database/services/timeline'
+import styles from './TimelineSnappCard.module.css'
 
 function usePrefersReducedMotion() {
   const [reduced, setReduced] = React.useState(false)
@@ -19,16 +20,45 @@ export interface TimelineSnappCardProps {
   ipfs_cid?: string | null
   title?: string | null
   subtitle?: string | null
+  description?: string | null
   created_at?: string | null
   last_offer_created_at?: string | null
   author_id?: string | null
   last_offer_id?: string | null
+  username?: string | null
+  user_display_name?: string | null
+  user_pfp_ipfs_cid?: string | null
+  last_edition_number?: number | null
 }
 
 export default function TimelineSnappCard(props: TimelineSnappCardProps) {
-  const { ipfs_cid, title, created_at, last_offer_created_at, last_offer_id } = props
+  const {
+    ipfs_cid,
+    title,
+    description,
+    created_at,
+    last_offer_created_at,
+    last_offer_id,
+    username,
+    user_display_name,
+    user_pfp_ipfs_cid,
+    last_edition_number,
+  } = props
   const [flipped, setFlipped] = React.useState(false)
+  const [dropdownOpen, setDropdownOpen] = React.useState(false)
+  const dropdownRef = React.useRef<HTMLDivElement>(null)
   const reducedMotion = usePrefersReducedMotion()
+
+  // Close dropdown when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
   const [generatedLoaded, setGeneratedLoaded] = React.useState(false)
   const [sourceLoaded, setSourceLoaded] = React.useState(false)
 
@@ -41,18 +71,39 @@ export default function TimelineSnappCard(props: TimelineSnappCardProps) {
   const generatedDownloadName = `${slugifiedTitle || 'go4snapp'}-generated.png`
   const sourceDownloadName = `${slugifiedTitle || 'go4snapp'}-source.png`
 
+  const userPfpUrl =
+    user_pfp_ipfs_cid && username ? `https://can.seedsn.app/ipfs/${user_pfp_ipfs_cid}/${username}-go4me.png` : undefined
+
   const toggle = () => setFlipped((f) => !f)
   const showDate = last_offer_created_at ?? created_at ?? ''
   const formattedDate = showDate
     ? new Date(showDate).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
     : ''
 
+  const getRelativeTime = (dateString: string) => {
+    const now = new Date()
+    const date = new Date(dateString)
+    const diffInMs = now.getTime() - date.getTime()
+    const diffInMinutes = Math.floor(diffInMs / (1000 * 60))
+    const diffInHours = Math.floor(diffInMinutes / 60)
+    const diffInDays = Math.floor(diffInHours / 24)
+
+    if (diffInMinutes < 1) return 'now'
+    if (diffInMinutes < 60) return `${diffInMinutes}m`
+    if (diffInHours < 24) return `${diffInHours}h`
+    if (diffInDays < 7) return `${diffInDays}d`
+    return formattedDate
+  }
+
+  const relativeTime = showDate ? getRelativeTime(showDate) : ''
+
   return (
-    <article className="snapp-card" onMouseLeave={() => !reducedMotion && setFlipped(false)}>
-      <div className="flip-wrap" onMouseEnter={() => !reducedMotion && setFlipped(true)}>
+    <article className={styles.snappCard} onMouseLeave={() => !reducedMotion && setFlipped(false)}>
+      <div className={styles.flipWrap} onMouseEnter={() => !reducedMotion && setFlipped(true)}>
+        <h3 className={styles.cardTitle}>{title ?? 'Go4Snapp'}</h3>
         <button
           type="button"
-          className="flip-inner"
+          className={styles.flipInner}
           aria-pressed={flipped}
           onClick={toggle}
           onKeyDown={(e) => {
@@ -62,81 +113,129 @@ export default function TimelineSnappCard(props: TimelineSnappCardProps) {
             }
           }}
         >
-          <div className="flip-face front">
+          <div className={`${styles.flipFace} ${styles.front}`}>
             {generated && (
               <Image
                 src={generated}
                 alt={title ?? 'Generated Go4Snapp'}
                 fill
-                sizes="400px"
+                sizes="550px"
                 onLoad={() => {
                   setGeneratedLoaded(true)
                 }}
                 style={{ objectFit: 'cover' }}
                 priority={false}
-                className={`snapp-image snapp-image--generated ${generatedLoaded ? 'visible' : ''}`}
+                className={`${styles.snappImage} ${generatedLoaded ? styles.visible : ''}`}
               />
             )}
           </div>
-          <div className="flip-face back">
+          <div className={`${styles.flipFace} ${styles.back}`}>
             {source && (
               <Image
                 src={source}
                 alt={title ? `${title} (source)` : 'Source Go4Snapp'}
                 fill
-                sizes="400px"
+                sizes="550px"
                 onLoad={() => {
                   setSourceLoaded(true)
                 }}
                 style={{ objectFit: 'contain' }}
                 priority={false}
-                className={`snapp-image snapp-image--source ${sourceLoaded ? 'visible' : ''}`}
+                className={`${styles.snappImage} ${sourceLoaded ? styles.visible : ''}`}
               />
             )}
           </div>
         </button>
       </div>
-      <div className="card-meta">
-        <h3 className="card-title">{title ?? 'Go4Snapp'}</h3>
-        {formattedDate && (
-          <time className="card-date" dateTime={showDate} suppressHydrationWarning>
-            {formattedDate}
-          </time>
+      <div className={styles.cardMeta}>
+        {(user_display_name || username) && (
+          <div className={styles.cardUser}>
+            {userPfpUrl && username && (
+              <a href={`https://${username}.go4.me`} target="_blank" rel="noopener noreferrer">
+                <Image
+                  src={userPfpUrl}
+                  alt={`${user_display_name || username}'s profile picture`}
+                  width={48}
+                  height={48}
+                  className={styles.cardUserPfp}
+                />
+              </a>
+            )}
+            <div className={styles.cardUserInfo}>
+              <span className={styles.cardUserDisplayName}>{user_display_name || username}</span>
+              {user_display_name && username && (
+                <a
+                  href={`https://x.com/${username}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.cardUserUsername}
+                >
+                  @{username}
+                </a>
+              )}
+            </div>
+            <div className={styles.cardUserMeta}>
+              {relativeTime && <span className={styles.cardUserDate}>{relativeTime}</span>}
+              <div className={styles.dropdownContainer} ref={dropdownRef}>
+                <button
+                  type="button"
+                  className={styles.moreButton}
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  aria-expanded={dropdownOpen}
+                  aria-haspopup="menu"
+                  aria-label="More options"
+                >
+                  ⋯
+                </button>
+                {dropdownOpen && (
+                  <div className={styles.moreMenu}>
+                    {source ? (
+                      <a
+                        className={styles.moreMenuItem}
+                        href={source}
+                        download={sourceDownloadName}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => setDropdownOpen(false)}
+                      >
+                        <span className={styles.downloadIcon}>⬇️</span>
+                        Original
+                      </a>
+                    ) : (
+                      <span className={`${styles.moreMenuItem} ${styles.moreMenuItemDisabled}`}>
+                        <span className={styles.downloadIcon}>⬇️</span>
+                        Original
+                      </span>
+                    )}
+                    {generated ? (
+                      <a
+                        className={styles.moreMenuItem}
+                        href={generated}
+                        download={generatedDownloadName}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => setDropdownOpen(false)}
+                      >
+                        <span className={styles.downloadIcon}>⬇️</span>
+                        go4snapp
+                      </a>
+                    ) : (
+                      <span className={`${styles.moreMenuItem} ${styles.moreMenuItemDisabled}`}>
+                        <span className={styles.downloadIcon}>⬇️</span>
+                        go4snapp
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         )}
-        <div className="card-actions">
-          {source ? (
-            <a
-              className="card-action"
-              href={source}
-              download={sourceDownloadName}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Download source
-            </a>
-          ) : (
-            <button type="button" className="card-action card-action--disabled" disabled>
-              Source unavailable
-            </button>
-          )}
-          {generated ? (
-            <a
-              className="card-action"
-              href={generated}
-              download={generatedDownloadName}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Download generated
-            </a>
-          ) : (
-            <button type="button" className="card-action card-action--disabled" disabled>
-              Generated unavailable
-            </button>
-          )}
+        {description && <p className={styles.cardDescription}>{description}</p>}
+        <div className={styles.cardActions}>
           {dexieUrl ? (
             <a
-              className="card-action card-action--dexie"
+              className={`${styles.cardAction} ${styles.cardActionDexie}`}
               href={dexieUrl}
               target="_blank"
               rel="noopener noreferrer"
@@ -147,170 +246,16 @@ export default function TimelineSnappCard(props: TimelineSnappCardProps) {
                 alt="Dexie"
                 width={16}
                 height={16}
-                className="card-action__icon"
               />
-              Dexie
+              Get #{last_edition_number} at Dexie
             </a>
           ) : (
-            <button type="button" className="card-action card-action--disabled" disabled>
+            <button type="button" className={`${styles.cardAction} ${styles.cardActionDisabled}`} disabled>
               Dexie unavailable
             </button>
           )}
         </div>
       </div>
-      <style jsx>{`
-        .snapp-card {
-          width: 100%;
-          max-width: 400px;
-          margin: 0 auto;
-          border: 1px solid #2f3336;
-          border-radius: 16px;
-          overflow: hidden;
-          background: #0f1419;
-          color: #e7e9ea;
-          box-shadow: 0 0 0 1px rgba(231, 233, 234, 0.02);
-          transition:
-            border-color 150ms ease,
-            box-shadow 150ms ease;
-        }
-        .snapp-card:hover {
-          border-color: #1d9bf0;
-          box-shadow: 0 8px 24px rgba(29, 155, 240, 0.12);
-        }
-        .flip-wrap {
-          position: relative;
-          width: 100%;
-          max-width: 100%;
-          height: 400px;
-          perspective: 1200px;
-          background: #050708;
-        }
-        .flip-inner {
-          position: absolute;
-          inset: 0;
-          border: 0;
-          padding: 0;
-          background: transparent;
-          transform-style: preserve-3d;
-          transition: transform 320ms ease;
-          cursor: pointer;
-        }
-        .flip-inner:focus-visible {
-          outline: 2px solid #1d9bf0;
-          outline-offset: 3px;
-        }
-        .flip-inner[aria-pressed='true'] {
-          transform: rotateY(180deg);
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .flip-inner {
-            transition: none;
-          }
-          .flip-inner[aria-pressed='true'] {
-            transform: none;
-          }
-        }
-        .flip-face {
-          position: absolute;
-          inset: 0;
-          width: 100%;
-          height: 100%;
-          backface-visibility: hidden;
-        }
-        .front {
-          transform: rotateY(0deg);
-        }
-        .back {
-          transform: rotateY(180deg);
-        }
-        .snapp-image {
-          transition: opacity 200ms ease;
-          opacity: 0;
-          object-position: center;
-          background: #050708;
-        }
-        .snapp-image--generated {
-        }
-        .snapp-image--source {
-        }
-        .snapp-image.visible {
-          opacity: 1;
-        }
-        .card-meta {
-          padding: 16px 20px 20px;
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-        }
-        .card-title {
-          margin: 0;
-          font-size: 18px;
-          font-weight: 600;
-          color: inherit;
-        }
-        .card-date {
-          font-size: 14px;
-          color: #8b98a5;
-        }
-        .card-actions {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 10px;
-        }
-        .card-action {
-          border: 1px solid #2f3336;
-          border-radius: 999px;
-          padding: 6px 14px;
-          font-size: 14px;
-          font-weight: 600;
-          background: transparent;
-          color: #1d9bf0;
-          cursor: pointer;
-          text-decoration: none;
-          transition:
-            background-color 150ms ease,
-            border-color 150ms ease,
-            color 150ms ease;
-        }
-        .card-action:hover {
-          border-color: #1d9bf0;
-          background: rgba(29, 155, 240, 0.12);
-        }
-        .card-action--disabled,
-        .card-action--disabled:hover {
-          cursor: not-allowed;
-          color: #8b98a5;
-          border-color: #2f3336;
-          background: transparent;
-        }
-        .card-action--dexie {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          background: linear-gradient(180deg, #7ab0ff 0%, #2f77ff 100%);
-          color: #ffffff;
-          border-color: rgba(47, 109, 255, 0.9);
-          box-shadow:
-            0 6px 14px rgba(47, 109, 255, 0.18),
-            0 2px 6px rgba(47, 109, 255, 0.12),
-            inset 0 1px 0 rgba(255, 255, 255, 0.25),
-            inset 0 -1px 0 rgba(0, 0, 0, 0.08);
-          text-decoration: none;
-        }
-        .card-action--dexie:hover {
-          background: linear-gradient(180deg, #89b8ff 0%, #2a6fee 100%);
-          border-color: #1d9bf0;
-          color: #ffffff;
-        }
-        .card-action--dexie img {
-          width: 16px;
-          height: 16px;
-        }
-        :global(.card-action__icon) {
-          width: 16px !important;
-          height: 16px !important;
-        }
-      `}</style>
     </article>
   )
 }

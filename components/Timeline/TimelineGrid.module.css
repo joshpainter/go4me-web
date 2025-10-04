@@ -1,0 +1,49 @@
+.timelineGrid {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.timelineGridItems {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  justify-items: center;
+}
+
+.timelineGridActions {
+  display: flex;
+  justify-content: center;
+}
+
+.timelineGridButton {
+  border: 1px solid #e1e8ed;
+  background: transparent;
+  color: #1d9bf0;
+  border-radius: 999px;
+  font-weight: 600;
+  padding: 10px 28px;
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    border-color 150ms ease;
+}
+
+.timelineGridButton:hover:not(:disabled) {
+  background: rgba(29, 155, 240, 0.1);
+  border-color: #1d9bf0;
+}
+
+.timelineGridButton:disabled {
+  cursor: not-allowed;
+  color: #657786;
+  border-color: #e1e8ed;
+}
+
+.timelineGridError {
+  text-align: center;
+  color: #e0245e;
+  font-size: 14px;
+}
