@@ -45,7 +45,12 @@ function MyApp({ Component, pageProps }: AppProps) {
         (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
       setTheme(preferred)
       document.documentElement.setAttribute('data-theme', preferred)
-    } catch {}
+    } catch (err) {
+      // Fallback to light theme if initialization fails
+      console.warn('Failed to initialize theme preference:', err)
+      setTheme('light')
+      document.documentElement.setAttribute('data-theme', 'light')
+    }
 
     // Comprehensive WalletConnect error suppression
     const isWalletConnectMessage = (val: unknown): boolean => {
@@ -169,7 +174,9 @@ function MyApp({ Component, pageProps }: AppProps) {
     document.documentElement.setAttribute('data-theme', next)
     try {
       localStorage.setItem('theme', next)
-    } catch {}
+    } catch (err) {
+      console.warn('Failed to persist theme preference to localStorage:', err)
+    }
   }, [])
 
   const toggleTheme = useCallback(() => {
